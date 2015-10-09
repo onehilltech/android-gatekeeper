@@ -1,14 +1,16 @@
 package com.onehilltech.gatekeeper.android;
 
-import android.util.Log;
+import android.content.Context;
 
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 
-import org.apache.http.Header;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @class GatekeeperClient
@@ -28,55 +30,16 @@ public class GatekeeperClient
   private final String baseUri_;
 
   /// Underlying HTTP client.
-  private final AsyncHttpClient client_ = new AsyncHttpClient ();
+  private final RequestQueue requestQueue_;
 
   /// Authorization token for the current user.
   private BearerToken token_;
 
   public interface ResultListener <T>
   {
-    void onSuccess (int statusCode, T result);
+    void onResponse (T result);
 
-    void onFailure (int statusCode, String responseString, Throwable throwable);
-  }
-
-  /**
-   * @class TokenResultListener
-   *
-   * Internal class that handles processing the results of a token request. If
-   * the received token is valid, it will replace the existing one.
-   */
-  private class TokenResultListener extends JsonHttpResponseHandler
-  {
-    private final ResultListener <BearerToken> result_;
-
-    public TokenResultListener (ResultListener <BearerToken> result)
-    {
-      this.result_ = result;
-    }
-
-    @Override
-    public void onSuccess (int statusCode, Header[] headers, JSONObject response)
-    {
-      try
-      {
-        // Store the token, and return it via the result listener.
-        BearerToken token = BearerToken.fromJSONObject (response);
-        setToken (token);
-
-        this.result_.onSuccess (statusCode, token);
-      }
-      catch (JSONException e)
-      {
-        Log.e (TAG, e.getMessage (), e);
-      }
-    }
-
-    @Override
-    public void onFailure (int statusCode, Header[] headers, String responseString, Throwable throwable)
-    {
-      this.result_.onFailure (statusCode, responseString, throwable);
-    }
+    void onError (int statusCode, String response);
   }
 
   /**
@@ -85,11 +48,24 @@ public class GatekeeperClient
    * @param clientId
    * @param baseUri
    */
-  public GatekeeperClient (String baseUri, String clientId, String clientSecret)
+  GatekeeperClient (Context context, String baseUri, String clientId, String clientSecret)
+  {
+    this (baseUri, clientId, clientSecret, Volley.newRequestQueue (context));
+  }
+
+  /**
+   * Package level constructor. Allows customization of the internal HTTP client.
+   *
+   * @param baseUri
+   * @param clientId
+   * @param clientSecret
+   */
+  GatekeeperClient (String baseUri, String clientId, String clientSecret, RequestQueue requestQueue)
   {
     this.baseUri_ = baseUri;
     this.clientId_ = clientId;
     this.clientSecret_ = clientSecret;
+    this.requestQueue_ = requestQueue;
   }
 
   /**
@@ -100,6 +76,16 @@ public class GatekeeperClient
   public String getClientId ()
   {
     return this.clientId_;
+  }
+
+  /**
+   * Get the secret for the client.
+   *
+   * @return
+   */
+  public String getClientSecret ()
+  {
+    return this.clientSecret_;
   }
 
   /**
@@ -120,7 +106,6 @@ public class GatekeeperClient
   public void setToken (BearerToken token)
   {
     this.token_ = token;
-    this.client_.addHeader ("Authorization", "Bearer " + token.getAccessToken ());
   }
 
   /**
@@ -161,15 +146,15 @@ public class GatekeeperClient
     this.getClientToken (new ResultListener<BearerToken> ()
     {
       @Override
-      public void onSuccess (int statusCode, BearerToken token)
+      public void onResponse (BearerToken token)
       {
         createAccountImpl (username, password, email, result);
       }
 
       @Override
-      public void onFailure (int statusCode, String responseString, Throwable throwable)
+      public void onError (int statusCode, String responseString)
       {
-        result.onFailure (statusCode, responseString, throwable);
+        result.onError (statusCode, responseString);
       }
     });
   }
@@ -187,25 +172,34 @@ public class GatekeeperClient
   {
     String url = this.getCompleteUrl ("/accounts");
 
-    RequestParams params = new RequestParams ();
-    params.put ("client_id", this.clientId_);
-    params.put ("username", username);
-    params.put ("password", password);
-    params.put ("email", email);
+    GatekeeperRequest <Boolean> request =
+        this.makeRequest (Request.Method.POST, url, Boolean.class,
+            new Response.Listener<Boolean> () {
+              @Override
+              public void onResponse (Boolean response)
+              {
+                result.onResponse (response);
+              }
+            },
+            new Response.ErrorListener ()
+            {
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+                NetworkResponse response = error.networkResponse;
 
-    this.client_.post (url, params, new JsonHttpResponseHandler () {
-      @Override
-      public void onFailure (int statusCode, Header[] headers, String responseString, Throwable throwable)
-      {
-        result.onFailure (statusCode, responseString, throwable);
-      }
+                if (response != null)
+                  result.onError (response.statusCode, new String (response.data));
+              }
+            });
 
-      @Override
-      public void onSuccess (int statusCode, Header[] headers, String responseString)
-      {
-        result.onSuccess (statusCode, Boolean.parseBoolean (responseString));
-      }
-    });
+    request
+        .addParam ("client_id", this.clientId_)
+        .addParam ("username", username)
+        .addParam ("password", password)
+        .addParam ("email", email);
+
+    this.requestQueue_.add (request);
   }
 
   /**
@@ -217,15 +211,14 @@ public class GatekeeperClient
    */
   public void getUserToken (String username, String password, ResultListener <BearerToken> result)
   {
-    String url = this.getCompleteUrl ("/oauth2/token");
+    HashMap <String, String> params = new HashMap<> ();
 
-    RequestParams params = new RequestParams ();
     params.put ("grant_type", "password");
     params.put ("client_id", this.clientId_);
     params.put ("username", username);
     params.put ("password", password);
 
-    this.client_.post (url, params, new TokenResultListener (result));
+    this.getToken (params, result);
   }
 
   /**
@@ -238,14 +231,12 @@ public class GatekeeperClient
     if (this.clientSecret_ == null)
       throw new IllegalStateException ("Must provide client secret to request token");
 
-    String url = this.getCompleteUrl ("/oauth2/token");
-
-    RequestParams params = new RequestParams ();
+    HashMap <String, String> params = new HashMap <> ();
     params.put ("grant_type", "client_credentials");
     params.put ("client_id", this.clientId_);
     params.put ("client_secret", this.clientSecret_);
 
-    this.client_.post (url, params, new TokenResultListener (result));
+    this.getToken (params, result);
   }
 
   /**
@@ -258,14 +249,53 @@ public class GatekeeperClient
     if (!this.token_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
-    String url = this.getCompleteUrl ("/oauth2/token");
-
-    RequestParams params = new RequestParams ();
+    HashMap <String, String> params = new HashMap <> ();
     params.put ("grant_type", "refresh_token");
     params.put ("client_id", this.clientId_);
     params.put ("refresh_token", this.token_.getRefreshToken ());
 
-    this.client_.post (url, params, new TokenResultListener (result));
+    this.getToken (params, result);
+  }
+
+  /**
+   * Helper method that gets the token using the provided body params.
+   *
+   * @param params
+   */
+  private void getToken (final Map<String, String> params, final ResultListener <BearerToken> result)
+  {
+    final String url = this.getCompleteUrl ("/oauth2/token");
+
+
+    GatekeeperRequest <Token> request =
+        this.makeRequest (Request.Method.POST, url, Token.class,
+            new Response.Listener<Token> ()
+            {
+              @Override
+              public void onResponse (Token response)
+              {
+                response.accept (new TokenVisitor ()
+                {
+                  @Override
+                  public void visitBearerToken (BearerToken token)
+                  {
+                    setToken (token);
+                    result.onResponse (token);
+                  }
+                });
+              }
+            },
+            new Response.ErrorListener () {
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+
+              }
+            });
+
+    request.addParams (params);
+
+    this.requestQueue_.add (request);
   }
 
   /**
@@ -278,19 +308,66 @@ public class GatekeeperClient
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
 
-    this.client_.get (url, new JsonHttpResponseHandler () {
-      @Override
-      public void onFailure (int statusCode, Header[] headers, String responseString, Throwable throwable)
-      {
-        result.onFailure (statusCode, responseString, throwable);
-      }
+    GatekeeperRequest <Boolean> request =
+        this.makeRequest (Request.Method.GET, url, Boolean.class,
+            new Response.Listener <Boolean> () {
+              @Override
+              public void onResponse (Boolean response)
+              {
+                result.onResponse (response);
+              }
+            },
+            new Response.ErrorListener () {
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+                NetworkResponse response = error.networkResponse;
 
-      @Override
-      public void onSuccess (int statusCode, Header[] headers, String responseString)
-      {
-        result.onSuccess (statusCode, Boolean.parseBoolean (responseString));
-      }
-    });
+                if (response != null)
+                  result.onError (response.statusCode, new String (response.data));
+              }
+            });
+
+    this.requestQueue_.add (request);
+  }
+
+  /**
+   * Make a new GatekeeperRequest object.
+   *
+   * @param method
+   * @param path
+   * @param clazz
+   * @param responseListener
+   * @param errorListener
+   * @param <T>
+   * @return
+   */
+  public <T> GatekeeperRequest <T> makeRequest (int method,
+                                                String path,
+                                                Class <T> clazz,
+                                                Response.Listener <T> responseListener,
+                                                Response.ErrorListener errorListener)
+  {
+    GatekeeperRequest <T> request =
+        new GatekeeperRequest<> (
+            method,
+            this.getCompleteUrl (path),
+            clazz,
+            this.token_,
+            responseListener,
+            errorListener);
+
+    return request;
+  }
+
+  /**
+   * Add a GatekeeperRequest object to the queue.
+   *
+   * @param request
+   */
+  public void addRequest (GatekeeperRequest <?> request)
+  {
+    this.requestQueue_.add (request);
   }
 
   /**
