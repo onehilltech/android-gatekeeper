@@ -96,7 +96,7 @@ public class RegistrationService extends IntentService
     GatekeeperClient client = Gatekeeper.getClient ();
 
     ProtectedRequest<Boolean> request =
-        client.makeRequest (Request.Method.POST, "/me/notifications", Boolean.class,
+        client.makeRequest (Request.Method.POST, "/me/notifications",
             new Response.Listener <Boolean> () {
               @Override
               public void onResponse (Boolean response)

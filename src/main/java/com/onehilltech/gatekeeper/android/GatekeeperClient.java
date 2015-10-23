@@ -357,6 +357,16 @@ public class GatekeeperClient
   }
 
   /**
+   * Add a request to the queue.
+   *
+   * @param request
+   */
+  public void addRequest (Request <?> request)
+  {
+    this.requestQueue_.add (request);
+  }
+
+  /**
    * Get the complete URL for a path.
    *
    * @param relativePath
