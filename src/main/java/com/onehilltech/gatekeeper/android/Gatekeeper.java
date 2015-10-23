@@ -2,9 +2,10 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
+
 /**
- * @class Gatekeeper
- *
  * Main entry point class for the Gatekeeper framework.
  */
 public class Gatekeeper
@@ -22,10 +23,18 @@ public class Gatekeeper
    */
   public static GatekeeperClient initialize (Context context, String baseUri, String clientId, String clientSecret)
   {
+    return initialize (baseUri, clientId, clientSecret, Volley.newRequestQueue (context));
+  }
+
+  public static GatekeeperClient initialize (String baseUri,
+                                             String clientId,
+                                             String clientSecret,
+                                             RequestQueue requestQueue)
+  {
     if (client_ != null)
       throw new IllegalStateException ("Gatekeeper already initialized");
 
-    client_ = new GatekeeperClient (context, baseUri, clientId, clientSecret);
+    client_ = new GatekeeperClient (baseUri, clientId, clientSecret, requestQueue);
     return client_;
   }
 

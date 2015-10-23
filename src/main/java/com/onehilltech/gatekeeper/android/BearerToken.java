@@ -8,9 +8,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.util.Date;
 
 /**
- * @class BearerToken
+ * Implementation of a Token object that implements the Bearer strategy used in
+ * Oauth 2.0.
  */
-
 public class BearerToken extends Token
 {
   /// The access token.

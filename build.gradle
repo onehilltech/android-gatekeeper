@@ -116,7 +116,11 @@ task sourcesJar(type: Jar) {
 
 task javadoc(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
+
+    classpath += configurations.compile
     classpath += project.files (android.getBootClasspath().join(File.pathSeparator))
+
+    failOnError false
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -124,6 +128,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
     //options.encoding = 'UTF-8'
 }
+
 artifacts {
     archives javadocJar
     archives sourcesJar

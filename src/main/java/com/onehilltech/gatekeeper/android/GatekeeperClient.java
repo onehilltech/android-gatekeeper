@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @class GatekeeperClient
+ * Client interface for communicating with a Gatekeeper service.
  */
 public class GatekeeperClient
 {

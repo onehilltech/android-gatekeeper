@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.util.Date;
 
 /**
- * @class Token
- *
  * Base class for all token types.
  */
 @JsonTypeInfo(
@@ -47,7 +45,6 @@ public abstract class Token
    *
    * @param json
    * @return
-   * @throws IOException
    */
   public static Token fromJSON (String json)
       throws IOException
@@ -59,7 +56,6 @@ public abstract class Token
    * Convert the token to a JSON string.
    *
    * @return
-   * @throws JsonProcessingException
    */
   public String toJSONString ()
       throws JsonProcessingException

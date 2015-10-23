@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by hillj on 9/19/15.
+ *
  */
 public class GatekeeperRequest <T> extends Request <T>
 {
