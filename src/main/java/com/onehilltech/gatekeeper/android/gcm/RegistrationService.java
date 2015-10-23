@@ -21,15 +21,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.android.volley.NetworkError;
 import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.Gatekeeper;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.ProtectedRequest;
+import com.onehilltech.gatekeeper.android.ResponseListener;
 
 import java.io.IOException;
 
@@ -63,19 +61,7 @@ public class RegistrationService extends IntentService
       InstanceID instanceID = InstanceID.getInstance (this);
       String token = instanceID.getToken (authorizedEntity, GoogleCloudMessaging.INSTANCE_ID_SCOPE, extras);
 
-      this.registerTokenWithServer (token, new GatekeeperClient.ResultListener<Boolean> () {
-        @Override
-        public void onResponse (Boolean result)
-        {
-          // Should we send a local notification?
-        }
-
-        @Override
-        public void onError (int statusCode, String response)
-        {
-
-        }
-      });
+      this.registerTokenWithServer (token, new ResponseListener<Boolean> ());
     }
     catch (IOException e)
     {
@@ -91,27 +77,10 @@ public class RegistrationService extends IntentService
    *
    * @param token The new token.
    */
-  private void registerTokenWithServer (String token, final GatekeeperClient.ResultListener<Boolean> resultListener)
+  private void registerTokenWithServer (String token, final ResponseListener <Boolean> listener)
   {
     GatekeeperClient client = Gatekeeper.getClient ();
-
-    ProtectedRequest<Boolean> request =
-        client.makeRequest (Request.Method.POST, "/me/notifications",
-            new Response.Listener <Boolean> () {
-              @Override
-              public void onResponse (Boolean response)
-              {
-                resultListener.onResponse (response);
-              }
-            },
-            new Response.ErrorListener () {
-              @Override
-              public void onErrorResponse (VolleyError error)
-              {
-                NetworkError netError = (NetworkError)error;
-                resultListener.onError (netError.networkResponse.statusCode, new String (netError.networkResponse.data));
-              }
-            });
+    ProtectedRequest<Boolean> request = client.makeRequest (Request.Method.POST, "/me/notifications", listener);
 
     request
         .addParam ("network", "gcm")

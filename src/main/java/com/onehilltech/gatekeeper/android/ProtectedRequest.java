@@ -21,7 +21,7 @@ public class ProtectedRequest<T> extends Request <T>
 {
   private final ObjectMapper objMapper_ = new ObjectMapper ();
 
-  private final Response.Listener <T> listener_;
+  private final ResponseListener <T> listener_;
 
   private final BearerToken token_;
 
@@ -36,15 +36,13 @@ public class ProtectedRequest<T> extends Request <T>
    * @param url
    * @param token
    * @param listener
-   * @param errorListener
    */
   public ProtectedRequest (int method,
                            String url,
                            BearerToken token,
-                           Response.Listener<T> listener,
-                           Response.ErrorListener errorListener)
+                           ResponseListener <T> listener)
   {
-    super (method, url, errorListener);
+    super (method, url, listener);
 
     this.token_ = token;
     this.listener_ = listener;

@@ -2,10 +2,8 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 
@@ -34,13 +32,6 @@ public class GatekeeperClient
 
   /// Authorization token for the current user.
   private BearerToken token_;
-
-  public interface ResultListener<T>
-  {
-    void onResponse (T result);
-
-    void onError (int statusCode, String response);
-  }
 
   /**
    * Initializing constructor.
@@ -139,22 +130,22 @@ public class GatekeeperClient
   public void createAccount (final String username,
                              final String password,
                              final String email,
-                             final ResultListener<Boolean> result)
+                             final ResponseListener<Boolean> listener)
   {
     // First, get a client token. We need a client token to create the account
     // for the user.
-    this.getClientToken (new ResultListener<BearerToken> ()
+    this.getClientToken (new ResponseListener<BearerToken> ()
     {
       @Override
-      public void onResponse (BearerToken token)
+      public void onErrorResponse (VolleyError error)
       {
-        createAccountImpl (username, password, email, result);
+        listener.onErrorResponse (error);
       }
 
       @Override
-      public void onError (int statusCode, String responseString)
+      public void onResponse (BearerToken token)
       {
-        result.onError (statusCode, responseString);
+        createAccountImpl (username, password, email, listener);
       }
     });
   }
@@ -166,32 +157,12 @@ public class GatekeeperClient
    * @param username
    * @param password
    * @param email
-   * @param result
+   * @param listener
    */
-  private void createAccountImpl (String username, String password, String email, final ResultListener<Boolean> result)
+  private void createAccountImpl (String username, String password, String email, ResponseListener<Boolean> listener)
   {
     String url = this.getCompleteUrl ("/accounts");
-
-    ProtectedRequest<Boolean> request =
-        this.makeRequest (Request.Method.POST, url,
-            new Response.Listener<Boolean> () {
-              @Override
-              public void onResponse (Boolean response)
-              {
-                result.onResponse (response);
-              }
-            },
-            new Response.ErrorListener ()
-            {
-              @Override
-              public void onErrorResponse (VolleyError error)
-              {
-                NetworkResponse response = error.networkResponse;
-
-                if (response != null)
-                  result.onError (response.statusCode, new String (response.data));
-              }
-            });
+    ProtectedRequest<Boolean> request = this.makeRequest (Request.Method.POST, url, listener);
 
     request
         .addParam ("client_id", this.clientId_)
@@ -207,9 +178,9 @@ public class GatekeeperClient
    *
    * @param username
    * @param password
-   * @param result
+   * @param listener
    */
-  public void getUserToken (String username, String password, ResultListener<BearerToken> result)
+  public void getUserToken (String username, String password, ResponseListener<BearerToken> listener)
   {
     HashMap <String, String> params = new HashMap<> ();
 
@@ -218,15 +189,15 @@ public class GatekeeperClient
     params.put ("username", username);
     params.put ("password", password);
 
-    this.getToken (params, result);
+    this.getToken (params, listener);
   }
 
   /**
    * Get an access token for the client. The \a clientSecret parameter is optional.
    *
-   * @param result
+   * @param listener
    */
-  public void getClientToken (ResultListener<BearerToken> result)
+  public void getClientToken (ResponseListener<BearerToken> listener)
   {
     if (this.clientSecret_ == null)
       throw new IllegalStateException ("Must provide client secret to request token");
@@ -236,15 +207,15 @@ public class GatekeeperClient
     params.put ("client_id", this.clientId_);
     params.put ("client_secret", this.clientSecret_);
 
-    this.getToken (params, result);
+    this.getToken (params, listener);
   }
 
   /**
    * Refresh the current access token.
    *
-   * @param result
+   * @param listener
    */
-  public void refreshToken (ResultListener<BearerToken> result)
+  public void refreshToken (ResponseListener <BearerToken> listener)
   {
     if (!this.token_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
@@ -254,7 +225,7 @@ public class GatekeeperClient
     params.put ("client_id", this.clientId_);
     params.put ("refresh_token", this.token_.getRefreshToken ());
 
-    this.getToken (params, result);
+    this.getToken (params, listener);
   }
 
   /**
@@ -262,71 +233,45 @@ public class GatekeeperClient
    *
    * @param params
    */
-  private void getToken (final Map<String, String> params, final ResultListener<BearerToken> result)
+  private void getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
   {
     final String url = this.getCompleteUrl ("/oauth2/token");
 
-
     ProtectedRequest<Token> request =
-        this.makeRequest (Request.Method.POST, url,
-            new Response.Listener<Token> ()
-            {
-              @Override
-              public void onResponse (Token response)
-              {
-                response.accept (new TokenVisitor ()
-                {
-                  @Override
-                  public void visitBearerToken (BearerToken token)
-                  {
-                    setToken (token);
-                    result.onResponse (token);
-                  }
-                });
-              }
-            },
-            new Response.ErrorListener () {
-              @Override
-              public void onErrorResponse (VolleyError error)
-              {
+        this.makeRequest (Request.Method.POST, url, new ResponseListener<Token> () {
+          @Override
+          public void onErrorResponse (VolleyError error)
+          {
+            listener.onErrorResponse (error);
+          }
 
+          @Override
+          public void onResponse (Token response)
+          {
+            response.accept (new TokenVisitor () {
+              @Override
+              public void visitBearerToken (BearerToken token)
+              {
+                setToken (token);
+                listener.onResponse (token);
               }
             });
+          }
+        });
 
     request.addParams (params);
-
     this.requestQueue_.add (request);
   }
 
   /**
    * Logout the current user.
    *
-   * @param result
-   * @param result
+   * @param listener
    */
-  public void logout (final ResultListener<Boolean> result)
+  public void logout (ResponseListener <Boolean> listener)
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
-
-    ProtectedRequest<Boolean> request =
-        this.makeRequest (Request.Method.GET, url,
-            new Response.Listener <Boolean> () {
-              @Override
-              public void onResponse (Boolean response)
-              {
-                result.onResponse (response);
-              }
-            },
-            new Response.ErrorListener () {
-              @Override
-              public void onErrorResponse (VolleyError error)
-              {
-                NetworkResponse response = error.networkResponse;
-
-                if (response != null)
-                  result.onError (response.statusCode, new String (response.data));
-              }
-            });
+    ProtectedRequest<Boolean> request = this.makeRequest (Request.Method.GET, url, listener);
 
     this.requestQueue_.add (request);
   }
@@ -337,23 +282,13 @@ public class GatekeeperClient
    *
    * @param method
    * @param path
-   * @param responseListener
-   * @param errorListener
+   * @param listener
    * @param <T>
    * @return
    */
-  public <T> ProtectedRequest<T> makeRequest (int method,
-                                              String path,
-                                              Response.Listener <T> responseListener,
-                                              Response.ErrorListener errorListener)
+  public <T> ProtectedRequest<T> makeRequest (int method, String path, ResponseListener <T> listener)
   {
-    return
-        new ProtectedRequest<> (
-            method,
-            path,
-            this.token_,
-            responseListener,
-            errorListener);
+    return new ProtectedRequest<> (method, path, this.token_, listener);
   }
 
   /**
