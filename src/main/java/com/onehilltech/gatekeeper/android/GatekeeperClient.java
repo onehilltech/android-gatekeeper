@@ -35,7 +35,7 @@ public class GatekeeperClient
   /// Authorization token for the current user.
   private BearerToken token_;
 
-  public interface ResultListener <T>
+  public interface ResultListener<T>
   {
     void onResponse (T result);
 
@@ -139,7 +139,7 @@ public class GatekeeperClient
   public void createAccount (final String username,
                              final String password,
                              final String email,
-                             final ResultListener <Boolean> result)
+                             final ResultListener<Boolean> result)
   {
     // First, get a client token. We need a client token to create the account
     // for the user.
@@ -168,12 +168,12 @@ public class GatekeeperClient
    * @param email
    * @param result
    */
-  private void createAccountImpl (String username, String password, String email, final ResultListener <Boolean> result)
+  private void createAccountImpl (String username, String password, String email, final ResultListener<Boolean> result)
   {
     String url = this.getCompleteUrl ("/accounts");
 
     ProtectedRequest<Boolean> request =
-        this.makeRequest (Request.Method.POST, url, Boolean.class,
+        this.makeRequest (Request.Method.POST, url,
             new Response.Listener<Boolean> () {
               @Override
               public void onResponse (Boolean response)
@@ -209,7 +209,7 @@ public class GatekeeperClient
    * @param password
    * @param result
    */
-  public void getUserToken (String username, String password, ResultListener <BearerToken> result)
+  public void getUserToken (String username, String password, ResultListener<BearerToken> result)
   {
     HashMap <String, String> params = new HashMap<> ();
 
@@ -226,7 +226,7 @@ public class GatekeeperClient
    *
    * @param result
    */
-  public void getClientToken (ResultListener <BearerToken> result)
+  public void getClientToken (ResultListener<BearerToken> result)
   {
     if (this.clientSecret_ == null)
       throw new IllegalStateException ("Must provide client secret to request token");
@@ -244,7 +244,7 @@ public class GatekeeperClient
    *
    * @param result
    */
-  public void refreshToken (ResultListener <BearerToken> result)
+  public void refreshToken (ResultListener<BearerToken> result)
   {
     if (!this.token_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
@@ -262,13 +262,13 @@ public class GatekeeperClient
    *
    * @param params
    */
-  private void getToken (final Map<String, String> params, final ResultListener <BearerToken> result)
+  private void getToken (final Map<String, String> params, final ResultListener<BearerToken> result)
   {
     final String url = this.getCompleteUrl ("/oauth2/token");
 
 
     ProtectedRequest<Token> request =
-        this.makeRequest (Request.Method.POST, url, Token.class,
+        this.makeRequest (Request.Method.POST, url,
             new Response.Listener<Token> ()
             {
               @Override
@@ -304,12 +304,12 @@ public class GatekeeperClient
    * @param result
    * @param result
    */
-  public void logout (final ResultListener <Boolean> result)
+  public void logout (final ResultListener<Boolean> result)
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
 
     ProtectedRequest<Boolean> request =
-        this.makeRequest (Request.Method.GET, url, Boolean.class,
+        this.makeRequest (Request.Method.GET, url,
             new Response.Listener <Boolean> () {
               @Override
               public void onResponse (Boolean response)
@@ -332,42 +332,28 @@ public class GatekeeperClient
   }
 
   /**
-   * Make a new ProtectedRequest object.
+   * Factory method for creating a protected request. The request will include the
+   * current token in the HTTP request header.
    *
    * @param method
    * @param path
-   * @param clazz
    * @param responseListener
    * @param errorListener
    * @param <T>
    * @return
    */
   public <T> ProtectedRequest<T> makeRequest (int method,
-                                                String path,
-                                                Class <T> clazz,
-                                                Response.Listener <T> responseListener,
-                                                Response.ErrorListener errorListener)
+                                              String path,
+                                              Response.Listener <T> responseListener,
+                                              Response.ErrorListener errorListener)
   {
-    ProtectedRequest<T> request =
+    return
         new ProtectedRequest<> (
             method,
-            this.getCompleteUrl (path),
-            clazz,
+            path,
             this.token_,
             responseListener,
             errorListener);
-
-    return request;
-  }
-
-  /**
-   * Add a ProtectedRequest object to the queue.
-   *
-   * @param request
-   */
-  public void addRequest (ProtectedRequest<?> request)
-  {
-    this.requestQueue_.add (request);
   }
 
   /**

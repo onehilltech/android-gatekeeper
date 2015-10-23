@@ -91,7 +91,7 @@ public class RegistrationService extends IntentService
    *
    * @param token The new token.
    */
-  private void registerTokenWithServer (String token, final GatekeeperClient.ResultListener <Boolean> resultListener)
+  private void registerTokenWithServer (String token, final GatekeeperClient.ResultListener<Boolean> resultListener)
   {
     GatekeeperClient client = Gatekeeper.getClient ();
 
