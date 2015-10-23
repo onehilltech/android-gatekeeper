@@ -172,7 +172,7 @@ public class GatekeeperClient
   {
     String url = this.getCompleteUrl ("/accounts");
 
-    GatekeeperRequest <Boolean> request =
+    ProtectedRequest<Boolean> request =
         this.makeRequest (Request.Method.POST, url, Boolean.class,
             new Response.Listener<Boolean> () {
               @Override
@@ -267,7 +267,7 @@ public class GatekeeperClient
     final String url = this.getCompleteUrl ("/oauth2/token");
 
 
-    GatekeeperRequest <Token> request =
+    ProtectedRequest<Token> request =
         this.makeRequest (Request.Method.POST, url, Token.class,
             new Response.Listener<Token> ()
             {
@@ -308,7 +308,7 @@ public class GatekeeperClient
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
 
-    GatekeeperRequest <Boolean> request =
+    ProtectedRequest<Boolean> request =
         this.makeRequest (Request.Method.GET, url, Boolean.class,
             new Response.Listener <Boolean> () {
               @Override
@@ -332,7 +332,7 @@ public class GatekeeperClient
   }
 
   /**
-   * Make a new GatekeeperRequest object.
+   * Make a new ProtectedRequest object.
    *
    * @param method
    * @param path
@@ -342,14 +342,14 @@ public class GatekeeperClient
    * @param <T>
    * @return
    */
-  public <T> GatekeeperRequest <T> makeRequest (int method,
+  public <T> ProtectedRequest<T> makeRequest (int method,
                                                 String path,
                                                 Class <T> clazz,
                                                 Response.Listener <T> responseListener,
                                                 Response.ErrorListener errorListener)
   {
-    GatekeeperRequest <T> request =
-        new GatekeeperRequest<> (
+    ProtectedRequest<T> request =
+        new ProtectedRequest<> (
             method,
             this.getCompleteUrl (path),
             clazz,
@@ -361,11 +361,11 @@ public class GatekeeperClient
   }
 
   /**
-   * Add a GatekeeperRequest object to the queue.
+   * Add a ProtectedRequest object to the queue.
    *
    * @param request
    */
-  public void addRequest (GatekeeperRequest <?> request)
+  public void addRequest (ProtectedRequest<?> request)
   {
     this.requestQueue_.add (request);
   }

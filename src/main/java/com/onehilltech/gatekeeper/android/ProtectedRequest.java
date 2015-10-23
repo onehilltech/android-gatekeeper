@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  *
  */
-public class GatekeeperRequest <T> extends Request <T>
+public class ProtectedRequest<T> extends Request <T>
 {
   private final ObjectMapper objMapper_ = new ObjectMapper ();
 
@@ -34,12 +34,12 @@ public class GatekeeperRequest <T> extends Request <T>
    * @param url URL of the request to make
    * @param clazz Relevant class object, for Gson's reflection
    */
-  public GatekeeperRequest (int method,
-                            String url,
-                            Class<T> clazz,
-                            BearerToken token,
-                            Response.Listener<T> listener,
-                            Response.ErrorListener errorListener)
+  public ProtectedRequest (int method,
+                           String url,
+                           Class<T> clazz,
+                           BearerToken token,
+                           Response.Listener<T> listener,
+                           Response.ErrorListener errorListener)
   {
     super (method, url, errorListener);
 
@@ -54,13 +54,13 @@ public class GatekeeperRequest <T> extends Request <T>
     this.listener_.onResponse (response);
   }
 
-  public GatekeeperRequest <T> addParams (Map <String, String> params)
+  public ProtectedRequest<T> addParams (Map <String, String> params)
   {
     this.params_.putAll (params);
     return this;
   }
 
-  public GatekeeperRequest <T> addParam (String name, String value)
+  public ProtectedRequest<T> addParam (String name, String value)
   {
     this.params_.put (name, value);
     return this;

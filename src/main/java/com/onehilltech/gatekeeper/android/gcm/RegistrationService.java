@@ -29,7 +29,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.Gatekeeper;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
-import com.onehilltech.gatekeeper.android.GatekeeperRequest;
+import com.onehilltech.gatekeeper.android.ProtectedRequest;
 
 import java.io.IOException;
 
@@ -95,7 +95,7 @@ public class RegistrationService extends IntentService
   {
     GatekeeperClient client = Gatekeeper.getClient ();
 
-    GatekeeperRequest <Boolean> request =
+    ProtectedRequest<Boolean> request =
         client.makeRequest (Request.Method.POST, "/me/notifications", Boolean.class,
             new Response.Listener <Boolean> () {
               @Override
