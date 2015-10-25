@@ -180,7 +180,7 @@ public class GatekeeperClient
    * @param password
    * @param listener
    */
-  public void getUserToken (String username, String password, ResponseListener<BearerToken> listener)
+  public ProtectedRequest<Token> getUserToken (String username, String password, ResponseListener<BearerToken> listener)
   {
     HashMap <String, String> params = new HashMap<> ();
 
@@ -189,7 +189,7 @@ public class GatekeeperClient
     params.put ("username", username);
     params.put ("password", password);
 
-    this.getToken (params, listener);
+    return this.getToken (params, listener);
   }
 
   /**
@@ -197,7 +197,7 @@ public class GatekeeperClient
    *
    * @param listener
    */
-  public void getClientToken (ResponseListener<BearerToken> listener)
+  public ProtectedRequest<Token> getClientToken (ResponseListener<BearerToken> listener)
   {
     if (this.clientSecret_ == null)
       throw new IllegalStateException ("Must provide client secret to request token");
@@ -207,7 +207,7 @@ public class GatekeeperClient
     params.put ("client_id", this.clientId_);
     params.put ("client_secret", this.clientSecret_);
 
-    this.getToken (params, listener);
+    return this.getToken (params, listener);
   }
 
   /**
@@ -215,7 +215,7 @@ public class GatekeeperClient
    *
    * @param listener
    */
-  public void refreshToken (ResponseListener <BearerToken> listener)
+  public ProtectedRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
   {
     if (!this.token_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
@@ -225,7 +225,7 @@ public class GatekeeperClient
     params.put ("client_id", this.clientId_);
     params.put ("refresh_token", this.token_.getRefreshToken ());
 
-    this.getToken (params, listener);
+    return this.getToken (params, listener);
   }
 
   /**
@@ -233,7 +233,7 @@ public class GatekeeperClient
    *
    * @param params
    */
-  private void getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
+  private ProtectedRequest<Token> getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
   {
     final String url = this.getCompleteUrl ("/oauth2/token");
 
@@ -261,6 +261,8 @@ public class GatekeeperClient
 
     request.addParams (params);
     this.requestQueue_.add (request);
+
+    return request;
   }
 
   /**
