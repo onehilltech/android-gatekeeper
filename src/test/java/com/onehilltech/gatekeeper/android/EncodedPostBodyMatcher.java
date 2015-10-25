@@ -8,7 +8,8 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.Map;
 
-public abstract class EncodedPostBodyMatcher implements FakeHttpLayer.RequestMatcherBuilder.PostBodyMatcher
+public abstract class EncodedPostBodyMatcher
+    implements FakeHttpLayer.RequestMatcherBuilder.PostBodyMatcher
 {
   @Override
   public final boolean matches (HttpEntity actualPostBody) throws IOException

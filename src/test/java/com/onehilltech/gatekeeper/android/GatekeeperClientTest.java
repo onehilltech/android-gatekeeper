@@ -1,5 +1,9 @@
 package com.onehilltech.gatekeeper.android;
 
+import com.android.volley.VolleyError;
+import com.onehilltech.gatekeeper.android.BearerToken;
+import com.onehilltech.gatekeeper.android.ResponseListener;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +16,8 @@ import org.robolectric.shadows.httpclient.FakeHttpLayer;
 import org.robolectric.shadows.httpclient.TestHttpResponse;
 
 import java.io.IOException;
+import java.lang.Boolean;
+import java.lang.Override;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -78,18 +84,18 @@ public class GatekeeperClientTest
         new TestHttpResponse (200, randomToken.toJSONString ()));
 
     // Execute the test.
-    this.client_.getUserToken (STRING_USERNAME, STRING_PASSWORD, new GatekeeperClient.ResultListener<BearerToken> () {
-      @Override
-      public void onResponse (BearerToken result)
-      {
-        Assert.assertEquals (randomToken, result);
-      }
+    this.client_.getUserToken (STRING_USERNAME, STRING_PASSWORD, new ResponseListener<BearerToken> () {
+        @Override
+        public void onErrorResponse (VolleyError error)
+        {
+          Assert.fail ();
+        }
 
-      @Override
-      public void onError (int statusCode, String responseString)
-      {
-        Assert.fail (responseString);
-      }
+        @Override
+        public void onResponse (BearerToken response)
+        {
+          Assert.assertEquals (randomToken, response);
+        }
     });
   }
 
@@ -103,9 +109,10 @@ public class GatekeeperClientTest
         new FakeHttpLayer.RequestMatcherBuilder ()
             .host (STRING_HOSTNAME).path ("oauth2/token")
             .method ("POST")
-            .postBody (new EncodedPostBodyMatcher () {
+            .postBody (new EncodedPostBodyMatcher ()
+            {
               @Override
-              public boolean matches (Map <String, String> postData) throws IOException
+              public boolean matches (Map<String, String> postData) throws IOException
               {
                 boolean matches =
                     postData.get ("client_id").equals (client_.getClientId ()) &&
@@ -121,7 +128,8 @@ public class GatekeeperClientTest
         new FakeHttpLayer.RequestMatcherBuilder ()
             .host (STRING_HOSTNAME).path ("accounts")
             .method ("POST")
-            .postBody (new EncodedPostBodyMatcher () {
+            .postBody (new EncodedPostBodyMatcher ()
+            {
               @Override
               public boolean matches (Map<String, String> postData) throws IOException
               {
@@ -141,31 +149,31 @@ public class GatekeeperClientTest
 
     // Execute the test.
 
-    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new GatekeeperClient.ResultListener<Boolean> () {
+    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new ResponseListener<Boolean> () {
       @Override
-      public void onResponse (Boolean result)
+      public void onErrorResponse (VolleyError error)
       {
-        Assert.assertTrue (result);
+        Assert.fail ();
       }
 
       @Override
-      public void onError (int statusCode, String responseString)
+      public void onResponse (Boolean response)
       {
-        Assert.fail (responseString);
+        Assert.assertTrue (response);
       }
     });
 
-    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new GatekeeperClient.ResultListener<Boolean> () {
+    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new ResponseListener<Boolean> () {
       @Override
-      public void onResponse (Boolean result)
+      public void onErrorResponse (VolleyError error)
       {
-        Assert.assertTrue (result);
+        Assert.fail ();
       }
 
       @Override
-      public void onError (int statusCode, String responseString)
+      public void onResponse (Boolean response)
       {
-        Assert.fail (responseString);
+        Assert.assertFalse (response);
       }
     });
   }
