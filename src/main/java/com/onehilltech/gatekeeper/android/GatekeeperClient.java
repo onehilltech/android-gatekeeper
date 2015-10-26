@@ -43,7 +43,7 @@ public class GatekeeperClient
     void onInitializeFailed ();
   }
 
-  private static class Metadata
+  public static class Metadata
   {
     public static final String CLIENT_ID = "com.onehilltech.gatekeeper.android.client_id";
     public static final String CLIENT_SECRET = "com.onehilltech.gatekeeper.android.client_secret";
