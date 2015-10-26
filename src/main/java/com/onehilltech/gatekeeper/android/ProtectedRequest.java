@@ -76,7 +76,9 @@ public class ProtectedRequest<T> extends Request <T>
   public Map<String, String> getHeaders () throws AuthFailureError
   {
     Map<String, String> headers = super.getHeaders ();
-    headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
+
+    if (this.token_ != null)
+      headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
 
     return headers;
   }

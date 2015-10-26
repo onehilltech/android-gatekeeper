@@ -1,7 +1,10 @@
 package com.onehilltech.gatekeeper.android;
 
+import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.onehilltech.gatekeeper.android.BearerToken;
+import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.ResponseListener;
 
 import org.junit.Assert;
@@ -36,17 +39,20 @@ public class GatekeeperClientTest
   private static final String STRING_PASSWORD = "tester1";
   private static final String STRING_EMAIL = "tester@gatekeeper.com";
 
+  private RequestQueue requestQueue_;
+
   @Before
   public void setup ()
   {
     FakeHttp.reset ();
+    this.requestQueue_ = Volley.newRequestQueue (RuntimeEnvironment.application);
 
     this.client_ =
         new GatekeeperClient (
-            RuntimeEnvironment.application,
             STRING_BASEURI,
             STRING_CLIENT_ID,
-            STRING_CLIENT_SECRET);
+            BearerToken.generateRandomToken (),
+            this.requestQueue_);
   }
 
   @Test
@@ -54,8 +60,7 @@ public class GatekeeperClientTest
   {
     Assert.assertEquals (STRING_BASEURI, this.client_.getBaseUri ());
     Assert.assertEquals (STRING_CLIENT_ID, this.client_.getClientId ());
-    Assert.assertEquals (STRING_CLIENT_SECRET, this.client_.getClientSecret ());
-    Assert.assertFalse (this.client_.hasToken ());
+    Assert.assertFalse (this.client_.isLoggedIn ());
   }
 
   @Test
@@ -115,8 +120,8 @@ public class GatekeeperClientTest
               public boolean matches (Map<String, String> postData) throws IOException
               {
                 boolean matches =
-                    postData.get ("client_id").equals (client_.getClientId ()) &&
-                        postData.get ("client_secret").equals (client_.getClientSecret ()) &&
+                    postData.get ("client_id").equals (STRING_CLIENT_ID) &&
+                        postData.get ("client_secret").equals (STRING_CLIENT_SECRET) &&
                         postData.get ("grant_type").equals ("client_credentials");
 
                 return matches;

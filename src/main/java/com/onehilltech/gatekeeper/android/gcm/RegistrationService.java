@@ -24,7 +24,6 @@ import android.util.Log;
 import com.android.volley.Request;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
-import com.onehilltech.gatekeeper.android.Gatekeeper;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.ProtectedRequest;
 import com.onehilltech.gatekeeper.android.ResponseListener;
@@ -77,15 +76,43 @@ public class RegistrationService extends IntentService
    *
    * @param token The new token.
    */
-  private void registerTokenWithServer (String token, final ResponseListener <Boolean> listener)
+  private void registerTokenWithServer (final String token, final ResponseListener <Boolean> listener)
   {
-    GatekeeperClient client = Gatekeeper.getClient ();
-    ProtectedRequest<Boolean> request = client.makeRequest (Request.Method.POST, "/me/notifications", listener);
+    try
+    {
+      // Since the GatekeeperClient cannot be used across activity/service boundaries,
+      // we need to initialize a new client. The initialization process must use the
+      // properties defined in the metadata to initialize the client. This is becuase
+      // there is no way to pass the client id, client secret, and base uri of the
+      // service to this object.
 
-    request
-        .addParam ("network", "gcm")
-        .addParam ("token", token);
+      GatekeeperClient.initialize (this, new GatekeeperClient.OnInitialized () {
+        @Override
+        public void onInitialized (GatekeeperClient client)
+        {
+          ProtectedRequest<Boolean> request =
+              client.makeRequest (
+                  Request.Method.POST,
+                  "/me/notifications",
+                  listener);
 
-    client.addRequest (request);
+          request
+              .addParam ("network", "gcm")
+              .addParam ("token", token);
+
+          client.addRequest (request);
+        }
+
+        @Override
+        public void onInitializeFailed ()
+        {
+          Log.e (TAG, "Cannot update Google Cloud Messaging token; initialization failed");
+        }
+      });
+    }
+    catch (Exception e)
+    {
+      Log.e (TAG, e.getLocalizedMessage (), e);
+    }
   }
 }

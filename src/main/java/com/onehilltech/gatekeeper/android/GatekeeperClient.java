@@ -1,12 +1,17 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.onehilltech.metadata.ManifestMetadata;
+import com.onehilltech.metadata.MetadataProperty;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,71 +21,173 @@ import java.util.Map;
 public class GatekeeperClient
 {
   /// Logging tag.
-  private static final String TAG = GatekeeperClient.class.getSimpleName ();
-
-  /// Client id.
-  private final String clientId_;
-
-  /// Client secret.
-  private final String clientSecret_;
+  private static final String TAG = "GatekeeperClient";
 
   /// Base URI for the Gatekeeper service.
   private final String baseUri_;
+
+  /// The client id.
+  private final String clientId_;
 
   /// Underlying HTTP client.
   private final RequestQueue requestQueue_;
 
   /// Authorization token for the current user.
-  private BearerToken token_;
+  private BearerToken userToken_;
+
+  private BearerToken clientToken_;
+
+  public interface OnInitialized
+  {
+    void onInitialized (GatekeeperClient client);
+    void onInitializeFailed ();
+  }
+
+  private static class Metadata
+  {
+    public static final String CLIENT_ID = "com.onehilltech.gatekeeper.android.client_id";
+    public static final String CLIENT_SECRET = "com.onehilltech.gatekeeper.android.client_secret";
+    public static final String BASE_URI = "com.onehilltech.gatekeeper.android.client.baseuri";
+
+    @MetadataProperty(name=CLIENT_ID, fromResource=true)
+    String clientId;
+
+    @MetadataProperty(name=CLIENT_SECRET, fromResource=true)
+    String clientSecret;
+
+    @MetadataProperty(name=BASE_URI, fromResource=true)
+    String baseUri;
+  }
+
+  /**
+   * Initialize a new GatekeeperClient using information from the metadata in
+   * AndroidManifest.xml.
+   *
+   * @param context         Target context
+   * @param onInitialized   Callback for initialization
+   *
+   * @throws PackageManager.NameNotFoundException
+   * @throws IllegalAccessException
+   * @throws ClassNotFoundException
+   * @throws InvocationTargetException
+   */
+  public static ProtectedRequest <Token> initialize (Context context, OnInitialized onInitialized)
+      throws PackageManager.NameNotFoundException,
+      IllegalAccessException,
+      ClassNotFoundException,
+      InvocationTargetException
+  {
+    Metadata metadata = new Metadata ();
+    ManifestMetadata.get (context).initFromMetadata (metadata);
+
+    return initialize (context,
+                       metadata.baseUri,
+                       metadata.clientId,
+                       metadata.clientSecret,
+                       onInitialized);
+  }
+
+  /**
+   * Initialize a new GatekeeperClient.
+   *
+   * @param context           Target context
+   * @param baseUri           Base uri of the service
+   * @param clientId          Client id
+   * @param clientSecret      Client secret
+   * @param onInitialized     Initialization callback
+   */
+  public static ProtectedRequest <Token> initialize (Context context,
+                                                     String baseUri,
+                                                     String clientId,
+                                                     String clientSecret,
+                                                     OnInitialized onInitialized)
+  {
+    RequestQueue requestQueue = Volley.newRequestQueue (context);
+    return initialize (baseUri, clientId, clientSecret, requestQueue, onInitialized);
+  }
+
+  /**
+   * Initialize a new GatekeeperClient object.
+   *
+   * @param baseUri           Base uri for service
+   * @param clientId          Client id
+   * @param clientSecret      Client secret
+   * @param requestQueue      Volley RequestQueue for requests
+   * @param onInitialized     Callback for initialization.
+   */
+  public static ProtectedRequest <Token> initialize (final String baseUri,
+                                                     final String clientId,
+                                                     String clientSecret,
+                                                     final RequestQueue requestQueue,
+                                                     final OnInitialized onInitialized)
+  {
+    // To initialize the client, we must first get a token for the client. This
+    // allows us to determine if the client is enabled. It also setups the client
+    // object with the required token.
+    String url = baseUri + "/oauth2/token";
+
+    ProtectedRequest <Token> request =
+        new ProtectedRequest<> (
+            Request.Method.POST,
+            url,
+            null,
+            new ResponseListener <Token> () {
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+                Log.e (TAG, error.getMessage (), error.getCause ());
+                onInitialized.onInitializeFailed ();
+              }
+
+              @Override
+              public void onResponse (Token response)
+              {
+                response.accept (new TokenVisitor () {
+                  @Override
+                  public void visitBearerToken (BearerToken token)
+                  {
+                    GatekeeperClient client =
+                        new GatekeeperClient (
+                            baseUri,
+                            clientId,
+                            token,
+                            requestQueue);
+
+                    onInitialized.onInitialized (client);
+                  }
+                });
+              }
+            });
+
+    request
+        .addParam ("grant_type", "client_credentials")
+        .addParam ("client_id", clientId)
+        .addParam ("client_secret", clientSecret);
+
+    requestQueue.add (request);
+
+    return request;
+  }
 
   /**
    * Initializing constructor.
    *
-   * @param clientId
    * @param baseUri
+   * @param clientToken
    */
-  GatekeeperClient (Context context, String baseUri, String clientId, String clientSecret)
-  {
-    this (baseUri, clientId, clientSecret, Volley.newRequestQueue (context));
-  }
-
-  /**
-   * Package level constructor. Allows customization of the internal HTTP client.
-   *
-   * @param baseUri
-   * @param clientId
-   * @param clientSecret
-   */
-  GatekeeperClient (String baseUri, String clientId, String clientSecret, RequestQueue requestQueue)
+  GatekeeperClient (String baseUri,
+                    String clientId,
+                    BearerToken clientToken,
+                    RequestQueue requestQueue)
   {
     this.baseUri_ = baseUri;
     this.clientId_ = clientId;
-    this.clientSecret_ = clientSecret;
+    this.clientToken_ = clientToken;
     this.requestQueue_ = requestQueue;
   }
 
   /**
-   * Get the id of the client.
-   *
-   * @return
-   */
-  public String getClientId ()
-  {
-    return this.clientId_;
-  }
-
-  /**
-   * Get the secret for the client.
-   *
-   * @return
-   */
-  public String getClientSecret ()
-  {
-    return this.clientSecret_;
-  }
-
-  /**
-   * Get the baseuri for the Gatekeeper service.
+   * Get the baseuri for the GatekeeperClient.
    *
    * @return
    */
@@ -90,33 +197,23 @@ public class GatekeeperClient
   }
 
   /**
-   * Set the token used by the client.
-   *
-   * @param token
-   */
-  public void setToken (BearerToken token)
-  {
-    this.token_ = token;
-  }
-
-  /**
-   * Get the token used by the client.
-   *
-   * @return
-   */
-  public BearerToken getToken ()
-  {
-    return this.token_;
-  }
-
-  /**
    * Test if the client has a token.
    *
    * @return
    */
-  public boolean hasToken ()
+  public boolean isLoggedIn ()
   {
-    return this.token_ != null;
+    return this.userToken_ != null;
+  }
+
+  /**
+   * Get the client id.
+   *
+   * @return
+   */
+  public String getClientId ()
+  {
+    return this.clientId_;
   }
 
   /**
@@ -132,37 +229,14 @@ public class GatekeeperClient
                              final String email,
                              final ResponseListener<Boolean> listener)
   {
-    // First, get a client token. We need a client token to create the account
-    // for the user.
-    this.getClientToken (new ResponseListener<BearerToken> ()
-    {
-      @Override
-      public void onErrorResponse (VolleyError error)
-      {
-        listener.onErrorResponse (error);
-      }
-
-      @Override
-      public void onResponse (BearerToken token)
-      {
-        createAccountImpl (username, password, email, listener);
-      }
-    });
-  }
-
-  /**
-   * Implementation for creating the account. This is called once the client has
-   * obtained a client token. The client should then get a token for the new user.
-   *
-   * @param username
-   * @param password
-   * @param email
-   * @param listener
-   */
-  private void createAccountImpl (String username, String password, String email, ResponseListener<Boolean> listener)
-  {
     String url = this.getCompleteUrl ("/accounts");
-    ProtectedRequest<Boolean> request = this.makeRequest (Request.Method.POST, url, listener);
+
+    ProtectedRequest <Boolean> request =
+        new ProtectedRequest<> (
+            Request.Method.POST,
+            url,
+            this.clientToken_,
+            listener);
 
     request
         .addParam ("client_id", this.clientId_)
@@ -180,7 +254,9 @@ public class GatekeeperClient
    * @param password
    * @param listener
    */
-  public ProtectedRequest<Token> getUserToken (String username, String password, ResponseListener<BearerToken> listener)
+  public ProtectedRequest<Token> getUserToken (String username,
+                                               String password,
+                                               ResponseListener<BearerToken> listener)
   {
     HashMap <String, String> params = new HashMap<> ();
 
@@ -193,37 +269,19 @@ public class GatekeeperClient
   }
 
   /**
-   * Get an access token for the client. The \a clientSecret parameter is optional.
-   *
-   * @param listener
-   */
-  public ProtectedRequest<Token> getClientToken (ResponseListener<BearerToken> listener)
-  {
-    if (this.clientSecret_ == null)
-      throw new IllegalStateException ("Must provide client secret to request token");
-
-    HashMap <String, String> params = new HashMap <> ();
-    params.put ("grant_type", "client_credentials");
-    params.put ("client_id", this.clientId_);
-    params.put ("client_secret", this.clientSecret_);
-
-    return this.getToken (params, listener);
-  }
-
-  /**
    * Refresh the current access token.
    *
    * @param listener
    */
   public ProtectedRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
   {
-    if (!this.token_.canRefresh ())
+    if (!this.userToken_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
     HashMap <String, String> params = new HashMap <> ();
     params.put ("grant_type", "refresh_token");
     params.put ("client_id", this.clientId_);
-    params.put ("refresh_token", this.token_.getRefreshToken ());
+    params.put ("refresh_token", this.userToken_.getRefreshToken ());
 
     return this.getToken (params, listener);
   }
@@ -252,7 +310,7 @@ public class GatekeeperClient
               @Override
               public void visitBearerToken (BearerToken token)
               {
-                setToken (token);
+                userToken_ = token;
                 listener.onResponse (token);
               }
             });
@@ -268,7 +326,7 @@ public class GatekeeperClient
   /**
    * Logout the current user.
    *
-   * @param listener
+   * @param listener      Response listener
    */
   public void logout (ResponseListener <Boolean> listener)
   {
@@ -282,21 +340,21 @@ public class GatekeeperClient
    * Factory method for creating a protected request. The request will include the
    * current token in the HTTP request header.
    *
-   * @param method
-   * @param path
-   * @param listener
-   * @param <T>
-   * @return
+   * @param method        HTTP method
+   * @param path          Full path of the resource
+   * @param listener      Response listener
+   * @param <T>           Object type of response body
+   * @return              Request object
    */
   public <T> ProtectedRequest<T> makeRequest (int method, String path, ResponseListener <T> listener)
   {
-    return new ProtectedRequest<> (method, path, this.token_, listener);
+    return new ProtectedRequest<> (method, path, this.userToken_, listener);
   }
 
   /**
    * Add a request to the queue.
    *
-   * @param request
+   * @param request        Add request to queue
    */
   public void addRequest (Request <?> request)
   {
@@ -306,8 +364,8 @@ public class GatekeeperClient
   /**
    * Get the complete URL for a path.
    *
-   * @param relativePath
-   * @return
+   * @param relativePath   Relative path of the url
+   * @return String containing the complete url path
    */
   private String getCompleteUrl (String relativePath)
   {
