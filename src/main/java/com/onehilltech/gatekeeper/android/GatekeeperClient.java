@@ -2,6 +2,7 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -43,11 +44,16 @@ public class GatekeeperClient
     void onInitializeFailed ();
   }
 
-  public static class Metadata
+  /**
+   * Configuration options for the GatekeeperClient. The options can be loaded
+   * from the AndroidManifest.xml.
+   */
+  public static class Options
   {
     public static final String CLIENT_ID = "com.onehilltech.gatekeeper.android.client_id";
     public static final String CLIENT_SECRET = "com.onehilltech.gatekeeper.android.client_secret";
-    public static final String BASE_URI = "com.onehilltech.gatekeeper.android.client.baseuri";
+    public static final String BASE_URI = "com.onehilltech.gatekeeper.android.baseuri";
+    public static final String BASE_URI_EMULATOR = "com.onehilltech.gatekeeper.android.baseuri_emulator";
 
     @MetadataProperty(name=CLIENT_ID, fromResource=true)
     String clientId;
@@ -57,6 +63,21 @@ public class GatekeeperClient
 
     @MetadataProperty(name=BASE_URI, fromResource=true)
     String baseUri;
+
+    @MetadataProperty(name=BASE_URI_EMULATOR, fromResource=true)
+    String getBaseUriEmulator;
+
+    /**
+     * Get the correct base uri based on where the application is running. This will return
+     * either baseUri or getBaseUriEmulator.
+     *
+     * @param context
+     * @return
+     */
+    public String getBaseUri (Context context)
+    {
+      return Build.PRODUCT.startsWith ("sdk_google") ? this.getBaseUriEmulator : this.baseUri;
+    }
   }
 
   /**
@@ -77,54 +98,43 @@ public class GatekeeperClient
       ClassNotFoundException,
       InvocationTargetException
   {
-    Metadata metadata = new Metadata ();
-    ManifestMetadata.get (context).initFromMetadata (metadata);
+    Options options = new Options ();
+    ManifestMetadata.get (context).initFromMetadata (options);
 
-    return initialize (context,
-                       metadata.baseUri,
-                       metadata.clientId,
-                       metadata.clientSecret,
-                       onInitialized);
+    return initialize (context, options, onInitialized);
   }
 
   /**
    * Initialize a new GatekeeperClient.
    *
    * @param context           Target context
-   * @param baseUri           Base uri of the service
-   * @param clientId          Client id
-   * @param clientSecret      Client secret
+   * @param options           Initialization options
    * @param onInitialized     Initialization callback
    */
   public static ProtectedRequest <Token> initialize (Context context,
-                                                     String baseUri,
-                                                     String clientId,
-                                                     String clientSecret,
+                                                     Options options,
                                                      OnInitialized onInitialized)
   {
     RequestQueue requestQueue = Volley.newRequestQueue (context);
-    return initialize (baseUri, clientId, clientSecret, requestQueue, onInitialized);
+    return initialize (context, options, requestQueue, onInitialized);
   }
 
   /**
    * Initialize a new GatekeeperClient object.
    *
-   * @param baseUri           Base uri for service
-   * @param clientId          Client id
-   * @param clientSecret      Client secret
+   * @param options           Initialization options
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static ProtectedRequest <Token> initialize (final String baseUri,
-                                                     final String clientId,
-                                                     String clientSecret,
+  public static ProtectedRequest <Token> initialize (Context context,
+                                                     final Options options,
                                                      final RequestQueue requestQueue,
                                                      final OnInitialized onInitialized)
   {
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
-    String url = baseUri + "/oauth2/token";
+    String url = options.getBaseUri (context) + "/oauth2/token";
 
     ProtectedRequest <Token> request =
         new ProtectedRequest<> (
@@ -148,8 +158,8 @@ public class GatekeeperClient
                   {
                     GatekeeperClient client =
                         new GatekeeperClient (
-                            baseUri,
-                            clientId,
+                            options.baseUri,
+                            options.clientId,
                             token,
                             requestQueue);
 
@@ -161,8 +171,8 @@ public class GatekeeperClient
 
     request
         .addParam ("grant_type", "client_credentials")
-        .addParam ("client_id", clientId)
-        .addParam ("client_secret", clientSecret);
+        .addParam ("client_id", options.clientId)
+        .addParam ("client_secret", options.clientSecret);
 
     requestQueue.add (request);
 
