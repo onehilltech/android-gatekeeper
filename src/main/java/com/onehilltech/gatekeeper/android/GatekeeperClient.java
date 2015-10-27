@@ -98,24 +98,21 @@ public class GatekeeperClient
       ClassNotFoundException,
       InvocationTargetException
   {
+    RequestQueue requestQueue = Volley.newRequestQueue (context);
+    return initialize (context, requestQueue, onInitialized);
+  }
+
+  public static ProtectedRequest <Token> initialize (Context context,
+                                                     RequestQueue requestQueue,
+                                                     OnInitialized onInitialized)
+      throws PackageManager.NameNotFoundException,
+      IllegalAccessException,
+      ClassNotFoundException,
+      InvocationTargetException
+  {
     Options options = new Options ();
     ManifestMetadata.get (context).initFromMetadata (options);
 
-    return initialize (context, options, onInitialized);
-  }
-
-  /**
-   * Initialize a new GatekeeperClient.
-   *
-   * @param context           Target context
-   * @param options           Initialization options
-   * @param onInitialized     Initialization callback
-   */
-  public static ProtectedRequest <Token> initialize (Context context,
-                                                     Options options,
-                                                     OnInitialized onInitialized)
-  {
-    RequestQueue requestQueue = Volley.newRequestQueue (context);
     return initialize (context, options, requestQueue, onInitialized);
   }
 
