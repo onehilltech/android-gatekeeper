@@ -56,16 +56,16 @@ public class GatekeeperClient
     public static final String BASE_URI_EMULATOR = "com.onehilltech.gatekeeper.android.baseuri_emulator";
 
     @MetadataProperty(name=CLIENT_ID, fromResource=true)
-    String clientId;
+    public String clientId;
 
     @MetadataProperty(name=CLIENT_SECRET, fromResource=true)
-    String clientSecret;
+    public String clientSecret;
 
     @MetadataProperty(name=BASE_URI, fromResource=true)
-    String baseUri;
+    public String baseUri;
 
     @MetadataProperty(name=BASE_URI_EMULATOR, fromResource=true)
-    String getBaseUriEmulator;
+    public String getBaseUriEmulator;
 
     /**
      * Get the correct base uri based on where the application is running. This will return
