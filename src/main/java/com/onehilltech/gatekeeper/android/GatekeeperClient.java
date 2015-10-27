@@ -71,12 +71,12 @@ public class GatekeeperClient
      * Get the correct base uri based on where the application is running. This will return
      * either baseUri or getBaseUriEmulator.
      *
-     * @param context
      * @return
      */
-    public String getBaseUri (Context context)
+    public String getBaseUri ()
     {
-      return Build.PRODUCT.startsWith ("sdk_google") ? this.getBaseUriEmulator : this.baseUri;
+      boolean isEmulator = Build.PRODUCT.startsWith ("sdk_google");
+      return isEmulator ? this.getBaseUriEmulator : this.baseUri;
     }
   }
 
@@ -131,7 +131,7 @@ public class GatekeeperClient
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
-    String url = options.getBaseUri (context) + "/oauth2/token";
+    String url = options.getBaseUri () + "/oauth2/token";
 
     ProtectedRequest <Token> request =
         new ProtectedRequest<> (
