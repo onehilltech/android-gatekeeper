@@ -32,7 +32,7 @@ android {
         minSdkVersion project.property ('android.minSdkVersion')
         targetSdkVersion project.property ('android.targetSdkVersion').toInteger ()
 
-        versionCode = project.property ('build.versionCode')
+        versionCode = project.property ('build.versionCode').toInteger ()
         versionName = project.property ('build.version')
 
         testApplicationId project.property ('android.testApplicationId')
