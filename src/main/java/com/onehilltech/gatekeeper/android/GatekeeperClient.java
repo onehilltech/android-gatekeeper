@@ -134,7 +134,7 @@ public class GatekeeperClient
     String url = options.getBaseUri () + "/oauth2/token";
 
     ProtectedRequest <Token> request =
-        new ProtectedRequest<> (
+        new ProtectedRequest<Token> (
             Request.Method.POST,
             url,
             null,
