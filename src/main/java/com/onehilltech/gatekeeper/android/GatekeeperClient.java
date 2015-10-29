@@ -9,6 +9,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 
@@ -92,7 +93,7 @@ public class GatekeeperClient
    * @throws ClassNotFoundException
    * @throws InvocationTargetException
    */
-  public static ProtectedRequest <Token> initialize (Context context, OnInitialized onInitialized)
+  public static JsonRequest<Token> initialize (Context context, OnInitialized onInitialized)
       throws PackageManager.NameNotFoundException,
       IllegalAccessException,
       ClassNotFoundException,
@@ -102,7 +103,7 @@ public class GatekeeperClient
     return initialize (context, requestQueue, onInitialized);
   }
 
-  public static ProtectedRequest <Token> initialize (Context context,
+  public static JsonRequest<Token> initialize (Context context,
                                                      RequestQueue requestQueue,
                                                      OnInitialized onInitialized)
       throws PackageManager.NameNotFoundException,
@@ -123,7 +124,7 @@ public class GatekeeperClient
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static ProtectedRequest <Token> initialize (Context context,
+  public static JsonRequest<Token> initialize (Context context,
                                                      final Options options,
                                                      final RequestQueue requestQueue,
                                                      final OnInitialized onInitialized)
@@ -133,12 +134,12 @@ public class GatekeeperClient
     // object with the required token.
     String url = options.getBaseUri () + "/oauth2/token";
 
-    ProtectedRequest <Token> request =
-        new ProtectedRequest<Token> (
+    JsonRequest<Token> request =
+        new JsonRequest<> (
             Request.Method.POST,
             url,
             null,
-            new ResponseListener <Token> () {
+            new ResponseListener <Token> (new TypeReference <Token> () {}) {
               @Override
               public void onErrorResponse (VolleyError error)
               {
@@ -238,8 +239,8 @@ public class GatekeeperClient
   {
     String url = this.getCompleteUrl ("/accounts");
 
-    ProtectedRequest <Boolean> request =
-        new ProtectedRequest<> (
+    JsonRequest<Boolean> request =
+        new JsonRequest<> (
             Request.Method.POST,
             url,
             this.clientToken_,
@@ -261,7 +262,7 @@ public class GatekeeperClient
    * @param password
    * @param listener
    */
-  public ProtectedRequest<Token> getUserToken (String username,
+  public JsonRequest<Token> getUserToken (String username,
                                                String password,
                                                ResponseListener<BearerToken> listener)
   {
@@ -280,7 +281,7 @@ public class GatekeeperClient
    *
    * @param listener
    */
-  public ProtectedRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
+  public JsonRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
   {
     if (!this.userToken_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
@@ -298,31 +299,38 @@ public class GatekeeperClient
    *
    * @param params
    */
-  private ProtectedRequest<Token> getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
+  private JsonRequest<Token> getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
   {
     final String url = this.getCompleteUrl ("/oauth2/token");
 
-    ProtectedRequest<Token> request =
-        this.makeRequest (Request.Method.POST, url, new ResponseListener<Token> () {
-          @Override
-          public void onErrorResponse (VolleyError error)
-          {
-            listener.onErrorResponse (error);
-          }
-
-          @Override
-          public void onResponse (Token response)
-          {
-            response.accept (new TokenVisitor () {
+    JsonRequest<Token> request =
+        this.makeJsonRequest (
+            Request.Method.POST,
+            url,
+            new ResponseListener<Token> (new TypeReference<Token> ()
+            {
+            })
+            {
               @Override
-              public void visitBearerToken (BearerToken token)
+              public void onErrorResponse (VolleyError error)
               {
-                userToken_ = token;
-                listener.onResponse (token);
+                listener.onErrorResponse (error);
+              }
+
+              @Override
+              public void onResponse (Token response)
+              {
+                response.accept (new TokenVisitor ()
+                {
+                  @Override
+                  public void visitBearerToken (BearerToken token)
+                  {
+                    userToken_ = token;
+                    listener.onResponse (token);
+                  }
+                });
               }
             });
-          }
-        });
 
     request.addParams (params);
     this.requestQueue_.add (request);
@@ -338,7 +346,7 @@ public class GatekeeperClient
   public void logout (ResponseListener <Boolean> listener)
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
-    ProtectedRequest<Boolean> request = this.makeRequest (Request.Method.GET, url, listener);
+    JsonRequest<Boolean> request = this.makeJsonRequest (Request.Method.GET, url, listener);
 
     this.requestQueue_.add (request);
   }
@@ -353,9 +361,9 @@ public class GatekeeperClient
    * @param <T>           Object type of response body
    * @return              Request object
    */
-  public <T> ProtectedRequest<T> makeRequest (int method, String path, ResponseListener <T> listener)
+  public <T> JsonRequest<T> makeJsonRequest (int method, String path, ResponseListener<T> listener)
   {
-    return new ProtectedRequest<> (method, path, this.userToken_, listener);
+    return new JsonRequest<> (method, path, this.userToken_, listener);
   }
 
   /**

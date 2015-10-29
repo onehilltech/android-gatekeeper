@@ -3,6 +3,7 @@ package com.onehilltech.gatekeeper.android;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.BearerToken;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.ResponseListener;
@@ -89,7 +90,9 @@ public class GatekeeperClientTest
         new TestHttpResponse (200, randomToken.toJSONString ()));
 
     // Execute the test.
-    this.client_.getUserToken (STRING_USERNAME, STRING_PASSWORD, new ResponseListener<BearerToken> () {
+    this.client_.getUserToken (STRING_USERNAME,
+                               STRING_PASSWORD,
+                               new ResponseListener<BearerToken> (new TypeReference<BearerToken> () { }) {
         @Override
         public void onErrorResponse (VolleyError error)
         {
@@ -154,32 +157,42 @@ public class GatekeeperClientTest
 
     // Execute the test.
 
-    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new ResponseListener<Boolean> () {
-      @Override
-      public void onErrorResponse (VolleyError error)
-      {
-        Assert.fail ();
-      }
+    this.client_.createAccount (
+        STRING_USERNAME,
+        STRING_PASSWORD,
+        STRING_EMAIL,
+        new ResponseListener<Boolean> (new TypeReference<Boolean> (){ })
+        {
+          @Override
+          public void onErrorResponse (VolleyError error)
+          {
+            Assert.fail ();
+          }
 
-      @Override
-      public void onResponse (Boolean response)
-      {
-        Assert.assertTrue (response);
-      }
-    });
+          @Override
+          public void onResponse (Boolean response)
+          {
+            Assert.assertTrue (response);
+          }
+        });
 
-    this.client_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new ResponseListener<Boolean> () {
-      @Override
-      public void onErrorResponse (VolleyError error)
-      {
-        Assert.fail ();
-      }
+    this.client_.createAccount (
+        STRING_USERNAME,
+        STRING_PASSWORD,
+        STRING_EMAIL,
+        new ResponseListener<Boolean> (new TypeReference<Boolean> () { })
+        {
+          @Override
+          public void onErrorResponse (VolleyError error)
+          {
+            Assert.fail ();
+          }
 
-      @Override
-      public void onResponse (Boolean response)
-      {
-        Assert.assertFalse (response);
-      }
-    });
+          @Override
+          public void onResponse (Boolean response)
+          {
+            Assert.assertFalse (response);
+          }
+        });
   }
 }

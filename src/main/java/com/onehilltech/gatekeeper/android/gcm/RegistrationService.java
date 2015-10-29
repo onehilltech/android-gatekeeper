@@ -22,10 +22,11 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.android.volley.Request;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
-import com.onehilltech.gatekeeper.android.ProtectedRequest;
+import com.onehilltech.gatekeeper.android.JsonRequest;
 import com.onehilltech.gatekeeper.android.ResponseListener;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class RegistrationService extends IntentService
       InstanceID instanceID = InstanceID.getInstance (this);
       String token = instanceID.getToken (authorizedEntity, GoogleCloudMessaging.INSTANCE_ID_SCOPE, extras);
 
-      this.registerTokenWithServer (token, new ResponseListener<Boolean> ());
+      this.registerTokenWithServer (token, new ResponseListener<> (new TypeReference<Boolean> () {}));
     }
     catch (IOException e)
     {
@@ -90,8 +91,8 @@ public class RegistrationService extends IntentService
         @Override
         public void onInitialized (GatekeeperClient client)
         {
-          ProtectedRequest<Boolean> request =
-              client.makeRequest (
+          JsonRequest<Boolean> request =
+              client.makeJsonRequest (
                   Request.Method.POST,
                   "/me/notifications",
                   listener);

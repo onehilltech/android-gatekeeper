@@ -6,21 +6,19 @@ import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.reflect.TypeToken;
+
+import org.apache.http.protocol.HTTP;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  *
  */
-public class ProtectedRequest<T> extends Request <T>
+public class JsonRequest <T> extends Request <T>
 {
   private final ObjectMapper objMapper_ = new ObjectMapper ();
 
@@ -30,8 +28,6 @@ public class ProtectedRequest<T> extends Request <T>
 
   private final HashMap<String, String> params_ = new HashMap <> ();
 
-  private final TypeToken<T> type_;
-
   /**
    * Initializing constructor.
    *
@@ -40,17 +36,15 @@ public class ProtectedRequest<T> extends Request <T>
    * @param token
    * @param listener
    */
-  public ProtectedRequest (int method,
-                           String url,
-                           BearerToken token,
-                           ResponseListener <T> listener)
+  public JsonRequest (int method,
+                      String url,
+                      BearerToken token,
+                      ResponseListener<T> listener)
   {
     super (method, url, listener);
 
     this.token_ = token;
     this.listener_ = listener;
-
-    this.type_ = new TypeToken <T> (this.getClass()) {};
   }
 
   @Override
@@ -59,13 +53,13 @@ public class ProtectedRequest<T> extends Request <T>
     this.listener_.onResponse (response);
   }
 
-  public ProtectedRequest<T> addParams (Map <String, String> params)
+  public JsonRequest<T> addParams (Map <String, String> params)
   {
     this.params_.putAll (params);
     return this;
   }
 
-  public ProtectedRequest<T> addParam (String name, String value)
+  public JsonRequest<T> addParam (String name, String value)
   {
     this.params_.put (name, value);
     return this;
@@ -81,7 +75,8 @@ public class ProtectedRequest<T> extends Request <T>
   public Map<String, String> getHeaders () throws AuthFailureError
   {
     Map<String, String> headers = super.getHeaders ();
-
+    headers.put (HTTP.CONTENT_TYPE, "application/json");
+    
     if (this.token_ != null)
       headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
 
@@ -94,7 +89,7 @@ public class ProtectedRequest<T> extends Request <T>
     try
     {
       String json = new String(response.data, HttpHeaderParser.parseCharset (response.headers));
-      T value = (T) this.objMapper_.readValue (json, this.type_.getRawType ());
+      T value = this.objMapper_.readValue (json, this.listener_.getResponseType ());
 
       return Response.success (value, HttpHeaderParser.parseCacheHeaders (response));
     }
