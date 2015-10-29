@@ -8,6 +8,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -29,7 +30,7 @@ public class ProtectedRequest<T> extends Request <T>
 
   private final HashMap<String, String> params_ = new HashMap <> ();
 
-  private final Class <T> type_;
+  private final TypeToken<T> type_;
 
   /**
    * Initializing constructor.
@@ -49,12 +50,7 @@ public class ProtectedRequest<T> extends Request <T>
     this.token_ = token;
     this.listener_ = listener;
 
-    Type superClass = this.getClass ().getGenericSuperclass ();
-
-    if (superClass instanceof Class <?>)
-      throw new IllegalArgumentException ("Internal error: TypeReference constructed without actual type information");
-
-    this.type_ = (Class<T>)((ParameterizedType) superClass).getActualTypeArguments()[0];
+    this.type_ = new TypeToken <T> (this.getClass()) {};
   }
 
   @Override
@@ -98,7 +94,7 @@ public class ProtectedRequest<T> extends Request <T>
     try
     {
       String json = new String(response.data, HttpHeaderParser.parseCharset (response.headers));
-      T value = this.objMapper_.readValue (json, this.type_);
+      T value = (T) this.objMapper_.readValue (json, this.type_.getRawType ());
 
       return Response.success (value, HttpHeaderParser.parseCacheHeaders (response));
     }
