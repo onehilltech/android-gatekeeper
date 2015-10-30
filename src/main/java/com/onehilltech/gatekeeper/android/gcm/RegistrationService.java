@@ -108,7 +108,7 @@ public class RegistrationService extends IntentService
           data.token = token;
 
           request.setData (data);
-          
+
           client.addRequest (request);
         }
 
