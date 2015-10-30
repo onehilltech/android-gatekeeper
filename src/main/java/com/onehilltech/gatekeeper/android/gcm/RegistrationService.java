@@ -97,10 +97,18 @@ public class RegistrationService extends IntentService
                   "/me/notifications",
                   listener);
 
-          request
-              .addParam ("network", "gcm")
-              .addParam ("token", token);
+          class Data
+          {
+            public String network;
+            public String token;
+          }
 
+          Data data = new Data ();
+          data.network = "gcm";
+          data.token = token;
+
+          request.setData (data);
+          
           client.addRequest (request);
         }
 
