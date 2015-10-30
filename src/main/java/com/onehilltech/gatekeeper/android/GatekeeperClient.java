@@ -182,7 +182,8 @@ public class GatekeeperClient
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
-    String url = options.getBaseUri () + "/oauth2/token";
+    final String baseUri = options.getBaseUri ();
+    String url = baseUri + "/oauth2/token";
 
     JsonRequest<Token> request =
         new JsonRequest<> (
@@ -205,7 +206,7 @@ public class GatekeeperClient
                   {
                     GatekeeperClient client =
                         new GatekeeperClient (
-                            options.baseUri,
+                            baseUri,
                             options.clientId,
                             token,
                             requestQueue);
