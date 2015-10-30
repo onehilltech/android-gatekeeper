@@ -9,6 +9,10 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
@@ -44,6 +48,40 @@ public class GatekeeperClient
     void onInitialized (GatekeeperClient client);
     void onInitializeFailed ();
   }
+
+  @JsonTypeInfo(
+      use=JsonTypeInfo.Id.NAME,
+      include=JsonTypeInfo.As.PROPERTY,
+      property="grant_type")
+  @JsonSubTypes({
+      @JsonSubTypes.Type (value=Password.class, name="password"),
+      @JsonSubTypes.Type (value=ClientCredentials.class, name="client_credentials"),
+      @JsonSubTypes.Type (value=RefreshToken.class, name="refresh_token")})
+  @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
+  public static class Grant
+  {
+    @JsonProperty("client_id")
+    public String clientId;
+  }
+
+  public static class ClientCredentials extends Grant
+  {
+    @JsonProperty("client_secret")
+    public String clientSecret;
+  }
+
+  public static class Password extends Grant
+  {
+    public String username;
+    public String password;
+  }
+
+  public class RefreshToken extends Grant
+  {
+    @JsonProperty("refresh_token")
+    public String refreshToken;
+  }
+
 
   /**
    * Configuration options for the GatekeeperClient. The options can be loaded
@@ -104,8 +142,8 @@ public class GatekeeperClient
   }
 
   public static JsonRequest<Token> initialize (Context context,
-                                                     RequestQueue requestQueue,
-                                                     OnInitialized onInitialized)
+                                               RequestQueue requestQueue,
+                                               OnInitialized onInitialized)
       throws PackageManager.NameNotFoundException,
       IllegalAccessException,
       ClassNotFoundException,
@@ -114,7 +152,7 @@ public class GatekeeperClient
     Options options = new Options ();
     ManifestMetadata.get (context).initFromMetadata (options);
 
-    return initialize (context, options, requestQueue, onInitialized);
+    return initialize (options, requestQueue, onInitialized);
   }
 
   /**
@@ -124,10 +162,9 @@ public class GatekeeperClient
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static JsonRequest<Token> initialize (Context context,
-                                                     final Options options,
-                                                     final RequestQueue requestQueue,
-                                                     final OnInitialized onInitialized)
+  public static JsonRequest<Token> initialize (final Options options,
+                                               final RequestQueue requestQueue,
+                                               final OnInitialized onInitialized)
   {
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
@@ -167,10 +204,10 @@ public class GatekeeperClient
               }
             });
 
-    request
-        .addParam ("grant_type", "client_credentials")
-        .addParam ("client_id", options.clientId)
-        .addParam ("client_secret", options.clientSecret);
+    ClientCredentials clientCreds = new ClientCredentials ();
+    clientCreds.clientId = options.clientId;
+    clientCreds.clientSecret = options.clientSecret;
+    request.setData (clientCreds);
 
     requestQueue.add (request);
 
@@ -237,6 +274,16 @@ public class GatekeeperClient
                              final String email,
                              final ResponseListener<Boolean> listener)
   {
+    class Data
+    {
+      @JsonProperty("client_id")
+      public String clientId;
+
+      public String username;
+      public String password;
+      public String email;
+    }
+
     String url = this.getCompleteUrl ("/accounts");
 
     JsonRequest<Boolean> request =
@@ -246,11 +293,13 @@ public class GatekeeperClient
             this.clientToken_,
             listener);
 
-    request
-        .addParam ("client_id", this.clientId_)
-        .addParam ("username", username)
-        .addParam ("password", password)
-        .addParam ("email", email);
+    Data data = new Data ();
+    data.clientId = this.clientId_;
+    data.username = username;
+    data.password = password;
+    data.email = email;
+
+    request.setData (data);
 
     this.requestQueue_.add (request);
   }
@@ -266,14 +315,12 @@ public class GatekeeperClient
                                                String password,
                                                ResponseListener<BearerToken> listener)
   {
-    HashMap <String, String> params = new HashMap<> ();
+    Password passwd = new Password ();
+    passwd.clientId = this.clientId_;
+    passwd.username = username;
+    passwd.password = password;
 
-    params.put ("grant_type", "password");
-    params.put ("client_id", this.clientId_);
-    params.put ("username", username);
-    params.put ("password", password);
-
-    return this.getToken (params, listener);
+    return this.getToken (passwd, listener);
   }
 
   /**
@@ -286,20 +333,14 @@ public class GatekeeperClient
     if (!this.userToken_.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
-    HashMap <String, String> params = new HashMap <> ();
-    params.put ("grant_type", "refresh_token");
-    params.put ("client_id", this.clientId_);
-    params.put ("refresh_token", this.userToken_.getRefreshToken ());
+    RefreshToken refreshToken = new RefreshToken ();
+    refreshToken.clientId = this.clientId_;
+    refreshToken.refreshToken = this.userToken_.getRefreshToken ();
 
-    return this.getToken (params, listener);
+    return this.getToken (refreshToken, listener);
   }
 
-  /**
-   * Helper method that gets the token using the provided body params.
-   *
-   * @param params
-   */
-  private JsonRequest<Token> getToken (final Map<String, String> params, final ResponseListener<BearerToken> listener)
+  private JsonRequest<Token> getToken (Grant grantType, final ResponseListener<BearerToken> listener)
   {
     final String url = this.getCompleteUrl ("/oauth2/token");
 
@@ -332,7 +373,7 @@ public class GatekeeperClient
               }
             });
 
-    request.addParams (params);
+    request.setData (grantType);
     this.requestQueue_.add (request);
 
     return request;
