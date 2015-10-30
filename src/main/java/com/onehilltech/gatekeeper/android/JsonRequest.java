@@ -8,8 +8,6 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.http.protocol.HTTP;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -72,11 +70,16 @@ public class JsonRequest <T> extends Request <T>
   }
 
   @Override
+  public String getBodyContentType ()
+  {
+    return "application/json; charset=utf-8";
+  }
+
+  @Override
   public Map<String, String> getHeaders () throws AuthFailureError
   {
-    Map<String, String> headers = super.getHeaders ();
-    headers.put (HTTP.CONTENT_TYPE, "application/json");
-    
+    HashMap<String, String> headers = new HashMap <> (super.getHeaders ());
+
     if (this.token_ != null)
       headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
 
