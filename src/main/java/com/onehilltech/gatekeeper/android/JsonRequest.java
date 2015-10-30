@@ -6,6 +6,7 @@ import com.android.volley.ParseError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -18,13 +19,18 @@ import java.util.Map;
  */
 public class JsonRequest <T> extends Request <T>
 {
+  public static final String CHARSET = "utf-8";
+
+  public static final String CONTENT_TYPE =
+      String.format ("application/json; charset=%s", CHARSET);
+
   private final ObjectMapper objMapper_ = new ObjectMapper ();
 
   private final ResponseListener <T> listener_;
 
   private final BearerToken token_;
 
-  private final HashMap<String, String> params_ = new HashMap <> ();
+  private Object dataObj_;
 
   /**
    * Initializing constructor.
@@ -45,34 +51,39 @@ public class JsonRequest <T> extends Request <T>
     this.listener_ = listener;
   }
 
+  /**
+   * Set the data for the request.
+   *
+   * @param data
+   */
+  public void setData (Object data)
+  {
+    this.dataObj_ = data;
+  }
+
   @Override
   protected void deliverResponse (T response)
   {
     this.listener_.onResponse (response);
   }
 
-  public JsonRequest<T> addParams (Map <String, String> params)
-  {
-    this.params_.putAll (params);
-    return this;
-  }
-
-  public JsonRequest<T> addParam (String name, String value)
-  {
-    this.params_.put (name, value);
-    return this;
-  }
-
-  @Override
-  protected Map<String, String> getParams () throws AuthFailureError
-  {
-    return this.params_;
-  }
-
   @Override
   public String getBodyContentType ()
   {
-    return "application/json; charset=utf-8";
+    return CONTENT_TYPE;
+  }
+
+  @Override
+  public byte[] getBody () throws AuthFailureError
+  {
+    try
+    {
+      return this.objMapper_.writeValueAsBytes (this.dataObj_);
+    }
+    catch (JsonProcessingException e)
+    {
+      return null;
+    }
   }
 
   @Override
