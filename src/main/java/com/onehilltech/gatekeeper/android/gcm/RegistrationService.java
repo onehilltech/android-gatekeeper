@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.android.volley.Request;
+import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
@@ -113,9 +114,9 @@ public class RegistrationService extends IntentService
         }
 
         @Override
-        public void onInitializeFailed ()
+        public void onError (VolleyError error)
         {
-          Log.e (TAG, "Cannot update Google Cloud Messaging token; initialization failed");
+          Log.e (TAG, "Gatekeeper initialization error; cannot update Google Cloud Messaging token");
         }
       });
     }

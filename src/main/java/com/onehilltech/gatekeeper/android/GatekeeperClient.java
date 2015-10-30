@@ -43,10 +43,23 @@ public class GatekeeperClient
 
   private BearerToken clientToken_;
 
+  /**
+   * Listener interface for initializing the client.
+   */
   public interface OnInitialized
   {
+    /**
+     * Callback for completion of the initialization process.
+     * @param client
+     */
     void onInitialized (GatekeeperClient client);
-    void onInitializeFailed ();
+
+    /**
+     * Callback for an error.
+     *
+     * @param error
+     */
+    void onError (VolleyError error);
   }
 
   @JsonTypeInfo(
@@ -180,8 +193,7 @@ public class GatekeeperClient
               @Override
               public void onErrorResponse (VolleyError error)
               {
-                Log.e (TAG, error.getMessage (), error.getCause ());
-                onInitialized.onInitializeFailed ();
+                onInitialized.onError (error);
               }
 
               @Override
