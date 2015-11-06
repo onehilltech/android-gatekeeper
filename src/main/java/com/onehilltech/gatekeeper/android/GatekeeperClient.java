@@ -290,16 +290,12 @@ public class GatekeeperClient
    * @param username
    * @param password
    */
-  public void createAccount (final String username,
-                             final String password,
-                             final String email,
-                             final ResponseListener<Boolean> listener)
+  public JsonRequest createAccount (String username, String password, String email, ResponseListener<Boolean> listener)
   {
     class Data
     {
       @JsonProperty("client_id")
       public String clientId;
-
       public String username;
       public String password;
       public String email;
@@ -307,7 +303,7 @@ public class GatekeeperClient
 
     String url = this.getCompleteUrl ("/accounts");
 
-    JsonRequest<Boolean> request =
+    JsonRequest <Boolean> request =
         new JsonRequest<> (
             Request.Method.POST,
             url,
@@ -323,6 +319,8 @@ public class GatekeeperClient
     request.setData (data);
 
     this.requestQueue_.add (request);
+
+    return request;
   }
 
   /**
@@ -332,9 +330,7 @@ public class GatekeeperClient
    * @param password
    * @param listener
    */
-  public JsonRequest<Token> getUserToken (String username,
-                                          String password,
-                                          ResponseListener<BearerToken> listener)
+  public JsonRequest getUserToken (String username, String password, ResponseListener<BearerToken> listener)
   {
     Password passwd = new Password ();
     passwd.clientId = this.clientId_;
@@ -349,7 +345,7 @@ public class GatekeeperClient
    *
    * @param listener
    */
-  public JsonRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
+  public JsonRequest refreshToken (ResponseListener <BearerToken> listener)
   {
     if (!this.userToken_.getCanRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
@@ -372,11 +368,11 @@ public class GatekeeperClient
    * @param listener
    * @return
    */
-  private JsonRequest<Token> getToken (Grant grantType,
-                                       final String tag,
-                                       final BearerToken.Kind kind,
-                                       boolean checkCache,
-                                       final ResponseListener<BearerToken> listener)
+  private JsonRequest getToken (Grant grantType,
+                                final String tag,
+                                final BearerToken.Kind kind,
+                                boolean checkCache,
+                                final ResponseListener<BearerToken> listener)
   {
     if (checkCache)
     {
@@ -444,7 +440,7 @@ public class GatekeeperClient
    *
    * @param listener      Response listener
    */
-  public void logout (final ResponseListener <Boolean> listener)
+  public JsonRequest logout (final ResponseListener <Boolean> listener)
   {
     if (!this.isLoggedIn ())
       throw new IllegalStateException ("Client is not logged in");
@@ -473,6 +469,8 @@ public class GatekeeperClient
 
     request.setShouldCache (false);
     this.requestQueue_.add (request);
+
+    return request;
   }
 
   /**
