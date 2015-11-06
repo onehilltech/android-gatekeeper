@@ -8,10 +8,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.data.BearerToken$Table;
@@ -65,39 +62,6 @@ public class GatekeeperClient
      * @param error
      */
     void onError (VolleyError error);
-  }
-
-  @JsonTypeInfo(
-      use=JsonTypeInfo.Id.NAME,
-      include=JsonTypeInfo.As.PROPERTY,
-      property="grant_type")
-  @JsonSubTypes({
-      @JsonSubTypes.Type (value=Password.class, name="password"),
-      @JsonSubTypes.Type (value=ClientCredentials.class, name="client_credentials"),
-      @JsonSubTypes.Type (value=RefreshToken.class, name="refresh_token")})
-  @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
-  public static class Grant
-  {
-    @JsonProperty("client_id")
-    public String clientId;
-  }
-
-  public static class ClientCredentials extends Grant
-  {
-    @JsonProperty("client_secret")
-    public String clientSecret;
-  }
-
-  public static class Password extends Grant
-  {
-    public String username;
-    public String password;
-  }
-
-  public class RefreshToken extends Grant
-  {
-    @JsonProperty("refresh_token")
-    public String refreshToken;
   }
 
   /**
