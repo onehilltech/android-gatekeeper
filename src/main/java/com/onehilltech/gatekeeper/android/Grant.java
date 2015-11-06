@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type (value=ClientCredentials.class, name="client_credentials"),
     @JsonSubTypes.Type (value=RefreshToken.class, name="refresh_token")})
 @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
-public class Grant
+public abstract class Grant
 {
     @JsonProperty("client_id")
     public String clientId;

@@ -1,7 +1,7 @@
 package com.onehilltech.gatekeeper.android;
 
 /**
- * Created by hilljh on 11/6/15.
+ * Grant for requesting an access token via a username and password.
  */
 public class Password extends Grant
 {
