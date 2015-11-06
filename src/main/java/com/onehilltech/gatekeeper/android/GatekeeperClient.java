@@ -248,6 +248,15 @@ public class GatekeeperClient
     return request;
   }
 
+  /**
+   * Helper method to make the GatekeeperClient object, and call the onInitialized
+   * callback with the client.
+   *
+   * @param options
+   * @param token
+   * @param requestQueue
+   * @param onInitialized
+   */
   private static void makeGatekeeperClient (Options options,
                                             BearerToken token,
                                             RequestQueue requestQueue,
@@ -270,10 +279,7 @@ public class GatekeeperClient
    * @param baseUri
    * @param clientToken
    */
-  GatekeeperClient (String baseUri,
-                    String clientId,
-                    BearerToken clientToken,
-                    RequestQueue requestQueue)
+  GatekeeperClient (String baseUri, String clientId, BearerToken clientToken, RequestQueue requestQueue)
   {
     this.baseUri_ = baseUri;
     this.clientId_ = clientId;
