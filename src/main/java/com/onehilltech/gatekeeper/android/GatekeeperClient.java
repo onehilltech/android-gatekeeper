@@ -3,7 +3,6 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -14,12 +13,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.onehilltech.gatekeeper.android.data.BearerToken;
+import com.onehilltech.gatekeeper.android.data.BearerToken$Table;
+import com.onehilltech.gatekeeper.android.data.Token;
+import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
+import com.raizlabs.android.dbflow.config.FlowManager;
+import com.raizlabs.android.dbflow.sql.builder.Condition;
+import com.raizlabs.android.dbflow.sql.language.Select;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Client interface for communicating with a Gatekeeper service.
@@ -41,6 +45,7 @@ public class GatekeeperClient
   /// Authorization token for the current user.
   private BearerToken userToken_;
 
+  /// Authorization token for the client.
   private BearerToken clientToken_;
 
   /**
@@ -95,7 +100,6 @@ public class GatekeeperClient
     public String refreshToken;
   }
 
-
   /**
    * Configuration options for the GatekeeperClient. The options can be loaded
    * from the AndroidManifest.xml.
@@ -117,18 +121,18 @@ public class GatekeeperClient
     public String baseUri;
 
     @MetadataProperty(name=BASE_URI_EMULATOR, fromResource=true)
-    public String getBaseUriEmulator;
+    public String baseUriEmulator;
 
     /**
      * Get the correct base uri based on where the application is running. This will return
-     * either baseUri or getBaseUriEmulator.
+     * either baseUri or baseUriEmulator.
      *
      * @return
      */
     public String getBaseUri ()
     {
       boolean isEmulator = Build.PRODUCT.startsWith ("sdk_google");
-      return isEmulator ? this.getBaseUriEmulator : this.baseUri;
+      return isEmulator ? this.baseUriEmulator : this.baseUri;
     }
   }
 
@@ -165,7 +169,7 @@ public class GatekeeperClient
     Options options = new Options ();
     ManifestMetadata.get (context).initFromMetadata (options);
 
-    return initialize (options, requestQueue, onInitialized);
+    return initialize (context, options, requestQueue, onInitialized);
   }
 
   /**
@@ -175,10 +179,27 @@ public class GatekeeperClient
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static JsonRequest<Token> initialize (final Options options,
+  public static JsonRequest<Token> initialize (final Context context,
+                                               final Options options,
                                                final RequestQueue requestQueue,
                                                final OnInitialized onInitialized)
   {
+    // First, initialize the DBFlow architecture.
+    FlowManager.init (context);
+
+    // Check if the client already has a token stored in the database.
+    BearerToken bearerToken =
+        new Select ().from (BearerToken.class)
+                     .where (Condition.column (BearerToken$Table.TAG).eq (options.clientId),
+                             Condition.column (BearerToken$Table.KIND).eq (BearerToken.Kind.ClientToken))
+                     .querySingle ();
+
+    if (bearerToken != null)
+    {
+      makeGatekeeperClient (options, bearerToken, requestQueue, onInitialized);
+      return null;
+    }
+
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
@@ -204,14 +225,13 @@ public class GatekeeperClient
                   @Override
                   public void visitBearerToken (BearerToken token)
                   {
-                    GatekeeperClient client =
-                        new GatekeeperClient (
-                            baseUri,
-                            options.clientId,
-                            token,
-                            requestQueue);
+                    // Set the remaining properties on the bearer token, then save
+                    // the token to the database.
+                    token.tag = options.clientId;
+                    token.kind = BearerToken.Kind.ClientToken;
+                    token.save ();
 
-                    onInitialized.onInitialized (client);
+                    makeGatekeeperClient (options, token, requestQueue, onInitialized);
                   }
                 });
               }
@@ -221,10 +241,27 @@ public class GatekeeperClient
     clientCreds.clientId = options.clientId;
     clientCreds.clientSecret = options.clientSecret;
     request.setData (clientCreds);
+    request.setShouldCache (false);
 
     requestQueue.add (request);
 
     return request;
+  }
+
+  private static void makeGatekeeperClient (Options options,
+                                            BearerToken token,
+                                            RequestQueue requestQueue,
+                                            OnInitialized onInitialized)
+  {
+    // Create a GatekeeperClient with the token.
+    GatekeeperClient client =
+        new GatekeeperClient (
+            options.getBaseUri (),
+            options.clientId,
+            token,
+            requestQueue);
+
+    onInitialized.onInitialized (client);
   }
 
   /**
@@ -325,8 +362,8 @@ public class GatekeeperClient
    * @param listener
    */
   public JsonRequest<Token> getUserToken (String username,
-                                               String password,
-                                               ResponseListener<BearerToken> listener)
+                                          String password,
+                                          ResponseListener<BearerToken> listener)
   {
     Password passwd = new Password ();
     passwd.clientId = this.clientId_;
@@ -343,12 +380,12 @@ public class GatekeeperClient
    */
   public JsonRequest<Token> refreshToken (ResponseListener <BearerToken> listener)
   {
-    if (!this.userToken_.canRefresh ())
+    if (!this.userToken_.getCanRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
     RefreshToken refreshToken = new RefreshToken ();
     refreshToken.clientId = this.clientId_;
-    refreshToken.refreshToken = this.userToken_.getRefreshToken ();
+    refreshToken.refreshToken = this.userToken_.refreshToken;
 
     return this.getToken (refreshToken, listener);
   }

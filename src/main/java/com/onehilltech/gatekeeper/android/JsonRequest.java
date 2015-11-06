@@ -8,6 +8,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onehilltech.gatekeeper.android.data.BearerToken;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -92,7 +93,7 @@ public class JsonRequest <T> extends Request <T>
     HashMap<String, String> headers = new HashMap <> (super.getHeaders ());
 
     if (this.token_ != null)
-      headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
+      headers.put ("Authorization", "Bearer " + this.token_.accessToken);
 
     return headers;
   }

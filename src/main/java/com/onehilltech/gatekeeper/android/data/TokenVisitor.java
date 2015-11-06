@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android;
+package com.onehilltech.gatekeeper.android.data;
 
 public class TokenVisitor
 {

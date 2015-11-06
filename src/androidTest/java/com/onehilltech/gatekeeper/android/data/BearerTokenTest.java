@@ -1,32 +1,34 @@
-package com.onehilltech.gatekeeper.android;
+package com.onehilltech.gatekeeper.android.data;
+
+import android.support.test.runner.AndroidJUnit4;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith (AndroidJUnit4.class)
 public class BearerTokenTest
 {
   @Test
   public void testConstructor ()
   {
     BearerToken token = new BearerToken ("access_token", "refresh_token", 1);
-    long currentTimeMillis = System.currentTimeMillis () + 1000;
 
-    Assert.assertEquals ("access_token", token.getAccessToken ());
-    Assert.assertEquals ("refresh_token", token.getRefreshToken ());
-    Assert.assertEquals (currentTimeMillis, token.getExpirationDate ().getTime ());
+    Assert.assertEquals ("access_token", token.accessToken);
+    Assert.assertEquals ("refresh_token", token.refreshToken);
   }
 
   @Test
   public void testCanRefresh ()
   {
     BearerToken token = new BearerToken ("access_token", "refresh_token", 1);
-    Assert.assertTrue (token.canRefresh ());
+    Assert.assertTrue (token.getCanRefresh ());
 
     token = new BearerToken ("access_token", null, 1);
-    Assert.assertFalse (token.canRefresh ());
+    Assert.assertFalse (token.getCanRefresh ());
   }
 
   @Test
@@ -43,7 +45,10 @@ public class BearerTokenTest
   @Test
   public void testJSON () throws Exception
   {
+    String tag = "id";
     BearerToken fakeToken = BearerToken.generateRandomToken ();
+    fakeToken.tag = tag;
+
     String jsonString = fakeToken.toJSONString ();
 
     // Test the keys in the json string.
@@ -61,6 +66,8 @@ public class BearerTokenTest
 
     // Make sure the original token was constructed.
     BearerToken bearerToken = (BearerToken)token;
+    bearerToken.tag = tag;
+
     Assert.assertEquals (fakeToken, bearerToken);
   }
 }

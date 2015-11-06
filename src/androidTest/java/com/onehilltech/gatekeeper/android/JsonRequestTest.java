@@ -1,23 +1,21 @@
 package com.onehilltech.gatekeeper.android;
 
+import android.support.test.runner.AndroidJUnit4;
+
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import org.apache.http.HttpStatus;
 import org.apache.http.protocol.HTTP;
 import org.junit.Assert;
 import org.junit.Test;
-
-import org.apache.http.HttpStatus;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 
-@RunWith (RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class)
+@RunWith (AndroidJUnit4.class)
 public class JsonRequestTest
 {
   public static class Message
