@@ -78,7 +78,7 @@ public class GatekeeperClientTest
       {
         try
         {
-          return new NetworkResponse (fakeToken.getBytes ());
+          return new NetworkResponse (fakeToken.toJsonBytes ());
         }
         catch (JsonProcessingException e)
         {

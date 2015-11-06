@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.raizlabs.android.dbflow.annotation.Column;
+import com.raizlabs.android.dbflow.annotation.NotNull;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 import com.raizlabs.android.dbflow.annotation.Unique;
@@ -35,6 +36,7 @@ public class BearerToken extends Token
 
   @JsonProperty("access_token")
   @Column(name="access_token")
+  @NotNull
   public String accessToken;
 
   @JsonProperty("refresh_token")
@@ -43,6 +45,7 @@ public class BearerToken extends Token
 
   @JsonIgnore
   @Column
+  @NotNull
   public Kind kind = Kind.UserToken;
 
   static char [] VALID_CHARS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'A', 'B', 'C', 'D', 'E', 'F'};

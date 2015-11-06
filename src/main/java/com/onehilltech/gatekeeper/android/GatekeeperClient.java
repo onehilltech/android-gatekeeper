@@ -240,6 +240,7 @@ public class GatekeeperClient
     ClientCredentials clientCreds = new ClientCredentials ();
     clientCreds.clientId = options.clientId;
     clientCreds.clientSecret = options.clientSecret;
+
     request.setData (clientCreds);
     request.setShouldCache (false);
 
@@ -376,7 +377,7 @@ public class GatekeeperClient
     passwd.username = username;
     passwd.password = password;
 
-    return this.getToken (passwd, listener);
+    return this.getToken (passwd, username, BearerToken.Kind.UserToken, true, listener);
   }
 
   /**
@@ -393,20 +394,51 @@ public class GatekeeperClient
     refreshToken.clientId = this.clientId_;
     refreshToken.refreshToken = this.userToken_.refreshToken;
 
-    return this.getToken (refreshToken, listener);
+    return this.getToken (refreshToken, this.userToken_.tag, this.userToken_.kind, false, listener);
   }
 
-  private JsonRequest<Token> getToken (Grant grantType, final ResponseListener<BearerToken> listener)
+  /**
+   * Get a BearerToken for the grant information. The token can come from the database, if
+   * it already exists, or it can come from the service.
+   *
+   * @param grantType
+   * @param tag
+   * @param kind
+   * @param checkCache
+   * @param listener
+   * @return
+   */
+  private JsonRequest<Token> getToken (Grant grantType,
+                                       final String tag,
+                                       final BearerToken.Kind kind,
+                                       boolean checkCache,
+                                       final ResponseListener<BearerToken> listener)
   {
+    if (checkCache)
+    {
+      // Check if the token already exists in the database.
+      BearerToken bearerToken =
+          new Select ().from (BearerToken.class)
+                       .where (Condition.column (BearerToken$Table.TAG).eq (tag),
+                               Condition.column (BearerToken$Table.KIND).eq (kind))
+                       .querySingle ();
+
+      if (bearerToken != null)
+      {
+        listener.onResponse (bearerToken);
+        return null;
+      }
+    }
+
+    // Since we do not have this as a token, we must contact the server to get a
+    // token for the grant.
     final String url = this.getCompleteUrl ("/oauth2/token");
 
     JsonRequest<Token> request =
         this.makeJsonRequest (
             Request.Method.POST,
             url,
-            new ResponseListener<Token> (new TypeReference<Token> ()
-            {
-            })
+            new ResponseListener<Token> (new TypeReference<Token> () { })
             {
               @Override
               public void onErrorResponse (VolleyError error)
@@ -422,6 +454,12 @@ public class GatekeeperClient
                   @Override
                   public void visitBearerToken (BearerToken token)
                   {
+                    // Save the token to the database.
+                    token.tag = tag;
+                    token.kind = kind;
+                    token.save ();
+
+                    // Keep a reference to the token, and call the listener.
                     userToken_ = token;
                     listener.onResponse (token);
                   }
@@ -429,7 +467,9 @@ public class GatekeeperClient
               }
             });
 
+    request.setShouldCache (false);
     request.setData (grantType);
+
     this.requestQueue_.add (request);
 
     return request;
@@ -440,12 +480,44 @@ public class GatekeeperClient
    *
    * @param listener      Response listener
    */
-  public void logout (ResponseListener <Boolean> listener)
+  public void logout (final ResponseListener <Boolean> listener)
   {
-    String url = this.getCompleteUrl ("/oauth2/logout");
-    JsonRequest<Boolean> request = this.makeJsonRequest (Request.Method.GET, url, listener);
+    if (!this.isLoggedIn ())
+      throw new IllegalStateException ("Client is not logged in");
 
+    String url = this.getCompleteUrl ("/oauth2/logout");
+    JsonRequest<Boolean> request =
+        this.makeJsonRequest (
+            Request.Method.GET,
+            url,
+            new ResponseListener<Boolean> (new TypeReference<Boolean> (){ }) {
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+                listener.onErrorResponse (error);
+              }
+
+              @Override
+              public void onResponse (Boolean response)
+              {
+                if (response)
+                  completeLogout ();
+
+                listener.onResponse (response);
+              }
+            });
+
+    request.setShouldCache (false);
     this.requestQueue_.add (request);
+  }
+
+  /**
+   * Complete the logout process by deleting the user token.
+   */
+  private void completeLogout ()
+  {
+    this.userToken_.delete ();
+    this.userToken_ = null;
   }
 
   /**

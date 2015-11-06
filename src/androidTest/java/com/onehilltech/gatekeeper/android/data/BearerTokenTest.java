@@ -49,7 +49,7 @@ public class BearerTokenTest
     BearerToken fakeToken = BearerToken.generateRandomToken ();
     fakeToken.tag = tag;
 
-    String jsonString = fakeToken.toJSONString ();
+    String jsonString = fakeToken.toJsonString ();
 
     // Test the keys in the json string.
     ObjectMapper objectMapper = new ObjectMapper ();

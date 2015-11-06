@@ -43,6 +43,16 @@ public abstract class Token extends BaseModel
   }
 
   /**
+   * Test if the token can expire.
+   *
+   * @return
+   */
+  public boolean canExpire ()
+  {
+    return this.expiration != null;
+  }
+
+  /**
    * Convert a JSON string into a Token.
    *
    * @param json
@@ -52,17 +62,6 @@ public abstract class Token extends BaseModel
       throws IOException
   {
     return objMapper.readValue (json, Token.class);
-  }
-
-  /**
-   * Convert the token to a JSON string.
-   *
-   * @return
-   */
-  public String toJSONString ()
-      throws JsonProcessingException
-  {
-    return objMapper.writeValueAsString (this);
   }
 
   /**
@@ -92,7 +91,25 @@ public abstract class Token extends BaseModel
     return this.expiration.equals (token.expiration);
   }
 
-  public byte [] getBytes ()
+  /**
+   * Convert the token to a JSON string.
+   *
+   * @return
+   */
+  public String toJsonString ()
+      throws JsonProcessingException
+  {
+    return objMapper.writeValueAsString (this);
+  }
+
+  /**
+   * Get the token as Json bytes. This is useful when sending the token as part of
+   * a Json request.
+   *
+   * @return
+   * @throws JsonProcessingException
+   */
+  public byte [] toJsonBytes ()
       throws JsonProcessingException
   {
     return objMapper.writeValueAsBytes (this);
