@@ -1,7 +1,5 @@
 package com.onehilltech.gatekeeper.android;
 
-import android.animation.TypeEvaluator;
-
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,7 +24,7 @@ public class ResponseListener <T> implements Response.Listener<T>, Response.Erro
    *
    * @return
    */
-  public TypeReference <T> getResponseType ()
+  public final TypeReference <T> getResponseType ()
   {
     return this.type_;
   }

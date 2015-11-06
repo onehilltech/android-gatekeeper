@@ -96,7 +96,7 @@ public abstract class Token extends BaseModel
    *
    * @return
    */
-  public String toJsonString ()
+  public final String toJsonString ()
       throws JsonProcessingException
   {
     return objMapper.writeValueAsString (this);
@@ -109,7 +109,7 @@ public abstract class Token extends BaseModel
    * @return
    * @throws JsonProcessingException
    */
-  public byte [] toJsonBytes ()
+  public final byte [] toJsonBytes ()
       throws JsonProcessingException
   {
     return objMapper.writeValueAsBytes (this);
