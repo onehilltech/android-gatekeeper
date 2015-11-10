@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.data.BearerToken$Table;
 import com.onehilltech.gatekeeper.android.data.GatekeeperDatabase;
+import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.builder.Condition;
 import com.raizlabs.android.dbflow.sql.language.Select;
 
@@ -48,6 +49,9 @@ public class GatekeeperClientTest
 
     // Make sure we start the request queue!
     this.requestQueue_.start ();
+
+    // Initialize the DBFlow framework.
+    FlowManager.init (InstrumentationRegistry.getContext ());
   }
 
   @After
