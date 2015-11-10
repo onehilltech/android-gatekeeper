@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.data.BearerToken$Table;
-import com.onehilltech.gatekeeper.android.data.GatekeeperDatabase;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.metadata.ManifestMetadata;
@@ -45,6 +44,8 @@ public class GatekeeperClient
 
   /// Authorization token for the client.
   private BearerToken clientToken_;
+
+  private static final String DBFLOW_MODULE_NAME = "Gatekeeper";
 
   /**
    * Listener interface for initializing the client.
@@ -150,7 +151,7 @@ public class GatekeeperClient
                                                final OnInitialized onInitialized)
   {
     // First, initialize the Gatekeeper DBFlow module.
-    FlowManager.initModule (GatekeeperDatabase.MODULE);
+    FlowManager.initModule (DBFLOW_MODULE_NAME);
 
     // Check if the client already has a token stored in the database.
     BearerToken bearerToken =
