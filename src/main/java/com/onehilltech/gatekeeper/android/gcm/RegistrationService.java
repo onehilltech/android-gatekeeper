@@ -23,7 +23,6 @@ import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
@@ -62,7 +61,22 @@ public class RegistrationService extends IntentService
       InstanceID instanceID = InstanceID.getInstance (this);
       String token = instanceID.getToken (authorizedEntity, GoogleCloudMessaging.INSTANCE_ID_SCOPE, extras);
 
-      this.registerTokenWithServer (token, new ResponseListener<> (new TypeReference<Boolean> () {}));
+      this.registerTokenWithServer (token, new ResponseListener<Boolean> () {
+        @Override
+        public void onResponse (Boolean response)
+        {
+          if (response)
+            Log.d (TAG, "Registered gcm token with server");
+          else
+            Log.w (TAG, "Failed to register gcm token with server");
+        }
+
+        @Override
+        public void onErrorResponse (VolleyError error)
+        {
+          Log.e (TAG, error.getMessage ());
+        }
+      });
     }
     catch (IOException e)
     {
@@ -96,6 +110,7 @@ public class RegistrationService extends IntentService
               client.makeJsonRequest (
                   Request.Method.POST,
                   "/me/notifications",
+                  Boolean.class,
                   listener);
 
           class Data

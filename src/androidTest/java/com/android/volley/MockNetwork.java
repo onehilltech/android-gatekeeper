@@ -17,6 +17,11 @@ public class MockNetwork implements Network
     this.matchers_.add (matcher);
   }
 
+  public void removeMatcher (RequestMatcher matcher)
+  {
+    this.matchers_.remove (matcher);
+  }
+
   public void clearMatchers ()
   {
     this.matchers_.clear ();

@@ -5,7 +5,7 @@ import android.support.test.runner.AndroidJUnit4;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.android.volley.VolleyError;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.protocol.HTTP;
@@ -44,7 +44,20 @@ public class JsonRequestTest
             Request.Method.GET,
             "/does-not-matter",
             null,
-            new ResponseListener<> (new TypeReference <Boolean> () {}));
+            Boolean.class,
+            new ResponseListener<Boolean> () {
+              @Override
+              public void onResponse (Boolean response)
+              {
+
+              }
+
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+
+              }
+            });
 
     Response <Boolean> res1 = req1.parseNetworkResponse (trueNetworkResponse);
     Assert.assertTrue (res1.result);
@@ -64,7 +77,20 @@ public class JsonRequestTest
             Request.Method.GET,
             "/does-not-matter",
             null,
-            new ResponseListener<> (new TypeReference <Message> () {}));
+            Message.class,
+            new ResponseListener<Message> () {
+              @Override
+              public void onResponse (Message response)
+              {
+
+              }
+
+              @Override
+              public void onErrorResponse (VolleyError error)
+              {
+
+              }
+            });
 
     Response <Message> res2 = req2.parseNetworkResponse (jsonObjNetworkResponse);
 

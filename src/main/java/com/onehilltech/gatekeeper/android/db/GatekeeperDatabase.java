@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android.db;
 
 import com.raizlabs.android.dbflow.annotation.Database;
 

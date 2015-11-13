@@ -8,7 +8,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onehilltech.gatekeeper.android.data.BearerToken;
+import com.onehilltech.gatekeeper.android.db.AccessToken;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -29,7 +29,9 @@ public class JsonRequest <T> extends Request <T>
 
   private final ResponseListener <T> listener_;
 
-  private final BearerToken token_;
+  private final AccessToken token_;
+
+  private final Class <T> responseType_;
 
   private Object dataObj_;
 
@@ -43,13 +45,15 @@ public class JsonRequest <T> extends Request <T>
    */
   public JsonRequest (int method,
                       String url,
-                      BearerToken token,
+                      AccessToken token,
+                      Class <T> responseType,
                       ResponseListener<T> listener)
   {
     super (method, url, listener);
 
     this.token_ = token;
     this.listener_ = listener;
+    this.responseType_ = responseType;
   }
 
   /**
@@ -60,6 +64,11 @@ public class JsonRequest <T> extends Request <T>
   public void setData (Object data)
   {
     this.dataObj_ = data;
+  }
+
+  public Object getData ()
+  {
+    return this.dataObj_;
   }
 
   @Override
@@ -93,7 +102,7 @@ public class JsonRequest <T> extends Request <T>
     HashMap<String, String> headers = new HashMap <> (super.getHeaders ());
 
     if (this.token_ != null)
-      headers.put ("Authorization", "Bearer " + this.token_.accessToken);
+      headers.put ("Authorization", "Bearer " + this.token_.getAccessToken ());
 
     return headers;
   }
@@ -104,7 +113,7 @@ public class JsonRequest <T> extends Request <T>
     try
     {
       String json = new String(response.data, HttpHeaderParser.parseCharset (response.headers));
-      T value = this.objMapper_.readValue (json, this.listener_.getResponseType ());
+      T value = this.objMapper_.readValue (json, this.responseType_);
 
       return Response.success (value, HttpHeaderParser.parseCacheHeaders (response));
     }

@@ -1,8 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
 import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 /**
  * Helper class that implements both the Response.Listener and Response.ErrorListener
@@ -10,34 +8,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
  *
  * @param <T>
  */
-public class ResponseListener <T> implements Response.Listener<T>, Response.ErrorListener
+public interface ResponseListener <T>
+    extends Response.Listener<T>, Response.ErrorListener
 {
-  private final TypeReference <T> type_;
 
-  public ResponseListener (TypeReference <T> type)
-  {
-    this.type_ = type;
-  }
-
-  /**
-   * Get the TypeReference of the response type.
-   *
-   * @return
-   */
-  public final TypeReference <T> getResponseType ()
-  {
-    return this.type_;
-  }
-
-  @Override
-  public void onErrorResponse (VolleyError error)
-  {
-
-  }
-
-  @Override
-  public void onResponse (T response)
-  {
-
-  }
 }

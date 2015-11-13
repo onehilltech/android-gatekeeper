@@ -60,7 +60,7 @@ public class BearerTokenTest
     Assert.assertTrue (jsonNode.has ("refresh_token"));
     Assert.assertTrue (jsonNode.has ("expires_in"));
 
-    // Test creating a Token from the json string.
+    // Test creating a BaseToken from the json string.
     Token token = Token.fromJSON (jsonString);
     Assert.assertTrue ((token instanceof BearerToken));
 

@@ -2,13 +2,12 @@ package com.onehilltech.gatekeeper.android.data;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.raizlabs.android.dbflow.annotation.Column;
-import com.raizlabs.android.dbflow.structure.BaseModel;
 
 import java.io.IOException;
 import java.util.Date;
@@ -23,14 +22,13 @@ import java.util.Date;
 @JsonSubTypes({
     @Type(value=BearerToken.class, name="Bearer")})
 @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
-public abstract class Token extends BaseModel
+public abstract class Token
 {
   /// FastXML object mapper reading/writing Json.
   private static final ObjectMapper objMapper = new ObjectMapper();
 
-  @Column
   @JsonIgnore
-  public Date expiration;
+  private Date expiration_;
 
   public Token ()
   {
@@ -39,21 +37,33 @@ public abstract class Token extends BaseModel
 
   public Token (Date expiration)
   {
-    this.expiration = expiration;
+    this.expiration_ = expiration;
   }
 
   /**
-   * Test if the token can expire.
+   * Get how long before the token expires in seconds.
+   *
+   * @return
+   */
+  @JsonProperty("expires_in")
+  public long getExpiresIn ()
+  {
+    return (this.expiration_.getTime () - System.currentTimeMillis ()) / 1000;
+  }
+
+  /**
+   * Test if the token can expire. If the token does not have an expiration date, then
+   * the token does not expire.
    *
    * @return
    */
   public boolean canExpire ()
   {
-    return this.expiration != null;
+    return this.expiration_ != null;
   }
 
   /**
-   * Convert a JSON string into a Token.
+   * Convert a JSON string into a BaseToken.
    *
    * @param json
    * @return
@@ -71,7 +81,17 @@ public abstract class Token extends BaseModel
    */
   public boolean hasExpired ()
   {
-    return System.currentTimeMillis () > this.expiration.getTime ();
+    return System.currentTimeMillis () > this.expiration_.getTime ();
+  }
+
+  /**
+   * Get the expiration date for the token.
+   *
+   * @return
+   */
+  public Date getExpiration ()
+  {
+    return this.expiration_;
   }
 
   /**
@@ -88,7 +108,7 @@ public abstract class Token extends BaseModel
       return false;
 
     Token token = (Token)obj;
-    return this.expiration.equals (token.expiration);
+    return this.expiration_.equals (token.expiration_);
   }
 
   /**
