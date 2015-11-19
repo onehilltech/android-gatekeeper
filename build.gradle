@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        jcenter ()
+        jcenter()
         flatDir {
             dirs 'libs'
         }
@@ -17,7 +17,7 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter ()
+        jcenter()
         flatDir {
             dirs 'libs'
         }
@@ -29,21 +29,21 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.neenbedankt.android-apt'
 
-group = project.property ('build.group')
-version = project.property ('build.version')
+group = project.property('build.group')
+version = project.property('build.version')
 
 android {
-    compileSdkVersion project.property ('android.compileSdkVersion').toInteger ()
-    buildToolsVersion project.property ('android.buildToolsVersion')
+    compileSdkVersion project.property('android.compileSdkVersion').toInteger()
+    buildToolsVersion project.property('android.buildToolsVersion')
 
     defaultConfig {
-        minSdkVersion project.property ('android.minSdkVersion')
-        targetSdkVersion project.property ('android.targetSdkVersion').toInteger ()
+        minSdkVersion project.property('android.minSdkVersion')
+        targetSdkVersion project.property('android.targetSdkVersion').toInteger()
 
-        versionCode = project.property ('build.versionCode').toInteger ()
-        versionName = project.property ('build.version')
+        versionCode = project.property('build.versionCode').toInteger()
+        versionName = project.property('build.version')
 
-        testApplicationId project.property ('android.testApplicationId')
+        testApplicationId project.property('android.testApplicationId')
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
@@ -83,16 +83,20 @@ android {
 dependencies {
     // For forked version of DBFlow.
     apt fileTree(dir: 'libs', include: ['DBFlow-Compiler-2.2.2.jar'])
-    compile 'com.dbflow:DBFlow:2.2.2@aar'
     compile fileTree(dir: 'libs', include: ['DBFlow-Core-2.2.2.jar'])
-
-    compile 'com.squareup:javawriter:2.5.0'
-    compile 'com.google.auto.service:auto-service:1.0-rc2'
 
     //apt 'com.raizlabs.android:DBFlow-Compiler:2.2.1'
     //compile 'com.raizlabs.android:DBFlow-Core:2.2.1'
     //compile 'com.raizlabs.android:DBFlow:2.2.1'
 
+    androidTestCompile 'junit:junit:4.11'
+    androidTestCompile('com.android.support.test:testing-support-lib:0.1') {
+        exclude group: 'junit'
+    }
+
+    compile 'com.dbflow:DBFlow:2.2.2@aar'
+    compile 'com.squareup:javawriter:2.5.0'
+    compile 'com.google.auto.service:auto-service:1.0-rc2'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
@@ -100,11 +104,9 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.0'
     compile 'com.google.android.gms:play-services-gcm:8.1.0'
     compile 'com.onehilltech.metadata:android-metadata:1.3.3'
-
-    androidTestCompile 'junit:junit:4.11'
-    androidTestCompile('com.android.support.test:testing-support-lib:0.1') {
-        exclude group: 'junit'
-    }
+    compile 'com.android.support:support-v4:22.2.1'
+    compile 'com.android.support:appcompat-v7:22.2.1'
+    compile 'com.android.support:design:22.2.1'
 }
 
 apt {
@@ -120,8 +122,8 @@ install {
                 packaging 'aar'
 
                 // Add your description here
-                name project.property ('project.name')
-                url  project.property ('project.website')
+                name project.property('project.name')
+                url project.property('project.website')
 
                 // Set your license
                 licenses {
@@ -138,9 +140,9 @@ install {
                     }
                 }
                 scm {
-                    connection project.property ('project.vcs')
-                    developerConnection project.property ('project.vcs')
-                    url project.property ('project.website')
+                    connection project.property('project.vcs')
+                    developerConnection project.property('project.vcs')
+                    url project.property('project.website')
                 }
             }
         }
@@ -156,7 +158,7 @@ task javadoc(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
 
     classpath += configurations.compile
-    classpath += project.files (android.getBootClasspath().join(File.pathSeparator))
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 
     failOnError false
 }
@@ -173,33 +175,33 @@ artifacts {
 }
 
 bintray {
-    user = project.property ('bintray.user')
-    key  = project.property ('bintray.apikey')
+    user = project.property('bintray.user')
+    key = project.property('bintray.apikey')
 
     configurations = ['archives']
 
     pkg {
-        repo    = project.property ('bintray.repo')
-        userOrg = project.property ('bintray.organization')
-        name    = project.property ('project.name')
-        desc    = project.property ('project.description')
+        repo = project.property('bintray.repo')
+        userOrg = project.property('bintray.organization')
+        name = project.property('project.name')
+        desc = project.property('project.description')
 
         publish = true
-        dryRun  = false
+        dryRun = false
 
-        websiteUrl      = project.property ('project.website')
-        vcsUrl          = project.property ('project.vcs')
-        issueTrackerUrl = project.property ('project.issues')
+        websiteUrl = project.property('project.website')
+        vcsUrl = project.property('project.vcs')
+        issueTrackerUrl = project.property('project.issues')
 
         licenses = ['Apache-2.0']
-        labels   = ['android', 'metadata', 'AndroidManifest.xml']
+        labels = ['android', 'metadata', 'AndroidManifest.xml']
 
         publicDownloadNumbers = true
 
         version {
-            name   = project.property ('build.version')
-            desc   = project.property ('project.description')
-            vcsTag = project.property ('build.version')
+            name = project.property('build.version')
+            desc = project.property('project.description')
+            vcsTag = project.property('build.version')
         }
     }
 }
