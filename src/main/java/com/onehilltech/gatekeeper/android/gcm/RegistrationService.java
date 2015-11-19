@@ -17,19 +17,24 @@
 package com.onehilltech.gatekeeper.android.gcm;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.JsonRequest;
 import com.onehilltech.gatekeeper.android.ResponseListener;
+import com.onehilltech.metadata.ManifestMetadata;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @class RegistrationService
@@ -38,12 +43,32 @@ public class RegistrationService extends IntentService
 {
   private static final String TAG = "RegistrationService";
 
-  public static final String EXTRA_AUTHORIZED_ENTITY = "extra_authorized_entity";
-  public static final String EXTRA_EXTRAS = "extra_extras";
+  private static final String EXTRA_AUTHORIZED_ENTITY = "extra_authorized_entity";
+  private static final String EXTRA_EXTRAS = "extra_extras";
+
+  public static final String METADATA_AUTHORIZED_ENTITY = "com.onehilltech.gatekeeper.android.authorized_entity";
+
 
   public RegistrationService ()
   {
     super (TAG);
+  }
+
+  public static Intent newIntent (Context context)
+      throws InvocationTargetException, PackageManager.NameNotFoundException, IllegalAccessException, ClassNotFoundException
+  {
+    ManifestMetadata metadata = ManifestMetadata.get (context);
+    String authorizedEntity = metadata.getValue (METADATA_AUTHORIZED_ENTITY, true, String.class);
+
+    return newIntent (context, authorizedEntity);
+  }
+
+  public static Intent newIntent (Context context, String authorizedEntity)
+  {
+    Intent intent = new Intent (context, RegistrationService.class);
+    intent.putExtra (EXTRA_AUTHORIZED_ENTITY, authorizedEntity);
+
+    return intent;
   }
 
   @Override
@@ -106,23 +131,27 @@ public class RegistrationService extends IntentService
         @Override
         public void onInitialized (GatekeeperClient client)
         {
+          String url = client.getCompleteUrl ("/me/notifications");
+
           JsonRequest<Boolean> request =
-              client.makeJsonRequest (
-                  Request.Method.POST,
-                  "/me/notifications",
-                  Boolean.class,
-                  listener);
+              client.makeJsonRequest (Request.Method.POST,
+                                      url,
+                                      new TypeReference<Boolean> () {},
+                                      listener);
 
           class Data
           {
+            public Data (String network, String token)
+            {
+              this.network = network;
+              this.token = token;
+            }
+
             public String network;
             public String token;
           }
 
-          Data data = new Data ();
-          data.network = "gcm";
-          data.token = token;
-
+          Data data = new Data ("gcm", token);
           request.setData (data);
 
           client.addRequest (request);
@@ -137,7 +166,7 @@ public class RegistrationService extends IntentService
     }
     catch (Exception e)
     {
-      Log.e (TAG, e.getLocalizedMessage (), e);
+      Log.e (TAG, e.getMessage (), e);
     }
   }
 }

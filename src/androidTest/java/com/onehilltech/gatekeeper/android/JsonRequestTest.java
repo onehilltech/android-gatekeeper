@@ -6,6 +6,7 @@ import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.protocol.HTTP;
@@ -44,8 +45,9 @@ public class JsonRequestTest
             Request.Method.GET,
             "/does-not-matter",
             null,
-            Boolean.class,
-            new ResponseListener<Boolean> () {
+            new TypeReference<Boolean> () { },
+            new ResponseListener<Boolean> ()
+            {
               @Override
               public void onResponse (Boolean response)
               {
@@ -77,8 +79,9 @@ public class JsonRequestTest
             Request.Method.GET,
             "/does-not-matter",
             null,
-            Message.class,
-            new ResponseListener<Message> () {
+            new TypeReference<Message> () { },
+            new ResponseListener<Message> ()
+            {
               @Override
               public void onResponse (Message response)
               {

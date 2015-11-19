@@ -7,6 +7,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onehilltech.gatekeeper.android.db.AccessToken;
 
@@ -31,7 +32,7 @@ public class JsonRequest <T> extends Request <T>
 
   private final AccessToken token_;
 
-  private final Class <T> responseType_;
+  private final TypeReference <T> typeReference_;
 
   private Object dataObj_;
 
@@ -46,14 +47,14 @@ public class JsonRequest <T> extends Request <T>
   public JsonRequest (int method,
                       String url,
                       AccessToken token,
-                      Class <T> responseType,
+                      TypeReference<T> typeReference,
                       ResponseListener<T> listener)
   {
     super (method, url, listener);
 
     this.token_ = token;
     this.listener_ = listener;
-    this.responseType_ = responseType;
+    this.typeReference_ = typeReference;
   }
 
   /**
@@ -113,7 +114,7 @@ public class JsonRequest <T> extends Request <T>
     try
     {
       String json = new String(response.data, HttpHeaderParser.parseCharset (response.headers));
-      T value = this.objMapper_.readValue (json, this.responseType_);
+      T value = this.objMapper_.readValue (json, this.typeReference_);
 
       return Response.success (value, HttpHeaderParser.parseCacheHeaders (response));
     }

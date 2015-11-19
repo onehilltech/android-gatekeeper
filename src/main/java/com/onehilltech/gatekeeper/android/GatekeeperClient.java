@@ -1,6 +1,7 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
@@ -10,13 +11,15 @@ import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
-import com.onehilltech.gatekeeper.android.db.ClientToken;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
+import com.onehilltech.gatekeeper.android.db.ClientToken;
 import com.onehilltech.gatekeeper.android.db.ClientToken$Table;
 import com.onehilltech.gatekeeper.android.db.UserToken;
 import com.onehilltech.gatekeeper.android.db.UserToken$Table;
+import com.onehilltech.gatekeeper.android.gcm.RegistrationService;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
@@ -150,6 +153,25 @@ public class GatekeeperClient
   }
 
   /**
+   * Enable support for Google Cloud Messaging.
+   *
+   * @param context
+   */
+  public void enableGoogleCloudMessageSupport (Context context)
+  {
+    try
+    {
+      // Start IntentService to register this application with GCM.
+      Intent intent = RegistrationService.newIntent (context);
+      context.startService (intent);
+    }
+    catch (Exception e)
+    {
+      throw new IllegalStateException ("Failed to enable Google Cloud Messaging support", e);
+    }
+  }
+
+  /**
    * Initialize a new GatekeeperClient object.
    *
    * @param options           Initialization options
@@ -186,8 +208,9 @@ public class GatekeeperClient
             Request.Method.POST,
             url,
             null,
-            Token.class,
-            new ResponseListener <Token> () {
+            new TypeReference<Token> () { },
+            new ResponseListener<Token> ()
+            {
               @Override
               public void onErrorResponse (VolleyError error)
               {
@@ -197,7 +220,8 @@ public class GatekeeperClient
               @Override
               public void onResponse (Token response)
               {
-                response.accept (new TokenVisitor () {
+                response.accept (new TokenVisitor ()
+                {
                   @Override
                   public void visitBearerToken (BearerToken token)
                   {
@@ -342,8 +366,9 @@ public class GatekeeperClient
             Request.Method.POST,
             url,
             this.clientToken_,
-            Boolean.class,
-            new ResponseListener<Boolean> () {
+            new TypeReference<Boolean> () { },
+            new ResponseListener<Boolean> ()
+            {
               @Override
               public void onErrorResponse (VolleyError error)
               {
@@ -453,7 +478,7 @@ public class GatekeeperClient
         this.makeJsonRequest (
             Request.Method.POST,
             url,
-            Token.class,
+            new TypeReference<Token> (){ },
             new ResponseListener<Token> ()
             {
               @Override
@@ -505,8 +530,9 @@ public class GatekeeperClient
         this.makeJsonRequest (
             Request.Method.GET,
             url,
-            Boolean.class,
-            new ResponseListener<Boolean> () {
+            new TypeReference<Boolean> () { },
+            new ResponseListener<Boolean> ()
+            {
               @Override
               public void onErrorResponse (VolleyError error)
               {
@@ -550,10 +576,10 @@ public class GatekeeperClient
    */
   public <T> JsonRequest<T> makeJsonRequest (int method,
                                              String path,
-                                             Class <T> responseType,
+                                             TypeReference<T> typeReference,
                                              ResponseListener<T> listener)
   {
-    return new JsonRequest<> (method, path, this.userToken_, responseType, listener);
+    return new JsonRequest<> (method, path, this.userToken_, typeReference, listener);
   }
 
   /**
@@ -572,7 +598,7 @@ public class GatekeeperClient
    * @param relativePath   Relative path of the url
    * @return String containing the complete url path
    */
-  private String getCompleteUrl (String relativePath)
+  public String getCompleteUrl (String relativePath)
   {
     return this.baseUri_ + relativePath;
   }

@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.google.android.gms.iid.InstanceIDListenerService;
-import com.onehilltech.metadata.ManifestMetadata;
 
 /**
  * Utility service that handles GCM refreshing the token. This service uses the authorized
@@ -37,24 +36,16 @@ import com.onehilltech.metadata.ManifestMetadata;
  */
 public class InstanceIDService extends InstanceIDListenerService
 {
-  /// Name of the metadata property containing the authorized entity.
-  public static final String METADATA_AUTHORIZED_ENTITY = "com.onehilltech.gatekeeper.android.authorized_entity";
-
   private static final String TAG = "InstanceIDService";
 
   @Override
   public void onTokenRefresh ()
   {
+    Log.d (TAG, "Refreshing Google Cloud Messaging token");
+
     try
     {
-      // The authorized entity is defined in AndroidManifest.xml. Read it, and pass it
-      // along to the RegistrationService as an extra.
-      ManifestMetadata metadata = ManifestMetadata.get (this);
-      String authorizedEntity = metadata.getValue (METADATA_AUTHORIZED_ENTITY, true, String.class);
-
-      Intent intent = new Intent (this, RegistrationService.class);
-      intent.putExtra (RegistrationService.EXTRA_AUTHORIZED_ENTITY, authorizedEntity);
-
+      Intent intent = RegistrationService.newIntent (this);
       this.startService (intent);
     }
     catch (Exception ex)
