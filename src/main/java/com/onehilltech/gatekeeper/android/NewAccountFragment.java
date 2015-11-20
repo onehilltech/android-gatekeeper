@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.android.volley.VolleyError;
+import com.onehilltech.gatekeeper.android.utils.InputError;
 
 import java.lang.reflect.InvocationTargetException;
 

@@ -1,11 +1,8 @@
-package com.onehilltech.gatekeeper.android;
+package com.onehilltech.gatekeeper.android.utils;
 
 import android.widget.TextView;
 
-/**
- * Created by hilljh on 11/19/15.
- */
-class InputError
+public class InputError
 {
   private TextView focusView_;
 
