@@ -77,6 +77,7 @@ public class LoginFragment extends Fragment
   {
     super.onViewCreated (view, savedInstanceState);
 
+    // Setup the UI controls.
     this.usernameView_ = (TextView)view.findViewById (R.id.username);
     this.passwordView_ = (TextView)view.findViewById (R.id.password);
 
@@ -87,6 +88,16 @@ public class LoginFragment extends Fragment
       public void onClick (View v)
       {
         performSignIn ();
+      }
+    });
+
+    View actionCreateNewAccount = view.findViewById (R.id.action_create_account);
+    actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
+    {
+      @Override
+      public void onClick (View v)
+      {
+        onLoginFragmentListener_.onCreateNewAccount (LoginFragment.this);
       }
     });
 
@@ -353,6 +364,8 @@ public class LoginFragment extends Fragment
   public interface OnLoginFragmentListener
   {
     void onLoginComplete (LoginFragment fragment);
+    void onCreateNewAccount (LoginFragment fragment);
+
     void onLoginError (LoginFragment fragment, Throwable t);
   }
 }

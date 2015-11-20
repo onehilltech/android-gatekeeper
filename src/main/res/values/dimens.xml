@@ -8,4 +8,7 @@
 
     <dimen name="button_sign_in_margin_top">16dp</dimen>
     <dimen name="button_create_new_account_margin_top">25dp</dimen>
+
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
 </resources>

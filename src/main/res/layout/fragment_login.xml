@@ -101,7 +101,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/button_create_new_account_margin_top"
             android:text="@string/action_create_new_account"
-            android:id="@+id/create_account"
+            android:id="@+id/action_create_account"
             android:layout_gravity="center_horizontal"
             android:clickable="true"
             android:layout_alignParentBottom="true"
