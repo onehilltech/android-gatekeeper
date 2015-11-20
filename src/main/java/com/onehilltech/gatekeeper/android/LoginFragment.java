@@ -35,6 +35,10 @@ public class LoginFragment extends Fragment
 {
   private static final String TAG = "LoginFragment";
 
+  private static final String ARG_USERNAME = "username";
+  private static final String ARG_PASSWORD = "password";
+  private static final String ARG_AUTO_LOGIN = "auto_login";
+
   private OnFragmentInteractionListener onLoginFragmentListener_;
 
   private TextView usernameView_;
@@ -49,6 +53,8 @@ public class LoginFragment extends Fragment
   private TextView progressTextView_;
   private TextView errorMessageView_;
 
+  private boolean autoLogin_ = false;
+
   /**
    * Create a new instance of the fragment.
    *
@@ -57,6 +63,45 @@ public class LoginFragment extends Fragment
   public static LoginFragment newInstance ()
   {
     LoginFragment fragment = new LoginFragment ();
+
+    return fragment;
+  }
+
+  /**
+   * Create an instance of the LoginFragment with the username initialized.
+   *
+   * @param username
+   * @return
+   */
+  public static LoginFragment newInstance (String username)
+  {
+    LoginFragment fragment = new LoginFragment ();
+
+    Bundle args = new Bundle ();
+    args.putString (ARG_USERNAME, username);
+
+    fragment.setArguments (args);
+
+    return fragment;
+  }
+
+
+  /**
+   * Create an instance of the LoginFragment with the username/password initialized.
+   *
+   * @param username
+   * @param password
+   * @return
+   */
+  public static LoginFragment newInstance (String username, String password)
+  {
+    LoginFragment fragment = new LoginFragment ();
+
+    Bundle args = new Bundle ();
+    args.putString (ARG_USERNAME, username);
+    args.putString (ARG_PASSWORD, password);
+
+    fragment.setArguments (args);
 
     return fragment;
   }
@@ -123,6 +168,21 @@ public class LoginFragment extends Fragment
       iconView.setVisibility (View.GONE);
     }
 
+    // Initialize the view with data.
+    Bundle args = this.getArguments ();
+
+    if (args != null)
+    {
+      if (args.containsKey (ARG_USERNAME))
+        this.usernameView_.setText (args.getString (ARG_USERNAME));
+
+      if (args.containsKey (ARG_PASSWORD))
+        this.passwordView_.setText (args.getString (ARG_PASSWORD));
+
+      if (args.containsKey (ARG_AUTO_LOGIN))
+        this.autoLogin_ = args.getBoolean (ARG_AUTO_LOGIN);
+    }
+
     try
     {
       this.showProgress (true, this.getString (R.string.progress_initializing_app));
@@ -168,7 +228,10 @@ public class LoginFragment extends Fragment
 
     // In case the activity does not finish, we still need to hide the progress
     // and show the login form.
-    this.hideProgress ();
+    if (this.autoLogin_)
+      this.performSignIn ();
+    else
+      this.hideProgress ();
   }
 
   @Override

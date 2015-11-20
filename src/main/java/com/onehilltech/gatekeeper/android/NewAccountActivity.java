@@ -13,6 +13,9 @@ import android.util.Log;
 public class NewAccountActivity extends AppCompatActivity
     implements NewAccountFragment.OnFragmentInteractionListener
 {
+  public static final String RESULT_DATA_USERNAME = "username";
+  public static final String RESULT_DATA_PASSWORD = "password";
+
   private static final String TAG = "NewAccountActivity";
 
   public static Intent newIntent (Context context)
@@ -25,6 +28,11 @@ public class NewAccountActivity extends AppCompatActivity
   {
     // Finish the activity and go back. Or, we could automatically login the user
     // to their account by passing their username/password back to the login activity.
+    Intent intent = new Intent ();
+    intent.putExtra (RESULT_DATA_USERNAME, fragment.getUsername ());
+    intent.putExtra (RESULT_DATA_PASSWORD, fragment.getPassword ());
+    this.setResult (RESULT_OK, intent);
+
     this.finish ();
   }
 
