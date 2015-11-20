@@ -226,10 +226,10 @@ public class LoginFragment extends Fragment
     InputError inputError = new InputError ();
 
     if (TextUtils.isEmpty (username))
-      inputError.addError (this.usernameView_, "Username is required");
+      inputError.addError (this.usernameView_, this.getString (R.string.error_field_required));
 
     if (TextUtils.isEmpty (password))
-      inputError.addError (this.passwordView_, "Password is required");
+      inputError.addError (this.passwordView_, this.getString (R.string.error_field_required));
 
     if (!inputError.hasError ())
     {
