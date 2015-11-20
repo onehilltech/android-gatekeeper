@@ -25,7 +25,7 @@ import com.onehilltech.gatekeeper.android.db.UserToken;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link OnLoginFragmentListener} interface
+ * {@link OnFragmentInteractionListener} interface
  * to handle interaction events.
  * Use the {@link LoginFragment#newInstance} factory method to
  * create an instance of this fragment.
@@ -35,7 +35,7 @@ public class LoginFragment extends Fragment
 {
   private static final String TAG = "LoginFragment";
 
-  private OnLoginFragmentListener onLoginFragmentListener_;
+  private OnFragmentInteractionListener onLoginFragmentListener_;
 
   private TextView usernameView_;
   private TextView passwordView_;
@@ -141,11 +141,11 @@ public class LoginFragment extends Fragment
 
     try
     {
-      this.onLoginFragmentListener_ = (OnLoginFragmentListener) activity;
+      this.onLoginFragmentListener_ = (OnFragmentInteractionListener) activity;
     }
     catch (ClassCastException e)
     {
-      throw new ClassCastException (activity + " must implement OnLoginFragmentListener");
+      throw new ClassCastException (activity + " must implement OnFragmentInteractionListener");
     }
   }
 
@@ -361,7 +361,7 @@ public class LoginFragment extends Fragment
    * "http://developer.android.com/training/basics/fragments/communicating.html"
    * >Communicating with Other Fragments</a> for more information.
    */
-  public interface OnLoginFragmentListener
+  public interface OnFragmentInteractionListener
   {
     void onLoginComplete (LoginFragment fragment);
     void onCreateNewAccount (LoginFragment fragment);

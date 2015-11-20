@@ -11,6 +11,7 @@
     <fragment
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.onehilltech.gatekeeper.android.LoginFragment" />
+        android:name="com.onehilltech.gatekeeper.android.LoginFragment"
+        tools:layout="@layout/fragment_login"/>
 
 </FrameLayout>

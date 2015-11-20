@@ -1,5 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -9,7 +10,7 @@ import android.util.Log;
  * Activity for using Gatekeeper to login
  */
 public class LoginActivity extends AppCompatActivity
-    implements LoginFragment.OnLoginFragmentListener
+    implements LoginFragment.OnFragmentInteractionListener
 {
   private static final String TAG = "LoginActivity";
 
@@ -29,7 +30,8 @@ public class LoginActivity extends AppCompatActivity
   @Override
   public void onCreateNewAccount (LoginFragment fragment)
   {
-    // TODO Start the NewAccountActivity.
+    Intent intent = NewAccountActivity.newIntent (this);
+    this.startActivity (intent);
   }
 
   @Override

@@ -1,15 +1,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                tools:context="com.onehilltech.gatekeeper.android.LoginFragment">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_horizontal"
+              android:orientation="vertical"
+              tools:context="com.onehilltech.gatekeeper.android.LoginFragment">
 
     <!-- application logo -->
 
     <ImageView
         android:id="@+id/app_icon"
-        android:layout_gravity="center_horizontal"
         android:layout_width="@dimen/login_logo_width_new"
         android:layout_height="@dimen/login_logo_height_new"
         android:layout_margin="@dimen/login_logo_margin"/>
@@ -18,7 +18,6 @@
         android:id="@+id/error_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:visibility="gone" />
 
     <!-- login progress -->
@@ -26,7 +25,6 @@
         android:id="@+id/progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:orientation="vertical"
         android:visibility="gone">
 
