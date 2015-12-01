@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
+import com.onehilltech.gatekeeper.android.data.Whoami;
 import com.onehilltech.gatekeeper.android.db.ClientToken;
 import com.onehilltech.gatekeeper.android.db.ClientToken$Table;
 import com.onehilltech.gatekeeper.android.db.UserToken;
@@ -509,6 +510,28 @@ public class GatekeeperClient
 
     request.setShouldCache (false);
     request.setData (grant);
+
+    this.requestQueue_.add (request);
+
+    return request;
+  }
+
+  /**
+   * Get the id of the current user.
+   *
+   * @return
+   */
+  public JsonRequest whoami (ResponseListener <Whoami> listener)
+  {
+    String relativeUrl = "/me/whoami";
+    String url = this.getCompleteUrl (relativeUrl);
+
+    JsonRequest request =
+        this.makeJsonRequest (
+            Request.Method.GET,
+            url,
+            new TypeReference <Whoami> () {},
+            listener);
 
     this.requestQueue_.add (request);
 
