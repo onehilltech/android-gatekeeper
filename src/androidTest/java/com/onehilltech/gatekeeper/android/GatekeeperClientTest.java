@@ -10,12 +10,10 @@ import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
-import com.onehilltech.gatekeeper.android.db.ClientToken;
-import com.onehilltech.gatekeeper.android.db.ClientToken$Table;
-import com.onehilltech.gatekeeper.android.db.GatekeeperDatabase;
-import com.onehilltech.gatekeeper.android.db.UserToken;
+import com.onehilltech.gatekeeper.android.data.ClientToken;
+import com.onehilltech.gatekeeper.android.data.ClientToken_Table;
+import com.onehilltech.gatekeeper.android.data.UserToken;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.sql.builder.Condition;
 import com.raizlabs.android.dbflow.sql.language.Select;
 
 import org.junit.After;
@@ -44,7 +42,7 @@ public class GatekeeperClientTest
   public void setup ()
   {
     // Delete the Gatekeeper database.
-    InstrumentationRegistry.getContext ().deleteDatabase (GatekeeperDatabase.NAME + ".db");
+    InstrumentationRegistry.getContext ().deleteDatabase ("gatekeeper.db");
 
     this.requestQueue_ = MockRequestQueue.newInstance ();
     this.mockNetwork_ = this.requestQueue_.getMockNetwork ();
@@ -75,7 +73,7 @@ public class GatekeeperClientTest
     // Make sure data is in the database.
     ClientToken clientToken =
         new Select ().from (ClientToken.class)
-                     .where (Condition.column (ClientToken$Table.CLIENT_ID).eq (STRING_CLIENT_ID))
+                     .where (ClientToken_Table.client_id.eq (STRING_CLIENT_ID))
                      .querySingle ();
 
     Assert.assertEquals (this.client_.getClientToken (), clientToken);
@@ -99,94 +97,6 @@ public class GatekeeperClientTest
     // without any network communication.
     this.client_ = null;
     Assert.assertNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
-    Assert.assertTrue (this.client_.isLoggedIn ());
-  }
-
-  @Test
-  public void testLogout () throws Exception
-  {
-    // Initialize the Gatekeeper client, the get a user token. This approach should
-    // get a user token from the service.
-    Assert.assertNotNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
-    Assert.assertNotNull (this.getUserToken (STRING_USERNAME, STRING_PASSWORD));
-
-    // Logout the user.
-    Assert.assertNotNull (this.logoutUser ());
-    Assert.assertFalse (this.client_.isLoggedIn ());
-
-    try
-    {
-      this.client_.logout (new ResponseListener<Boolean> ()
-      {
-        @Override
-        public void onErrorResponse (VolleyError error)
-        {
-
-        }
-
-        @Override
-        public void onResponse (Boolean response)
-        {
-
-        }
-      });
-
-      // Try to logout the user again.
-      Assert.fail ("Should not logout the user");
-    }
-    catch (IllegalStateException e)
-    {
-      // Expect this exception
-    }
-  }
-
-  private JsonRequest logoutUser () throws Exception
-  {
-    MockNetwork.RequestMatcher requestMatcher = new MockNetwork.RequestMatcher ()
-    {
-      @Override
-      public boolean matches (Request<?> request)
-      {
-        return request.getOriginUrl ().endsWith ("/oauth2/logout");
-      }
-
-      @Override
-      public NetworkResponse getNetworkResponse (Request<?> request) throws VolleyError
-      {
-        return new NetworkResponse ("true".getBytes ());
-      }
-    };
-
-    this.mockNetwork_.addMatcher (requestMatcher);
-
-    synchronized (this)
-    {
-      JsonRequest request = this.client_.logout (new ResponseListener<Boolean> ()
-      {
-        @Override
-        public void onErrorResponse (VolleyError error)
-        {
-          Assert.fail (error.getMessage ());
-        }
-
-        @Override
-        public void onResponse (Boolean response)
-        {
-          synchronized (GatekeeperClientTest.this)
-          {
-            Assert.assertTrue (response);
-            GatekeeperClientTest.this.notify ();
-          }
-        }
-      });
-
-      if (request != null)
-        this.wait ();
-
-      this.mockNetwork_.removeMatcher (requestMatcher);
-
-      return request;
-    }
   }
 
   /**
@@ -268,8 +178,6 @@ public class GatekeeperClientTest
 
       if (request != null)
         this.wait ();
-
-      Assert.assertTrue (this.client_.isLoggedIn ());
 
       this.mockNetwork_.removeMatcher (requestMatcher);
       return request;

@@ -20,12 +20,12 @@
         <activity android:name=".NewAccountActivity"></activity>
 
         <service
-            android:name=".gcm.RegistrationService"
+            android:name=".gcm.GcmRegistrationIntentService"
             android:exported="false">
         </service>
 
         <service
-            android:name=".gcm.InstanceIDService"
+            android:name=".gcm.GcmInstanceIDService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID"/>

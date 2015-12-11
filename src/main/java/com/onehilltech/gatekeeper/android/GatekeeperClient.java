@@ -1,7 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
@@ -12,19 +11,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.onehilltech.gatekeeper.android.data.AccessToken;
+import com.onehilltech.gatekeeper.android.data.Account;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
+import com.onehilltech.gatekeeper.android.data.ClientToken;
+import com.onehilltech.gatekeeper.android.data.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
-import com.onehilltech.gatekeeper.android.data.Whoami;
-import com.onehilltech.gatekeeper.android.db.ClientToken;
-import com.onehilltech.gatekeeper.android.db.ClientToken$Table;
-import com.onehilltech.gatekeeper.android.db.UserToken;
-import com.onehilltech.gatekeeper.android.db.UserToken$Table;
-import com.onehilltech.gatekeeper.android.gcm.RegistrationService;
+import com.onehilltech.gatekeeper.android.data.UserToken;
+import com.onehilltech.gatekeeper.android.data.UserToken_Table;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.sql.builder.Condition;
 import com.raizlabs.android.dbflow.sql.language.Select;
 
 import java.lang.reflect.InvocationTargetException;
@@ -46,9 +44,6 @@ public class GatekeeperClient
   /// Underlying HTTP client.
   private final RequestQueue requestQueue_;
 
-  /// Authorization token for the current user.
-  private UserToken userToken_;
-
   /// Authorization token for the client.
   private ClientToken clientToken_;
 
@@ -56,7 +51,7 @@ public class GatekeeperClient
   private static final String DBFLOW_MODULE_NAME = "Gatekeeper";
 
   /**
-   * Listener interface for initializing the client.
+   * OnRegistrationCompleteListener interface for initializing the client.
    */
   public interface OnInitialized
   {
@@ -154,25 +149,6 @@ public class GatekeeperClient
   }
 
   /**
-   * Enable support for Google Cloud Messaging.
-   *
-   * @param context
-   */
-  public void enableGoogleCloudMessageSupport (Context context)
-  {
-    try
-    {
-      // Start IntentService to register this application with GCM.
-      Intent intent = RegistrationService.newIntent (context);
-      context.startService (intent);
-    }
-    catch (Exception e)
-    {
-      throw new IllegalStateException ("Failed to enable Google Cloud Messaging support", e);
-    }
-  }
-
-  /**
    * Initialize a new GatekeeperClient object.
    *
    * @param options           Initialization options
@@ -189,7 +165,7 @@ public class GatekeeperClient
     // Check if the client already has a token stored in the database.
     ClientToken clientToken =
         new Select ().from (ClientToken.class)
-                     .where (Condition.column (ClientToken$Table.CLIENT_ID).eq (options.clientId))
+                     .where (ClientToken_Table.client_id.eq (options.clientId))
                      .querySingle ();
 
     if (clientToken != null)
@@ -250,7 +226,7 @@ public class GatekeeperClient
   }
 
   /**
-   * Helper method to make the GatekeeperClient object, and call the onInitialized
+   * Helper method to make the GatekeeperClient object, and call the onRegistrationComplete
    * callback with the client.
    *
    * @param options
@@ -286,19 +262,6 @@ public class GatekeeperClient
     this.clientId_ = clientId;
     this.clientToken_ = clientToken;
     this.requestQueue_ = requestQueue;
-
-    this.initUserToken ();
-  }
-
-  /**
-   * Initialize the user token from the cache.
-   */
-  private void initUserToken ()
-  {
-    // There should only be one user token.
-    this.userToken_ =
-        new Select ().from (UserToken.class)
-                     .querySingle ();
   }
 
   /**
@@ -319,16 +282,6 @@ public class GatekeeperClient
   public String getBaseUri ()
   {
     return this.baseUri_;
-  }
-
-  /**
-   * Test if the client has a token.
-   *
-   * @return
-   */
-  public boolean isLoggedIn ()
-  {
-    return this.userToken_ != null;
   }
 
   /**
@@ -397,16 +350,6 @@ public class GatekeeperClient
   }
 
   /**
-   * Get the logged in user's token.
-   *
-   * @return      UserToken object.
-   */
-  UserToken getUserToken ()
-  {
-    return this.userToken_;
-  }
-
-  /**
    * Get an access token for the user.
    *
    * @param username        Username
@@ -418,7 +361,7 @@ public class GatekeeperClient
     // Check if the token already exists in the database.
     UserToken userToken =
         new Select ().from (UserToken.class)
-                     .where (Condition.column (UserToken$Table.USERNAME).eq (username))
+                     .where (UserToken_Table.username.eq (username))
                      .querySingle ();
 
     if (userToken == null)
@@ -432,10 +375,6 @@ public class GatekeeperClient
     }
     else
     {
-      // Store the loaded token as the user token, then pass control to the
-      // listener. Make sure we return null as the request since we did not
-      // send a request to the server.
-      this.userToken_ = userToken;
       listener.onResponse (userToken);
     }
 
@@ -447,16 +386,16 @@ public class GatekeeperClient
    *
    * @param listener        Callback listener
    */
-  public JsonRequest refreshToken (ResponseListener <UserToken> listener)
+  public JsonRequest refreshToken (UserToken token, ResponseListener <UserToken> listener)
   {
-    if (!this.userToken_.canRefresh ())
+    if (!token.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
     RefreshToken refreshToken = new RefreshToken ();
     refreshToken.clientId = this.clientId_;
-    refreshToken.refreshToken = this.userToken_.getRefreshToken ();
+    refreshToken.refreshToken = token.getRefreshToken ();
 
-    return this.requestUserToken (this.userToken_.getUsername (), refreshToken, listener);
+    return this.requestUserToken (token.getUsername (), refreshToken, listener);
   }
 
   /**
@@ -479,7 +418,10 @@ public class GatekeeperClient
         this.makeJsonRequest (
             Request.Method.POST,
             url,
-            new TypeReference<Token> (){ },
+            this.clientToken_,
+            new TypeReference<Token> ()
+            {
+            },
             new ResponseListener<Token> ()
             {
               @Override
@@ -496,13 +438,7 @@ public class GatekeeperClient
                   @Override
                   public void visitBearerToken (BearerToken token)
                   {
-                    // Save the token to the database.
-                    UserToken userToken = UserToken.fromToken (username, token);
-                    userToken.save ();
-
-                    // Keep a reference to the token, and call the listener.
-                    userToken_ = userToken;
-                    listener.onResponse (userToken_);
+                    completeUserLogin (username, token, listener);
                   }
                 });
               }
@@ -517,11 +453,28 @@ public class GatekeeperClient
   }
 
   /**
+   * Complete the user login process.
+   *
+   * @param username
+   * @param token
+   * @param listener
+   */
+  private void completeUserLogin (String username, BearerToken token, ResponseListener<UserToken> listener)
+  {
+    // Save the token to the database.
+    UserToken userToken = UserToken.fromToken (username, token);
+    userToken.save ();
+
+    // Keep a reference to the token, and call the listener.
+    listener.onResponse (userToken);
+  }
+
+  /**
    * Get the id of the current user.
    *
    * @return
    */
-  public JsonRequest whoami (ResponseListener <Whoami> listener)
+  public JsonRequest whoami (UserToken token, ResponseListener <Account> listener)
   {
     String relativeUrl = "/me/whoami";
     String url = this.getCompleteUrl (relativeUrl);
@@ -530,7 +483,8 @@ public class GatekeeperClient
         this.makeJsonRequest (
             Request.Method.GET,
             url,
-            new TypeReference <Whoami> () {},
+            token,
+            new TypeReference <Account> () {},
             listener);
 
     this.requestQueue_.add (request);
@@ -543,16 +497,14 @@ public class GatekeeperClient
    *
    * @param listener      Response listener
    */
-  public JsonRequest logout (final ResponseListener <Boolean> listener)
+  public JsonRequest logout (final UserToken token, final ResponseListener <Boolean> listener)
   {
-    if (!this.isLoggedIn ())
-      throw new IllegalStateException ("Client is not logged in");
-
     String url = this.getCompleteUrl ("/oauth2/logout");
     JsonRequest<Boolean> request =
         this.makeJsonRequest (
             Request.Method.GET,
             url,
+            token,
             new TypeReference<Boolean> () { },
             new ResponseListener<Boolean> ()
             {
@@ -566,7 +518,7 @@ public class GatekeeperClient
               public void onResponse (Boolean response)
               {
                 if (response)
-                  completeLogout ();
+                  token.delete ();
 
                 listener.onResponse (response);
               }
@@ -576,15 +528,6 @@ public class GatekeeperClient
     this.requestQueue_.add (request);
 
     return request;
-  }
-
-  /**
-   * Complete the logout process by deleting the user token.
-   */
-  private void completeLogout ()
-  {
-    this.userToken_.delete ();
-    this.userToken_ = null;
   }
 
   /**
@@ -599,10 +542,11 @@ public class GatekeeperClient
    */
   public <T> JsonRequest<T> makeJsonRequest (int method,
                                              String path,
+                                             AccessToken token,
                                              TypeReference<T> typeReference,
                                              ResponseListener<T> listener)
   {
-    return new JsonRequest<> (method, path, this.userToken_, typeReference, listener);
+    return new JsonRequest<> (method, path, token, typeReference, listener);
   }
 
   /**

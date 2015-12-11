@@ -32,11 +32,11 @@ import com.google.android.gms.iid.InstanceIDListenerService;
  *
  * Using this service is optional. You can manually handle token refreshes using your own
  * service. In order to refresh the token with the Gatekeeper service, you must manually
- * start the RegistrationService intent.
+ * start the GcmRegistrationIntentService intent.
  */
-public class InstanceIDService extends InstanceIDListenerService
+public class GcmInstanceIDService extends InstanceIDListenerService
 {
-  private static final String TAG = "InstanceIDService";
+  private static final String TAG = "GcmInstanceIDService";
 
   @Override
   public void onTokenRefresh ()
@@ -45,7 +45,7 @@ public class InstanceIDService extends InstanceIDListenerService
 
     try
     {
-      Intent intent = RegistrationService.newIntent (this);
+      Intent intent = GcmRegistrationIntentService.newIntent (this);
       this.startService (intent);
     }
     catch (Exception ex)

@@ -19,7 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.volley.VolleyError;
-import com.onehilltech.gatekeeper.android.db.UserToken;
+import com.onehilltech.gatekeeper.android.data.UserToken;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 
@@ -32,7 +32,7 @@ import com.onehilltech.gatekeeper.android.utils.InputError;
  * create an instance of this fragment.
  */
 public class LoginFragment extends Fragment
-  implements GatekeeperClient.OnInitialized
+  implements SingleUserSessionClient.OnInitializedListener
 {
   private static final String TAG = "LoginFragment";
 
@@ -45,7 +45,7 @@ public class LoginFragment extends Fragment
   private TextView usernameView_;
   private TextView passwordView_;
 
-  private GatekeeperClient gatekeeperClient_;
+  private SingleUserSessionClient userSessionClient_;
 
   private JsonRequest loginRequest_;
 
@@ -187,7 +187,7 @@ public class LoginFragment extends Fragment
     try
     {
       this.showProgress (true, this.getString (R.string.progress_initializing_app));
-      GatekeeperClient.initialize (this.getActivity (), this);
+      SingleUserSessionClient.initialize (this.getActivity (), this);
     }
     catch (Exception e)
     {
@@ -218,11 +218,11 @@ public class LoginFragment extends Fragment
   }
 
   @Override
-  public void onInitialized (GatekeeperClient client)
+  public void onInitialized (SingleUserSessionClient client)
   {
     // Store our reference to the client, and check if the client is logged in.
     // This way, we can short circuit the login process.
-    this.gatekeeperClient_ = client;
+    this.userSessionClient_ = client;
 
     if (client.isLoggedIn ())
       this.onLoginFragmentListener_.onLoginComplete (this);
@@ -236,9 +236,9 @@ public class LoginFragment extends Fragment
   }
 
   @Override
-  public void onError (VolleyError error)
+  public void onError (Throwable t)
   {
-    Log.e (TAG, error.getMessage (), error);
+    Log.e (TAG, t.getMessage (), t);
 
     // Hide the progress, and make sure the login form is not shown since we could
     // not initialize the client.
@@ -249,7 +249,7 @@ public class LoginFragment extends Fragment
     this.showErrorMessage (this.getString (R.string.error_failed_to_initialize_client));
 
     if (this.onLoginFragmentListener_ != null)
-      this.onLoginFragmentListener_.onLoginError (this, error);
+      this.onLoginFragmentListener_.onLoginError (this, t);
   }
 
   /**
@@ -298,7 +298,7 @@ public class LoginFragment extends Fragment
     if (!inputError.hasError ())
     {
       this.loginRequest_ =
-          this.gatekeeperClient_.getUserToken (
+          this.userSessionClient_.loginUser (
               username,
               password,
               new ResponseListener<UserToken> ()

@@ -1,18 +1,14 @@
-package com.onehilltech.gatekeeper.android.db;
+package com.onehilltech.gatekeeper.android.data;
 
-import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 
 import java.util.Date;
 
-@Table(databaseName= GatekeeperDatabase.NAME, tableName=ClientToken.TABLE_NAME)
+@Table(database=GatekeeperDatabase.class, name="client_tokens")
 public class ClientToken extends AccessToken
 {
-  /// Name of the database table.
-  public static final String TABLE_NAME = "client_tokens";
-
   /// Client id.
   @Column(name="client_id")
   @PrimaryKey

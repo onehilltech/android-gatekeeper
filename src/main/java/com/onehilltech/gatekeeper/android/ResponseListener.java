@@ -3,7 +3,7 @@ package com.onehilltech.gatekeeper.android;
 import com.android.volley.Response;
 
 /**
- * Helper class that implements both the Response.Listener and Response.ErrorListener
+ * Helper class that implements both the Response.OnRegistrationCompleteListener and Response.ErrorListener
  * interface to reduce the number of objects created.
  *
  * @param <T>

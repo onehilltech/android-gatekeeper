@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -31,17 +32,18 @@ import com.google.android.gms.iid.InstanceID;
 import com.onehilltech.gatekeeper.android.GatekeeperClient;
 import com.onehilltech.gatekeeper.android.JsonRequest;
 import com.onehilltech.gatekeeper.android.ResponseListener;
+import com.onehilltech.gatekeeper.android.SingleUserSessionClient;
 import com.onehilltech.metadata.ManifestMetadata;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * @class RegistrationService
+ * @class GcmRegistrationIntentService
  */
-public class RegistrationService extends IntentService
+public class GcmRegistrationIntentService extends IntentService
 {
-  private static final String TAG = "RegistrationService";
+  private static final String TAG = "GcmRegIntentService";
 
   private static final String EXTRA_AUTHORIZED_ENTITY = "extra_authorized_entity";
   private static final String EXTRA_EXTRAS = "extra_extras";
@@ -49,7 +51,7 @@ public class RegistrationService extends IntentService
   public static final String METADATA_AUTHORIZED_ENTITY = "com.onehilltech.gatekeeper.android.authorized_entity";
 
 
-  public RegistrationService ()
+  public GcmRegistrationIntentService ()
   {
     super (TAG);
   }
@@ -65,7 +67,7 @@ public class RegistrationService extends IntentService
 
   public static Intent newIntent (Context context, String authorizedEntity)
   {
-    Intent intent = new Intent (context, RegistrationService.class);
+    Intent intent = new Intent (context, GcmRegistrationIntentService.class);
     intent.putExtra (EXTRA_AUTHORIZED_ENTITY, authorizedEntity);
 
     return intent;
@@ -82,18 +84,21 @@ public class RegistrationService extends IntentService
 
     try
     {
-      // Request the GCM token from this instance.
+      // Get the GCM configuration, and register the token with the service.
       InstanceID instanceID = InstanceID.getInstance (this);
-      String token = instanceID.getToken (authorizedEntity, GoogleCloudMessaging.INSTANCE_ID_SCOPE, extras);
+      final String gcmToken = instanceID.getToken (authorizedEntity, GoogleCloudMessaging.INSTANCE_ID_SCOPE, extras);
 
-      this.registerTokenWithServer (token, new ResponseListener<Boolean> () {
+      this.registerTokenWithServer (gcmToken, new ResponseListener<Boolean> () {
         @Override
         public void onResponse (Boolean response)
         {
-          if (response)
-            Log.d (TAG, "Registered gcm token with server");
-          else
-            Log.w (TAG, "Failed to register gcm token with server");
+          Intent intent = new Intent (Intents.REGISTRATION_COMPLETE);
+          intent.putExtra (Intents.EXTRA_TOKEN, gcmToken);
+
+          // Broadcast the Gcm token to all that is listening. This is mainly the
+          // GcmClient object.
+          LocalBroadcastManager.getInstance (GcmRegistrationIntentService.this)
+                               .sendBroadcast (intent);
         }
 
         @Override
@@ -119,54 +124,49 @@ public class RegistrationService extends IntentService
    */
   private void registerTokenWithServer (final String token, final ResponseListener <Boolean> listener)
   {
-    try
+    // Since the GatekeeperClient cannot be used across activity/service boundaries,
+    // we need to initialize a new client. The initialization process must use the
+    // properties defined in the metadata to initialize the client. This is because
+    // there is no way to pass the client id, client secret, and base uri of the
+    // service to this object.
+    SingleUserSessionClient.initialize (this, new SingleUserSessionClient.OnInitializedListener ()
     {
-      // Since the GatekeeperClient cannot be used across activity/service boundaries,
-      // we need to initialize a new client. The initialization process must use the
-      // properties defined in the metadata to initialize the client. This is becuase
-      // there is no way to pass the client id, client secret, and base uri of the
-      // service to this object.
+      @Override
+      public void onInitialized (SingleUserSessionClient sessionClient)
+      {
+        GatekeeperClient gatekeeperClient = sessionClient.getClient ();
+        String url = gatekeeperClient.getCompleteUrl ("/me/notifications");
 
-      GatekeeperClient.initialize (this, new GatekeeperClient.OnInitialized () {
-        @Override
-        public void onInitialized (GatekeeperClient client)
+        JsonRequest<Boolean> request =
+            sessionClient.makeJsonRequest (Request.Method.POST,
+                                           url,
+                                           new TypeReference<Boolean> () {},
+                                           listener);
+
+        class PostData
         {
-          String url = client.getCompleteUrl ("/me/notifications");
-
-          JsonRequest<Boolean> request =
-              client.makeJsonRequest (Request.Method.POST,
-                                      url,
-                                      new TypeReference<Boolean> () {},
-                                      listener);
-
-          class Data
+          public PostData (String network, String token)
           {
-            public Data (String network, String token)
-            {
-              this.network = network;
-              this.token = token;
-            }
-
-            public String network;
-            public String token;
+            this.network = network;
+            this.token = token;
           }
 
-          Data data = new Data ("gcm", token);
-          request.setData (data);
-
-          client.addRequest (request);
+          public String network;
+          public String token;
         }
 
-        @Override
-        public void onError (VolleyError error)
-        {
-          Log.e (TAG, "Gatekeeper initialization error; cannot update Google Cloud Messaging token");
-        }
-      });
-    }
-    catch (Exception e)
-    {
-      Log.e (TAG, e.getMessage (), e);
-    }
+        PostData data = new PostData ("gcm", token);
+        request.setData (data);
+
+        gatekeeperClient.addRequest (request);
+      }
+
+      @Override
+      public void onError (Throwable t)
+      {
+        Log.e (TAG, "Gatekeeper initialization error; cannot update Google Cloud Messaging token");
+
+      }
+    });
   }
 }
