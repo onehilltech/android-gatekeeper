@@ -19,7 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.volley.VolleyError;
-import com.onehilltech.gatekeeper.android.data.UserToken;
+import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 

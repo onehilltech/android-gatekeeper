@@ -11,19 +11,19 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.onehilltech.gatekeeper.android.data.AccessToken;
-import com.onehilltech.gatekeeper.android.data.Account;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
-import com.onehilltech.gatekeeper.android.data.ClientToken;
-import com.onehilltech.gatekeeper.android.data.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
-import com.onehilltech.gatekeeper.android.data.UserToken;
-import com.onehilltech.gatekeeper.android.data.UserToken_Table;
+import com.onehilltech.gatekeeper.android.model.AccessToken;
+import com.onehilltech.gatekeeper.android.model.Account;
+import com.onehilltech.gatekeeper.android.model.ClientToken;
+import com.onehilltech.gatekeeper.android.model.ClientToken$Table;
+import com.onehilltech.gatekeeper.android.model.UserToken;
+import com.onehilltech.gatekeeper.android.model.UserToken$Table;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.sql.language.Select;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -164,9 +164,10 @@ public class GatekeeperClient
 
     // Check if the client already has a token stored in the database.
     ClientToken clientToken =
-        new Select ().from (ClientToken.class)
-                     .where (ClientToken_Table.client_id.eq (options.clientId))
-                     .querySingle ();
+        SQLite.select ()
+              .from (ClientToken.class)
+              .where (ClientToken$Table.client_id.eq (options.clientId))
+              .querySingle ();
 
     if (clientToken != null)
     {
@@ -360,25 +361,23 @@ public class GatekeeperClient
   {
     // Check if the token already exists in the database.
     UserToken userToken =
-        new Select ().from (UserToken.class)
-                     .where (UserToken_Table.username.eq (username))
-                     .querySingle ();
+        SQLite.select ()
+              .from (UserToken.class)
+              .where (UserToken$Table.username.eq (username))
+              .querySingle ();
 
-    if (userToken == null)
-    {
-      UserCredentials userCredentials = new UserCredentials ();
-      userCredentials.clientId = this.clientId_;
-      userCredentials.username = username;
-      userCredentials.password = password;
-
-      return this.requestUserToken (username, userCredentials, listener);
-    }
-    else
+    if (userToken != null)
     {
       listener.onResponse (userToken);
+      return null;
     }
 
-    return null;
+    UserCredentials userCredentials = new UserCredentials ();
+    userCredentials.clientId = this.clientId_;
+    userCredentials.username = username;
+    userCredentials.password = password;
+
+    return this.requestUserToken (username, userCredentials, listener);
   }
 
   /**

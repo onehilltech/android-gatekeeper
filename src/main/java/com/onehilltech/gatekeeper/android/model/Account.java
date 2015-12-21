@@ -1,19 +1,17 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.ModelContainer;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
-import com.raizlabs.android.dbflow.sql.language.Select;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 
 @ModelContainer
-@Table (database=GatekeeperDatabase.class, name="accounts")
+@Table (database=GatekeeperDatabase.class, name="account")
 public class Account extends BaseModel
 {
-  @Column
   @PrimaryKey
   public String _id;
 
@@ -22,26 +20,31 @@ public class Account extends BaseModel
     // required constructor
   }
 
+  private Account (String id)
+  {
+    this._id = id;
+  }
+
   /**
    * Lookup an account, or create a new account if one does not exist.
    *
-   * @param id
-   * @return
+   * @param id      The account id
+   * @return        Account object
    */
   @JsonCreator
   public static Account lookupOrCreate (@JsonProperty("_id") String id)
   {
     Account account =
-        new Select ()
-            .from (Account.class)
-            .where (Account_Table._id.eq (id))
-            .querySingle ();
+        SQLite.select ()
+              .from (Account.class)
+              .where (Account$Table._id.eq (id))
+              .querySingle ();
 
-    if (account == null)
-    {
-      account = new Account (id);
-      account.save ();
-    }
+    if (account != null)
+      return account;
+
+    account = new Account (id);
+    account.insert ();
 
     return account;
   }
@@ -49,10 +52,5 @@ public class Account extends BaseModel
   public String getId ()
   {
     return this._id;
-  }
-
-  private Account (String id)
-  {
-    this._id = id;
   }
 }

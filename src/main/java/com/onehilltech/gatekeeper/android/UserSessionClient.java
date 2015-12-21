@@ -1,6 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
-import com.onehilltech.gatekeeper.android.data.UserToken;
+import com.onehilltech.gatekeeper.android.model.UserToken;
 
 /**
  * Created by hilljh on 12/1/15.

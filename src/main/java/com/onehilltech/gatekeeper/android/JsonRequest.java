@@ -9,7 +9,7 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onehilltech.gatekeeper.android.data.AccessToken;
+import com.onehilltech.gatekeeper.android.model.AccessToken;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

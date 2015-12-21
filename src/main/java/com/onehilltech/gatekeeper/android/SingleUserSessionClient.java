@@ -7,8 +7,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.onehilltech.gatekeeper.android.data.Account;
-import com.onehilltech.gatekeeper.android.data.UserToken;
+import com.onehilltech.gatekeeper.android.model.Account;
+import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.sql.language.Select;
 
 import java.lang.reflect.InvocationTargetException;
@@ -115,6 +115,16 @@ public class SingleUserSessionClient extends UserSessionClient
   {
     this.userToken_.delete ();
     this.userToken_ = null;
+  }
+
+  /**
+   * Get the user token.
+   *
+   * @return
+   */
+  public UserToken getUserToken ()
+  {
+    return this.userToken_;
   }
 
   /**

@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android.model;
 
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.structure.BaseModel;
