@@ -37,7 +37,7 @@ public class Account extends BaseModel
     Account account =
         SQLite.select ()
               .from (Account.class)
-              .where (Account$Table._id.eq (id))
+              .where (Account_Table._id.eq (id))
               .querySingle ();
 
     if (account != null)

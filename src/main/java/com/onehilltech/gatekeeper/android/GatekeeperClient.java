@@ -17,9 +17,9 @@ import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.gatekeeper.android.model.AccessToken;
 import com.onehilltech.gatekeeper.android.model.Account;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
-import com.onehilltech.gatekeeper.android.model.ClientToken$Table;
+import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
-import com.onehilltech.gatekeeper.android.model.UserToken$Table;
+import com.onehilltech.gatekeeper.android.model.UserToken_Table;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
@@ -166,7 +166,7 @@ public class GatekeeperClient
     ClientToken clientToken =
         SQLite.select ()
               .from (ClientToken.class)
-              .where (ClientToken$Table.client_id.eq (options.clientId))
+              .where (ClientToken_Table.client_id.eq (options.clientId))
               .querySingle ();
 
     if (clientToken != null)
@@ -363,7 +363,7 @@ public class GatekeeperClient
     UserToken userToken =
         SQLite.select ()
               .from (UserToken.class)
-              .where (UserToken$Table.username.eq (username))
+              .where (UserToken_Table.username.eq (username))
               .querySingle ();
 
     if (userToken != null)
