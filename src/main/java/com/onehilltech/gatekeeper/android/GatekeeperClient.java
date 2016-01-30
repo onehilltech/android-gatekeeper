@@ -16,6 +16,7 @@ import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.gatekeeper.android.model.AccessToken;
 import com.onehilltech.gatekeeper.android.model.Account;
+import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
@@ -23,6 +24,7 @@ import com.onehilltech.gatekeeper.android.model.UserToken_Table;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
+import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.lang.reflect.InvocationTargetException;
@@ -160,7 +162,7 @@ public class GatekeeperClient
                                                final OnInitialized onInitialized)
   {
     // First, initialize the Gatekeeper DBFlow module.
-    FlowManager.initModule (DBFLOW_MODULE_NAME);
+    FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
 
     // Check if the client already has a token stored in the database.
     ClientToken clientToken =
@@ -347,6 +349,53 @@ public class GatekeeperClient
 
     this.requestQueue_.add (request);
 
+    return request;
+  }
+
+  /**
+   * Get the account profile for the user associated with the token.
+   *
+   * @param token
+   * @param listener
+   * @return
+   */
+  public JsonRequest getAccountProfile (UserToken token, ResponseListener <AccountProfile> listener)
+  {
+    String url = this.getCompleteUrl ("/me/profile");
+
+    JsonRequest <AccountProfile> request =
+        new JsonRequest<> (
+            Request.Method.GET,
+            url,
+            token,
+            new TypeReference <AccountProfile> () {},
+            listener);
+
+    this.requestQueue_.add (request);
+    return request;
+  }
+
+  /**
+   * Get an account profile.
+   *
+   * @param token
+   * @param accountId
+   * @param listener
+   * @return
+   */
+  public JsonRequest getAccountProfile (UserToken token, String accountId, ResponseListener <AccountProfile> listener)
+  {
+    String url = this.getCompleteUrl ("/accounts/" + accountId + "/profile");
+
+    JsonRequest <AccountProfile> request =
+        new JsonRequest<> (
+            Request.Method.GET,
+            url,
+            token,
+            new TypeReference <AccountProfile> () {},
+            listener);
+
+    this.requestQueue_.add (request);
     return request;
   }
 

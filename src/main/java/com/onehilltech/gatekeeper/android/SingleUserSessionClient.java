@@ -8,6 +8,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.model.Account;
+import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.sql.language.Select;
 
@@ -157,12 +158,39 @@ public class SingleUserSessionClient extends UserSessionClient
     });
   }
 
+  /**
+   * Get the profile for an account.
+   *
+   * @param listener
+   * @return
+   */
+  public JsonRequest getAccountProfile (ResponseListener <AccountProfile> listener)
+  {
+    return this.getClient ().getAccountProfile (this.userToken_, listener);
+  }
+
+  /**
+   * Test if the client is logged in.
+   *
+   * @return
+   */
   public boolean isLoggedIn ()
   {
     return this.userToken_ != null;
   }
 
 
+  /**
+   * Make a JsonRequest object for the current user. The request will set the
+   * authorization header for the server to validate.
+   *
+   * @param method
+   * @param path
+   * @param typeReference
+   * @param listener
+   * @param <T>
+   * @return
+   */
   public <T> JsonRequest <T> makeJsonRequest (int method,
                                               String path,
                                               TypeReference<T> typeReference,
