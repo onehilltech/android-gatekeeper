@@ -11,7 +11,7 @@ import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
-import com.onehilltech.gatekeeper.android.model.ClientToken$Table;
+import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
@@ -74,7 +74,7 @@ public class GatekeeperClientTest
     ClientToken clientToken =
         SQLite.select ()
               .from (ClientToken.class)
-              .where (ClientToken$Table.client_id.eq (STRING_CLIENT_ID))
+              .where (ClientToken_Table.client_id.eq (STRING_CLIENT_ID))
               .querySingle ();
 
     Assert.assertEquals (this.client_.getClientToken (), clientToken);
