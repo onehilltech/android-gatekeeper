@@ -167,8 +167,8 @@ artifacts {
 }
 
 bintray {
-    user = project.property('bintray.user')
-    key = project.property('bintray.apikey')
+    user = project.hasProperty ('bintray.user') ? project.property('bintray.user') : ''
+    key = project.hasProperty ('bintray.apikey') ? project.property('bintray.apikey') : ''
 
     configurations = ['archives']
 
