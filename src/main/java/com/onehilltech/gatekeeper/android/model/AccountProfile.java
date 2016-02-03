@@ -19,7 +19,7 @@ import java.util.Map;
 public class AccountProfile extends BaseModel
 {
   @PrimaryKey(autoincrement=true)
-  int _id;
+  long _id;
 
   @ForeignKey(
       onDelete=ForeignKeyAction.CASCADE,
