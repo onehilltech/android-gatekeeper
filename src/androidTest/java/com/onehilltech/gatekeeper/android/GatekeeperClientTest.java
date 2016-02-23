@@ -1,5 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
+import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -24,26 +25,29 @@ import org.junit.runner.RunWith;
 
 @RunWith (AndroidJUnit4.class)
 public class GatekeeperClientTest
+  implements GatekeeperClient.OnInitialized
 {
   private MockRequestQueue requestQueue_;
   private MockNetwork mockNetwork_;
 
+  private Configuration clientConfig_;
   private GatekeeperClient client_;
-
-  private static final String STRING_BASEURL = "http://localhost:5000";
-  private static final String STRING_CLIENT_ID = "my_client_id";
-  private static final String STRING_CLIENT_SECRET = "my_client_secret";
 
   private static final String STRING_USERNAME = "tester1";
   private static final String STRING_PASSWORD = "tester1";
   private static final String STRING_EMAIL = "tester@gatekeeper.com";
 
   @Before
-  public void setup ()
+  public void setup () throws Exception
   {
-    // Delete the Gatekeeper database.
-    InstrumentationRegistry.getContext ().deleteDatabase ("gatekeeper.db");
+    // Get the target context for the test case.
+    Context targetContext = InstrumentationRegistry.getTargetContext ();
 
+    // Delete the database.
+    targetContext.deleteDatabase ("gatekeeper.db");
+
+    // Prepare data needs to initialize the client.
+    this.clientConfig_ = Configuration.loadFromMetadata (InstrumentationRegistry.getTargetContext ());
     this.requestQueue_ = MockRequestQueue.newInstance ();
     this.mockNetwork_ = this.requestQueue_.getMockNetwork ();
 
@@ -51,14 +55,15 @@ public class GatekeeperClientTest
     this.requestQueue_.start ();
 
     // Initialize the DBFlow framework.
-    FlowManager.init (InstrumentationRegistry.getTargetContext ());
+    FlowManager.init (targetContext);
   }
 
   @After
   public void teardown ()
   {
     // Stop the request queue.
-    this.requestQueue_.stop ();
+    if (this.requestQueue_ != null)
+      this.requestQueue_.stop ();
 
     // Destroy the FlowManager resources.
     FlowManager.destroy ();
@@ -67,14 +72,14 @@ public class GatekeeperClientTest
   @Test
   public void testInitialize () throws Exception
   {
-    Assert.assertNotNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
+    Assert.assertNotNull (this.initializeClient ());
     Assert.assertNotNull (this.client_);
 
     // Make sure data is in the database.
     ClientToken clientToken =
         SQLite.select ()
               .from (ClientToken.class)
-              .where (ClientToken_Table.client_id.eq (STRING_CLIENT_ID))
+              .where (ClientToken_Table.client_id.eq (clientConfig_.clientId))
               .querySingle ();
 
     Assert.assertEquals (this.client_.getClientToken (), clientToken);
@@ -82,7 +87,7 @@ public class GatekeeperClientTest
     // Test initialization again. There should be no network transmission, and the
     // client should initialize itself again.
     this.client_ = null;
-    Assert.assertNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
+    Assert.assertNull (this.initializeClient ());
     Assert.assertNotNull (this.client_);
   }
 
@@ -91,13 +96,13 @@ public class GatekeeperClientTest
   {
     // Initialize the Gatekeeper client, the get a user token. This approach should
     // get a user token from the service.
-    Assert.assertNotNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
+    Assert.assertNotNull (this.initializeClient ());
     Assert.assertNotNull (this.getUserToken (STRING_USERNAME, STRING_PASSWORD));
 
     // Test initialization again. Both the client and the user should be initialized
     // without any network communication.
     this.client_ = null;
-    Assert.assertNull (this.initializeClient (STRING_CLIENT_ID, STRING_CLIENT_SECRET));
+    Assert.assertNull (this.initializeClient ());
   }
 
   /**
@@ -117,7 +122,7 @@ public class GatekeeperClientTest
       @Override
       public boolean matches (Request<?> request)
       {
-        if (!request.getOriginUrl ().equals (STRING_BASEURL + "/oauth2/token"))
+        if (!request.getOriginUrl ().equals (clientConfig_.baseUri + "/oauth2/token"))
           return false;
 
         JsonRequest jsonRequest = (JsonRequest) request;
@@ -126,7 +131,7 @@ public class GatekeeperClientTest
         return
             userCredentials.username.equals (username) &&
                 userCredentials.password.equals (password) &&
-                userCredentials.clientId.equals (STRING_CLIENT_ID);
+                userCredentials.clientId.equals (clientConfig_.clientId);
       }
 
       @Override
@@ -190,7 +195,7 @@ public class GatekeeperClientTest
    *
    * @throws Exception
    */
-  private Request <?> initializeClient (final String clientId, final String clientSecret)
+  private Request <?> initializeClient ()
       throws Exception
   {
     final BearerToken fakeToken = BearerToken.generateRandomToken ();
@@ -200,15 +205,15 @@ public class GatekeeperClientTest
       @Override
       public boolean matches (Request<?> request)
       {
-        if (!request.getOriginUrl ().equals (STRING_BASEURL + "/oauth2/token"))
+        if (!request.getOriginUrl ().equals (clientConfig_.baseUri + "/oauth2/token"))
           return false;
 
         JsonRequest jsonRequest = (JsonRequest) request;
         ClientCredentials clientCredentials = (ClientCredentials) jsonRequest.getData ();
 
         return
-            clientCredentials.clientId.equals (clientId) &&
-                clientCredentials.clientSecret.equals (clientSecret);
+            clientCredentials.clientId.equals (clientConfig_.clientId) &&
+                clientCredentials.clientSecret.equals (clientConfig_.clientSecret);
       }
 
       @Override
@@ -227,50 +232,43 @@ public class GatekeeperClientTest
 
     this.mockNetwork_.addMatcher (requestMatcher);
 
-    // Initialize the Gatekeeper client.
-    final GatekeeperClient.Options options = new GatekeeperClient.Options ();
-    options.clientId = clientId;
-    options.clientSecret = clientSecret;
-    options.baseUri = options.baseUriEmulator = STRING_BASEURL;
-
     synchronized (this)
     {
       Request <?> request =
           GatekeeperClient.initialize (
-              options,
+              this.clientConfig_,
               this.requestQueue_,
-              new GatekeeperClient.OnInitialized ()
-              {
-                @Override
-                public void onInitialized (GatekeeperClient client)
-                {
-                  Assert.assertEquals (options.clientId, client.getClientId ());
-                  Assert.assertEquals (options.baseUri, client.getBaseUri ());
-
-                  // Save the client for the later test.
-                  client_ = client;
-
-                  synchronized (GatekeeperClientTest.this)
-                  {
-                    GatekeeperClientTest.this.notify ();
-                  }
-                }
-
-                @Override
-                public void onError (VolleyError error)
-                {
-                  synchronized (GatekeeperClientTest.this)
-                  {
-                    Assert.fail (error.getMessage ());
-                  }
-                }
-              });
+              this);
 
       if (request != null)
         this.wait ();
 
       this.mockNetwork_.removeMatcher (requestMatcher);
       return request;
+    }
+  }
+
+  @Override
+  public void onInitialized (GatekeeperClient client)
+  {
+    Assert.assertEquals (this.clientConfig_.clientId, client.getClientId ());
+    Assert.assertEquals (this.clientConfig_.baseUri, client.getBaseUri ());
+
+    // Save the client for the later test.
+    client_ = client;
+
+    synchronized (GatekeeperClientTest.this)
+    {
+      GatekeeperClientTest.this.notify ();
+    }
+  }
+
+  @Override
+  public void onError (VolleyError error)
+  {
+    synchronized (GatekeeperClientTest.this)
+    {
+      Assert.fail (error.getMessage ());
     }
   }
 }

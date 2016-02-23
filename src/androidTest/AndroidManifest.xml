@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.onehilltech.gatekeeper.android.test">
+
+    <application>
+        <meta-data android:name="com.onehilltech.gatekeeper.android.client_id"
+                   android:resource="@string/gatekeeper_client_id" />
+
+        <meta-data android:name="com.onehilltech.gatekeeper.android.client_secret"
+                   android:resource="@string/gatekeeper_client_secret" />
+
+        <meta-data android:name="com.onehilltech.gatekeeper.android.baseuri"
+                   android:resource="@string/gatekeeper_baseuri" />
+    </application>
+
+</manifest>

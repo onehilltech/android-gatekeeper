@@ -18,9 +18,7 @@ import java.util.Map;
 @Table (database=GatekeeperDatabase.class, name="account_profile")
 public class AccountProfile extends BaseModel
 {
-  @PrimaryKey(autoincrement=true)
-  long _id;
-
+  @PrimaryKey
   @ForeignKey(
       onDelete=ForeignKeyAction.CASCADE,
       onUpdate=ForeignKeyAction.CASCADE,
