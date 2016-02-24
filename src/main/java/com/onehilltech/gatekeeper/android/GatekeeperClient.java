@@ -2,7 +2,6 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -21,13 +20,17 @@ import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken_Table;
-import com.onehilltech.metadata.ManifestMetadata;
-import com.onehilltech.metadata.MetadataProperty;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
+import com.raizlabs.android.dbflow.config.*;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.lang.reflect.InvocationTargetException;
+
+// There is a nasty bug that we cannot figure out. The only want to get the line below
+// to actually import the database holder is to use wildcard import. Hopefully, we can
+// remove the wildcard import statement when we have more time to investigate the problem.
+//
+//import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
 
 /**
  * Client interface for communicating with a Gatekeeper service.
@@ -48,9 +51,6 @@ public class GatekeeperClient
 
   /// Authorization token for the client.
   private ClientToken clientToken_;
-
-  /// DBFlow module name for Gatekeeper.
-  private static final String DBFLOW_MODULE_NAME = "Gatekeeper";
 
   /**
    * OnRegistrationCompleteListener interface for initializing the client.
@@ -76,42 +76,6 @@ public class GatekeeperClient
   {
     void onResult (T result);
     void onError (VolleyError e);
-  }
-
-  /**
-   * Configuration options for the GatekeeperClient. The options can be loaded
-   * from the AndroidManifest.xml.
-   */
-  public static class Options
-  {
-    public static final String CLIENT_ID = "com.onehilltech.gatekeeper.android.client_id";
-    public static final String CLIENT_SECRET = "com.onehilltech.gatekeeper.android.client_secret";
-    public static final String BASE_URI = "com.onehilltech.gatekeeper.android.baseuri";
-    public static final String BASE_URI_EMULATOR = "com.onehilltech.gatekeeper.android.baseuri_emulator";
-
-    @MetadataProperty(name=CLIENT_ID, fromResource=true)
-    public String clientId;
-
-    @MetadataProperty(name=CLIENT_SECRET, fromResource=true)
-    public String clientSecret;
-
-    @MetadataProperty(name=BASE_URI, fromResource=true)
-    public String baseUri;
-
-    @MetadataProperty(name=BASE_URI_EMULATOR, fromResource=true)
-    public String baseUriEmulator;
-
-    /**
-     * Get the correct base uri based on where the application is running. This will return
-     * either baseUri or baseUriEmulator.
-     *
-     * @return      Base uri
-     */
-    public String getBaseUri ()
-    {
-      boolean isEmulator = Build.PRODUCT.startsWith ("sdk_google");
-      return isEmulator ? this.baseUriEmulator : this.baseUri;
-    }
   }
 
   /**
@@ -144,20 +108,18 @@ public class GatekeeperClient
       ClassNotFoundException,
       InvocationTargetException
   {
-    Options options = new Options ();
-    ManifestMetadata.get (context).initFromMetadata (options);
-
-    return initialize (options, requestQueue, onInitialized);
+    Configuration config = Configuration.loadFromMetadata (context);
+    return initialize (config, requestQueue, onInitialized);
   }
 
   /**
    * Initialize a new GatekeeperClient object.
    *
-   * @param options           Initialization options
+   * @param config            Client configuration
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static JsonRequest<Token> initialize (final Options options,
+  public static JsonRequest<Token> initialize (final Configuration config,
                                                final RequestQueue requestQueue,
                                                final OnInitialized onInitialized)
   {
@@ -168,20 +130,19 @@ public class GatekeeperClient
     ClientToken clientToken =
         SQLite.select ()
               .from (ClientToken.class)
-              .where (ClientToken_Table.client_id.eq (options.clientId))
+              .where (ClientToken_Table.client_id.eq (config.clientId))
               .querySingle ();
 
     if (clientToken != null)
     {
-      makeGatekeeperClient (options, clientToken, requestQueue, onInitialized);
+      makeGatekeeperClient (config, clientToken, requestQueue, onInitialized);
       return null;
     }
 
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
-    final String baseUri = options.getBaseUri ();
-    String url = baseUri + "/oauth2/token";
+    String url = config.baseUri + "/oauth2/token";
 
     JsonRequest<Token> request =
         new JsonRequest<> (
@@ -207,18 +168,18 @@ public class GatekeeperClient
                   {
                     // Set remaining properties on the bearer token, then save token to database.
                     Log.d (TAG, "Saving client token to database");
-                    ClientToken clientToken = ClientToken.fromToken (options.clientId, token);
+                    ClientToken clientToken = ClientToken.fromToken (config.clientId, token);
                     clientToken.save ();
 
-                    makeGatekeeperClient (options, clientToken, requestQueue, onInitialized);
+                    makeGatekeeperClient (config, clientToken, requestQueue, onInitialized);
                   }
                 });
               }
             });
 
     ClientCredentials clientCredentials = new ClientCredentials ();
-    clientCredentials.clientId = options.clientId;
-    clientCredentials.clientSecret = options.clientSecret;
+    clientCredentials.clientId = config.clientId;
+    clientCredentials.clientSecret = config.clientSecret;
 
     request.setData (clientCredentials);
     request.setShouldCache (false);
@@ -232,23 +193,22 @@ public class GatekeeperClient
    * Helper method to make the GatekeeperClient object, and call the onRegistrationComplete
    * callback with the client.
    *
-   * @param options
-   * @param clientToken
-   * @param requestQueue
-   * @param onInitialized
+   * @param config              Client configuration
+   * @param clientToken         Client access token
+   * @param requestQueue        Request queue for sending request to server
+   * @param onInitialized       Callback for initialization complete
    */
-  private static void makeGatekeeperClient (Options options,
+  private static void makeGatekeeperClient (Configuration config,
                                             ClientToken clientToken,
                                             RequestQueue requestQueue,
                                             OnInitialized onInitialized)
   {
     // Create a GatekeeperClient with the token.
     GatekeeperClient client =
-        new GatekeeperClient (
-            options.getBaseUri (),
-            options.clientId,
-            clientToken,
-            requestQueue);
+        new GatekeeperClient (config.baseUri,
+                              config.clientId,
+                              clientToken,
+                              requestQueue);
 
     onInitialized.onInitialized (client);
   }

@@ -5,9 +5,11 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:1.3.0'
+
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.3.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
         classpath 'com.google.gms:google-services:1.3.0-beta1'
+
         classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
     }
 }
@@ -20,12 +22,15 @@ allprojects {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
-
 apply plugin: 'com.neenbedankt.android-apt'
 
-group = project.property('build.group')
+apt {
+    arguments {
+        targetModuleName 'Gatekeeper'
+    }
+}
+
+group   = project.property('build.group')
 version = project.property('build.version')
 
 android {
@@ -76,12 +81,12 @@ android {
     }
 }
 
-def dbflow_version = "develop-SNAPSHOT"
+def dbflowVersion = "develop-SNAPSHOT"
 
 dependencies {
-    apt "com.github.onehilltech.DBFlow:dbflow-processor:${dbflow_version}"
-    compile "com.github.onehilltech.DBFlow:dbflow-core:${dbflow_version}"
-    compile "com.github.onehilltech.DBFlow:dbflow:${dbflow_version}"
+    apt "com.github.onehilltech.DBFlow:dbflow-processor:${dbflowVersion}"
+    compile "com.github.onehilltech.DBFlow:dbflow-core:${dbflowVersion}"
+    compile "com.github.onehilltech.DBFlow:dbflow:${dbflowVersion}"
 
     compile 'com.mcxiaoke.volley:library:1.0.19'
 
@@ -101,11 +106,8 @@ dependencies {
     }
 }
 
-apt {
-    arguments {
-        targetModuleName 'Gatekeeper'
-    }
-}
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 install {
     repositories.mavenInstaller {
@@ -197,3 +199,8 @@ bintray {
         }
     }
 }
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
