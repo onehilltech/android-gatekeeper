@@ -72,7 +72,7 @@ public class GatekeeperClientTest
   @Test
   public void testInitialize () throws Exception
   {
-    Assert.assertNotNull (this.initializeClient ());
+    this.initializeClient ();
     Assert.assertNotNull (this.client_);
 
     // Make sure data is in the database.
@@ -87,7 +87,7 @@ public class GatekeeperClientTest
     // Test initialization again. There should be no network transmission, and the
     // client should initialize itself again.
     this.client_ = null;
-    Assert.assertNull (this.initializeClient ());
+    this.initializeClient ();
     Assert.assertNotNull (this.client_);
   }
 
@@ -96,13 +96,13 @@ public class GatekeeperClientTest
   {
     // Initialize the Gatekeeper client, the get a user token. This approach should
     // get a user token from the service.
-    Assert.assertNotNull (this.initializeClient ());
+    this.initializeClient ();
     Assert.assertNotNull (this.getUserToken (STRING_USERNAME, STRING_PASSWORD));
 
     // Test initialization again. Both the client and the user should be initialized
     // without any network communication.
     this.client_ = null;
-    Assert.assertNull (this.initializeClient ());
+    this.initializeClient ();
   }
 
   /**
@@ -195,7 +195,7 @@ public class GatekeeperClientTest
    *
    * @throws Exception
    */
-  private Request <?> initializeClient ()
+  private void initializeClient ()
       throws Exception
   {
     final BearerToken fakeToken = BearerToken.generateRandomToken ();
@@ -234,17 +234,12 @@ public class GatekeeperClientTest
 
     synchronized (this)
     {
-      Request <?> request =
-          GatekeeperClient.initialize (
+      GatekeeperClient.initialize (
               this.clientConfig_,
               this.requestQueue_,
               this);
 
-      if (request != null)
-        this.wait ();
-
       this.mockNetwork_.removeMatcher (requestMatcher);
-      return request;
     }
   }
 

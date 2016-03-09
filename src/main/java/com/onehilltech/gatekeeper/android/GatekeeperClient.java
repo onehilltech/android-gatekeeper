@@ -2,6 +2,7 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -90,26 +91,36 @@ public class GatekeeperClient
    * @throws ClassNotFoundException
    * @throws InvocationTargetException
    */
-  public static JsonRequest<Token> initialize (Context context, OnInitialized onInitialized)
+  public static void initialize (Context context, OnInitialized onInitialized)
       throws PackageManager.NameNotFoundException,
       IllegalAccessException,
       ClassNotFoundException,
       InvocationTargetException
   {
     RequestQueue requestQueue = Volley.newRequestQueue (context);
-    return initialize (context, requestQueue, onInitialized);
+    initialize (context, requestQueue, onInitialized);
   }
 
-  public static JsonRequest<Token> initialize (Context context,
-                                               RequestQueue requestQueue,
-                                               OnInitialized onInitialized)
+  /**
+   * Initialize a new GatekeeperClient object.
+   *
+   * @param context
+   * @param requestQueue
+   * @param onInitialized
+   * @return
+   * @throws PackageManager.NameNotFoundException
+   * @throws IllegalAccessException
+   * @throws ClassNotFoundException
+   * @throws InvocationTargetException
+   */
+  public static void initialize (Context context, RequestQueue requestQueue, OnInitialized onInitialized)
       throws PackageManager.NameNotFoundException,
       IllegalAccessException,
       ClassNotFoundException,
       InvocationTargetException
   {
     Configuration config = Configuration.loadFromMetadata (context);
-    return initialize (config, requestQueue, onInitialized);
+    initialize (config, requestQueue, onInitialized);
   }
 
   /**
@@ -119,26 +130,65 @@ public class GatekeeperClient
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitialized     Callback for initialization.
    */
-  public static JsonRequest<Token> initialize (final Configuration config,
-                                               final RequestQueue requestQueue,
-                                               final OnInitialized onInitialized)
+  public static void initialize (final Configuration config,
+                                 final RequestQueue requestQueue,
+                                 final OnInitialized onInitialized)
   {
     // First, initialize the Gatekeeper DBFlow module.
     FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
 
-    // Check if the client already has a token stored in the database.
-    ClientToken clientToken =
-        SQLite.select ()
-              .from (ClientToken.class)
-              .where (ClientToken_Table.client_id.eq (config.clientId))
-              .querySingle ();
+    // Load the client token in the background.
+    new AsyncTask <String, Long, ClientToken> () {
+      @Override
+      protected ClientToken doInBackground (String... params)
+      {
+        String clientId = params[0];
 
+        // Check if the client already has a token stored in the database.
+        ClientToken clientToken =
+            SQLite.select ()
+                  .from (ClientToken.class)
+                  .where (ClientToken_Table.client_id.eq (clientId))
+                  .querySingle ();
+
+        return clientToken;
+      }
+
+      @Override
+      protected void onPostExecute (ClientToken clientToken)
+      {
+        initialize (config, clientToken, requestQueue, onInitialized);
+      }
+    }.execute (config.clientId);
+  }
+
+  /**
+   * Initialize a new GatekeeperClient object.
+   *
+   * @param config
+   * @param clientToken
+   * @param requestQueue
+   * @param onInitialized
+   */
+  private static void initialize (final Configuration config,
+                                  final ClientToken clientToken,
+                                  final RequestQueue requestQueue,
+                                  final OnInitialized onInitialized)
+  {
     if (clientToken != null)
-    {
       makeGatekeeperClient (config, clientToken, requestQueue, onInitialized);
-      return null;
-    }
+    else
+      requestClientToken (config, requestQueue, onInitialized);
+  }
 
+  /**
+   * Request a new client token. Requesting a new client token will result a initializing
+   * a new GatekeeperClient object.
+   */
+  private static void requestClientToken (final Configuration config,
+                                          final RequestQueue requestQueue,
+                                          final OnInitialized onInitialized)
+  {
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
@@ -185,8 +235,6 @@ public class GatekeeperClient
     request.setShouldCache (false);
 
     requestQueue.add (request);
-
-    return request;
   }
 
   /**

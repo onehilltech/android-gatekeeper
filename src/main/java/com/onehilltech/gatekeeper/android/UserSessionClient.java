@@ -3,12 +3,17 @@ package com.onehilltech.gatekeeper.android;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 
 /**
- * Created by hilljh on 12/1/15.
+ * Base class for all session client objects.
  */
 public abstract class UserSessionClient
 {
   protected final GatekeeperClient client_;
 
+  /**
+   * Initializing constructor.
+   *
+   * @param client
+   */
   protected UserSessionClient (GatekeeperClient client)
   {
     this.client_ = client;

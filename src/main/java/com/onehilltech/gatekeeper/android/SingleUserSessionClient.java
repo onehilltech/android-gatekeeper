@@ -2,6 +2,7 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
@@ -37,19 +38,36 @@ public class SingleUserSessionClient extends UserSessionClient
     initialize (context, Volley.newRequestQueue (context), listener);
   }
 
-  public static void initialize (Context context,
-                                 RequestQueue queue,
-                                 final OnInitializedListener listener)
+  /**
+   * Initialize the single user session client.
+   *
+   * @param context
+   * @param queue
+   * @param listener
+   */
+  public static void initialize (Context context, RequestQueue queue, final OnInitializedListener listener)
   {
     try
     {
       GatekeeperClient.initialize (context, queue, new GatekeeperClient.OnInitialized ()
       {
         @Override
-        public void onInitialized (GatekeeperClient client)
+        public void onInitialized (final GatekeeperClient client)
         {
-          SingleUserSessionClient sessionClient = new SingleUserSessionClient (client);
-          listener.onInitialized (sessionClient);
+          new AsyncTask <Void, Void, UserToken> () {
+            @Override
+            protected UserToken doInBackground (Void... params)
+            {
+              return new Select ().from (UserToken.class).querySingle ();
+            }
+
+            @Override
+            protected void onPostExecute (UserToken userToken)
+            {
+              SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
+              listener.onInitialized (sessionClient);
+            }
+          }.execute ();
         }
 
         @Override
@@ -70,16 +88,10 @@ public class SingleUserSessionClient extends UserSessionClient
    *
    * @param client
    */
-  private SingleUserSessionClient (GatekeeperClient client)
+  private SingleUserSessionClient (GatekeeperClient client, UserToken userToken)
   {
     super (client);
-
-    this.initUserToken ();
-  }
-
-  private void initUserToken ()
-  {
-    this.userToken_ = new Select ().from (UserToken.class).querySingle ();
+    this.userToken_ = userToken;
   }
 
   /**
@@ -116,6 +128,9 @@ public class SingleUserSessionClient extends UserSessionClient
   {
     this.userToken_.delete ();
     this.userToken_ = null;
+
+    if (this.whoami_ != null)
+      this.whoami_ = null;
   }
 
   /**
@@ -133,7 +148,7 @@ public class SingleUserSessionClient extends UserSessionClient
    *
    * @return
    */
-  public void getMyAccount (final ResponseListener <Account> listener)
+  public void getMyAccount (final ResponseListener<Account> listener)
   {
     if (this.whoami_ != null)
     {
