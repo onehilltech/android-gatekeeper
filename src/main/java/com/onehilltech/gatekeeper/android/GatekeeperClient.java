@@ -2,7 +2,6 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -22,8 +21,10 @@ import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken_Table;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.config.*;
-import com.raizlabs.android.dbflow.sql.language.SQLite;
+import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
+import com.raizlabs.android.dbflow.runtime.TransactionManager;
+import com.raizlabs.android.dbflow.runtime.transaction.SelectSingleModelTransaction;
+import com.raizlabs.android.dbflow.runtime.transaction.TransactionListenerAdapter;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -123,6 +124,7 @@ public class GatekeeperClient
     initialize (config, requestQueue, onInitialized);
   }
 
+
   /**
    * Initialize a new GatekeeperClient object.
    *
@@ -137,29 +139,17 @@ public class GatekeeperClient
     // First, initialize the Gatekeeper DBFlow module.
     FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
 
-    // Load the client token in the background.
-    new AsyncTask <String, Long, ClientToken> () {
-      @Override
-      protected ClientToken doInBackground (String... params)
-      {
-        String clientId = params[0];
-
-        // Check if the client already has a token stored in the database.
-        ClientToken clientToken =
-            SQLite.select ()
-                  .from (ClientToken.class)
-                  .where (ClientToken_Table.client_id.eq (clientId))
-                  .querySingle ();
-
-        return clientToken;
-      }
-
-      @Override
-      protected void onPostExecute (ClientToken clientToken)
-      {
-        initialize (config, clientToken, requestQueue, onInitialized);
-      }
-    }.execute (config.clientId);
+    TransactionManager.getInstance ().addTransaction (
+        new SelectSingleModelTransaction<> (
+            ClientToken.class,
+            new TransactionListenerAdapter<ClientToken> ()
+            {
+              @Override
+              public void onResultReceived (ClientToken clientToken)
+              {
+                initialize (config, clientToken, requestQueue, onInitialized);
+              }
+            }, ClientToken_Table.client_id.eq (config.clientId)));
   }
 
   /**
@@ -319,8 +309,11 @@ public class GatekeeperClient
     {
       @JsonProperty("client_id")
       public String clientId;
+
       public String username;
+
       public String password;
+
       public String email;
     }
 
@@ -414,27 +407,33 @@ public class GatekeeperClient
    * @param password        Password
    * @param listener        Callback listener
    */
-  public JsonRequest getUserToken (String username, String password, ResponseListener<UserToken> listener)
+  public void getUserToken (final String username, final String password, final ResponseListener<UserToken> listener)
   {
-    // Check if the token already exists in the database.
-    UserToken userToken =
-        SQLite.select ()
-              .from (UserToken.class)
-              .where (UserToken_Table.username.eq (username))
-              .querySingle ();
+    // First, see if there is a token on the device for the username/password
+    // combination. If it does not exist, then we need to request the token
+    // for the username/password from the service.
+    TransactionManager.getInstance ().addTransaction (
+        new SelectSingleModelTransaction (
+            UserToken.class,
+            new TransactionListenerAdapter <UserToken> () {
+              @Override
+              public void onResultReceived (UserToken userToken)
+              {
+                if (userToken != null)
+                {
+                  listener.onResponse (userToken);
+                }
+                else
+                {
+                  UserCredentials userCredentials = new UserCredentials ();
+                  userCredentials.clientId = clientId_;
+                  userCredentials.username = username;
+                  userCredentials.password = password;
 
-    if (userToken != null)
-    {
-      listener.onResponse (userToken);
-      return null;
-    }
-
-    UserCredentials userCredentials = new UserCredentials ();
-    userCredentials.clientId = this.clientId_;
-    userCredentials.username = username;
-    userCredentials.password = password;
-
-    return this.requestUserToken (username, userCredentials, listener);
+                  requestUserToken (username, userCredentials, listener);
+                }
+              }
+            }, UserToken_Table.username.eq (username)));
   }
 
   /**
