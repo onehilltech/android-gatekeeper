@@ -26,9 +26,9 @@ public abstract class UserSessionClient
    * @param password
    * @param listener
    */
-  public JsonRequest loginUser (String username, String password, final ResponseListener <UserToken> listener)
+  public void loginUser (String username, String password, final ResponseListener <UserToken> listener)
   {
-    return this.client_.getUserToken (username, password, listener);
+    this.client_.getUserToken (username, password, listener);
   }
 
   /**

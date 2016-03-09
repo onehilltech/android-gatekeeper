@@ -21,7 +21,7 @@ import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken_Table;
 import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
+import com.raizlabs.android.dbflow.config.*;
 import com.raizlabs.android.dbflow.runtime.TransactionManager;
 import com.raizlabs.android.dbflow.runtime.transaction.SelectSingleModelTransaction;
 import com.raizlabs.android.dbflow.runtime.transaction.TransactionListenerAdapter;

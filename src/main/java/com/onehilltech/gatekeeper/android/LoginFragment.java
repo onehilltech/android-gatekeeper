@@ -47,8 +47,6 @@ public class LoginFragment extends Fragment
 
   private SingleUserSessionClient userSessionClient_;
 
-  private JsonRequest loginRequest_;
-
   private View loginForm_;
   private View progressView_;
   private TextView progressTextView_;
@@ -277,9 +275,6 @@ public class LoginFragment extends Fragment
    */
   private void performSignIn ()
   {
-    if (this.loginRequest_ != null)
-      return;
-
     String username = this.usernameView_.getText ().toString ();
     String password = this.passwordView_.getText ().toString ();
 
@@ -297,28 +292,27 @@ public class LoginFragment extends Fragment
 
     if (!inputError.hasError ())
     {
-      this.loginRequest_ =
-          this.userSessionClient_.loginUser (
-              username,
-              password,
-              new ResponseListener<UserToken> ()
-              {
-                @Override
-                public void onErrorResponse (VolleyError error)
-                {
-                  Log.e (TAG, error.getMessage (), error);
-                  completeSignInProcess (false);
+      this.userSessionClient_.loginUser (
+          username,
+          password,
+          new ResponseListener<UserToken> ()
+          {
+            @Override
+            public void onErrorResponse (VolleyError error)
+            {
+              Log.e (TAG, error.getMessage (), error);
+              completeSignInProcess (false);
 
-                  // Notify the parent view there was an error.
-                  onLoginFragmentListener_.onLoginError (LoginFragment.this, error);
-                }
+              // Notify the parent view there was an error.
+              onLoginFragmentListener_.onLoginError (LoginFragment.this, error);
+            }
 
-                @Override
-                public void onResponse (UserToken response)
-                {
-                  completeSignInProcess (true);
-                }
-              });
+            @Override
+            public void onResponse (UserToken response)
+            {
+              completeSignInProcess (true);
+            }
+          });
     }
     else
     {
@@ -333,7 +327,6 @@ public class LoginFragment extends Fragment
    */
   private void completeSignInProcess (boolean finish)
   {
-    this.loginRequest_ = null;
     this.hideProgress ();
 
     if (finish)
