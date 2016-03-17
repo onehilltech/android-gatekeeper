@@ -1,0 +1,88 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'com.github.dcendents.android-maven'
+
+apt {
+    arguments {
+        targetModuleName 'Gatekeeper'
+    }
+}
+
+group   = project.property('build.group')
+version = project.property('build.version')
+
+android {
+    compileSdkVersion project.property('android.compileSdkVersion').toInteger()
+    buildToolsVersion project.property('android.buildToolsVersion')
+
+    defaultConfig {
+        minSdkVersion project.property('android.minSdkVersion')
+        targetSdkVersion project.property('android.targetSdkVersion').toInteger()
+
+        versionCode = project.property('build.versionCode').toInteger()
+        versionName = project.property('build.version')
+
+        testApplicationId project.property('android.testApplicationId')
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        debug {
+            // testCoverageEnabled true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LGPL2.1'
+    }
+}
+
+def dbflowVersion = "develop-SNAPSHOT"
+
+dependencies {
+    apt "com.github.onehilltech.DBFlow:dbflow-processor:${dbflowVersion}"
+    compile "com.github.onehilltech.DBFlow:dbflow-core:${dbflowVersion}"
+    compile "com.github.onehilltech.DBFlow:dbflow:${dbflowVersion}"
+
+    compile 'com.github.onehilltech:android-design:-SNAPSHOT'
+    compile 'com.onehilltech.metadata:android-metadata:1.3.3'
+
+    compile 'com.mcxiaoke.volley:library:1.0.19'
+
+    compile 'com.fasterxml.jackson.core:jackson-core:2.6.2'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
+    compile 'org.apache.commons:commons-lang3:3.0'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
+
+    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile 'com.android.support:support-v4:23.2.0'
+    compile 'com.android.support:design:23.2.0'
+
+    androidTestCompile 'junit:junit:4.11'
+    androidTestCompile('com.android.support.test:testing-support-lib:0.1') {
+        exclude group: 'junit'
+    }
+}
