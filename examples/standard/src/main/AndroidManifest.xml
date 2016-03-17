@@ -37,7 +37,6 @@
         <meta-data
             android:name="com.onehilltech.gatekeeper.android.baseuri"
             android:resource="@string/gatekeeper_baseuri" />
-
     </application>
 
 </manifest>

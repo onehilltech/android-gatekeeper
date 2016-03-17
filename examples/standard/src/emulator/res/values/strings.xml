@@ -1,5 +1,5 @@
 <resources>
     <string name="gatekeeper_baseuri">http://10.0.2.2:5000</string>
-    <string name="gatekeeper_client_id">client_id</string>
-    <string name="gatekeeper_client_secret">client_secret</string>
+    <string name="gatekeeper_client_id">56e9e8a88efd9a3e4f12477b</string>
+    <string name="gatekeeper_client_secret">SDAO-QBmRM2-bZH02TSMrw7Ooe38Co6xt_FORwY3fALK8jg-V_NIK7r0Wd8Z79C__jeF14SxIigVyXNx61UtzYJW1WZs4UbQl7mzheWYacgOTGxROoIRdKxLB_9jC8T4Jt8oJ5KSRSLRs7d5agfcO9pAaXhJya7ZtGAxXTNesd4</string>
 </resources>
