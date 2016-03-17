@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,7 @@ import android.widget.TextView;
 
 import com.android.volley.VolleyError;
 import com.onehilltech.gatekeeper.android.model.UserToken;
+import com.onehilltech.gatekeeper.android.utils.ErrorMessageUtil;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class LoginFragment extends Fragment
@@ -218,13 +218,7 @@ public class LoginFragment extends Fragment
 
   private void handleVolleyError (VolleyError e)
   {
-    int statusCode = e.networkResponse.statusCode;
-
-    if (statusCode >= 400 && statusCode < 500)
-      this.signInButton_.setEnabled (false);
-
-    // TODO We need to decode the response based on content-type
-    String errorMsg = String.format ("Error: %s", new String (e.networkResponse.data));
+    String errorMsg = ErrorMessageUtil.instance ().getErrorMessage (e);
     this.showErrorMessage (errorMsg);
   }
 
@@ -239,7 +233,7 @@ public class LoginFragment extends Fragment
     if (this.errorMessageView_.getVisibility () != View.VISIBLE)
       this.errorMessageView_.setVisibility (View.VISIBLE);
 
-    this.errorMessageView_.setText (errMsg);
+    this.errorMessageView_.setText ("Error: " + errMsg);
   }
 
   /**
@@ -272,7 +266,7 @@ public class LoginFragment extends Fragment
             @Override
             public void onErrorResponse (VolleyError error)
             {
-              Log.e (TAG, error.getMessage (), error);
+              handleVolleyError (error);
               completeSignInProcess (false);
 
               // Notify the parent view there was an error.
