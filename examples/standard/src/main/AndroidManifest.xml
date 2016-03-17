@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.onehilltech.gatekeeper.android.examples.standard">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:name=".TheApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/MaterialDesign">
+
+        <activity android:name="com.onehilltech.gatekeeper.android.LoginActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <activity android:name=".MainActivity" />
+
+        <!-- Gatekeeper metadata -->
+        <meta-data
+            android:name="com.onehilltech.gatekeeper.android.client_id"
+            android:resource="@string/gatekeeper_client_id"/>
+        <meta-data
+            android:name="com.onehilltech.gatekeeper.android.client_secret"
+            android:resource="@string/gatekeeper_client_secret"/>
+
+        <meta-data
+            android:name="com.onehilltech.gatekeeper.android.baseuri"
+            android:resource="@string/gatekeeper_baseuri" />
+
+    </application>
+
+</manifest>

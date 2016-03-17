@@ -1,0 +1,118 @@
+buildscript {
+    repositories {
+        jcenter()
+
+        maven {
+            url "https://jitpack.io"
+        }
+    }
+
+    dependencies {
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.7'
+    }
+}
+
+apply plugin: 'com.android.application'
+
+group   = project.property('build.group')
+version = project.property('build.version')
+
+android {
+    compileSdkVersion project.property('android.compileSdkVersion').toInteger()
+    buildToolsVersion project.property('android.buildToolsVersion')
+
+    defaultConfig {
+        minSdkVersion project.property('android.minSdkVersion')
+        targetSdkVersion project.property('android.targetSdkVersion').toInteger()
+
+        versionCode = project.property('build.versionCode').toInteger()
+        versionName = project.property('build.version')
+
+        testApplicationId project.property('android.testApplicationId')
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        debug {
+            //testCoverageEnabled true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    productFlavors {
+        // This product flavor allows us to have a custom configuration for running
+        // on the emulator.
+        emulator {
+
+        }
+
+        // This product flavor allows us to have a custom configuration for running
+        // on a real mobile device.
+        device {
+
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LGPL2.1'
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+    }
+}
+
+apply plugin: 'android-apt'
+
+apt {
+    arguments {
+        targetModuleName 'Fundall'
+    }
+}
+
+def dbflowVersion = "develop-SNAPSHOT"
+
+dependencies {
+    compile project (":lib")
+
+    androidTestCompile 'junit:junit:4.11'
+    androidTestCompile('com.android.support.test:testing-support-lib:0.1') {
+        exclude group: 'junit'
+    }
+
+    /*
+    compile 'com.github.onehilltech:android-gatekeeper:-SNAPSHOT'
+    compile 'com.github.onehilltech:android-design:-SNAPSHOT'
+
+    compile 'com.makeramen:roundedimageview:2.2.1'
+    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile 'com.android.support:support-v4:23.2.0'
+    compile 'com.android.support:design:23.2.0'
+    compile 'com.android.support:cardview-v7:23.2.0'
+    compile 'com.android.support:palette-v7:23.2.0'
+
+    compile 'com.stripe:stripe-android:+'
+    compile 'com.google.android.gms:play-services-gcm:8.1.0'
+    compile 'com.getbase:floatingactionbutton:1.10.1'
+    compile 'joda-time:joda-time:2.3'*/
+
+}
+

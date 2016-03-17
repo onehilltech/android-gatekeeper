@@ -1,0 +1,5 @@
+<resources>
+    <string name="gatekeeper_baseuri">http://10.0.2.2:5000</string>
+    <string name="gatekeeper_client_id">client_id</string>
+    <string name="gatekeeper_client_secret">client_secret</string>
+</resources>
