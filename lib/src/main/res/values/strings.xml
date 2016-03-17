@@ -18,4 +18,6 @@
     <string name="error_password_not_match">Password does not match</string>
     <string name="error_invalid_password">Password is invalid</string>
     <string name="error_invalid_email">Email is invalid</string>
+
+    <string name="gatekeeper_title_new_account">New account</string>
 </resources>

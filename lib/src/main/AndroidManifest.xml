@@ -11,7 +11,10 @@
         android:label="@string/app_name"
         android:theme="@style/MaterialDesign">
 
-        <activity android:name=".NewAccountActivity"/>
+        <activity
+            android:name=".NewAccountActivity"
+            android:label="@string/gatekeeper_title_new_account"
+            />
 
         <service
             android:name=".gcm.GcmRegistrationIntentService"
