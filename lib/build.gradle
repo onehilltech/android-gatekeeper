@@ -75,11 +75,11 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     compile 'org.apache.commons:commons-lang3:3.0'
-    compile 'com.google.android.gms:play-services-gcm:8.1.0'
+    compile 'com.google.android.gms:play-services-gcm:8.4.0'
 
-    compile 'com.android.support:appcompat-v7:23.2.0'
-    compile 'com.android.support:support-v4:23.2.0'
-    compile 'com.android.support:design:23.2.0'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:design:23.3.0'
 
     androidTestCompile 'junit:junit:4.11'
     androidTestCompile('com.android.support.test:testing-support-lib:0.1') {

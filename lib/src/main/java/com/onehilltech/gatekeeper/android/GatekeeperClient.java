@@ -54,6 +54,8 @@ public class GatekeeperClient
   /// Authorization token for the client.
   private ClientToken clientToken_;
 
+  private static final int VERSION = 1;
+
   /**
    * OnRegistrationCompleteListener interface for initializing the client.
    */
@@ -181,7 +183,7 @@ public class GatekeeperClient
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
     // object with the required token.
-    String url = config.baseUri + "/oauth2/token";
+    String url = config.baseUri + "/v" + VERSION + "/oauth2/token";
 
     JsonRequest<Token> request =
         new JsonRequest<> (
@@ -506,8 +508,7 @@ public class GatekeeperClient
    */
   public JsonRequest whoami (UserToken token, ResponseListener <Account> listener)
   {
-    String relativeUrl = "/me/whoami";
-    String url = this.getCompleteUrl (relativeUrl);
+    String url = this.getCompleteUrl ("/me/whoami");
 
     JsonRequest request =
         this.makeJsonRequest (
@@ -597,6 +598,6 @@ public class GatekeeperClient
    */
   public String getCompleteUrl (String relativePath)
   {
-    return this.baseUri_ + relativePath;
+    return this.baseUri_ + "/v" + VERSION + relativePath;
   }
 }

@@ -8,12 +8,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.protocol.HTTP;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.net.HttpURLConnection;
 import java.util.HashMap;
 
 @RunWith (AndroidJUnit4.class)
@@ -31,11 +30,11 @@ public class JsonRequestTest
     // Test with a basic boolean type.
     String trueString = "true";
     HashMap <String, String> headers = new HashMap<> ();
-    headers.put (HTTP.CONTENT_TYPE, "UTF-8");
+    headers.put ("Content-Type", "UTF-8");
 
     NetworkResponse trueNetworkResponse =
         new NetworkResponse (
-            HttpStatus.SC_OK,
+            HttpURLConnection.HTTP_OK,
             trueString.getBytes (),
             headers,
             false);
@@ -69,7 +68,7 @@ public class JsonRequestTest
 
     NetworkResponse jsonObjNetworkResponse =
         new NetworkResponse (
-            HttpStatus.SC_OK,
+            HttpURLConnection.HTTP_OK,
             content.getBytes (),
             headers,
             false);

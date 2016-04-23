@@ -150,44 +150,39 @@ public class GatekeeperClientTest
 
     this.mockNetwork_.addMatcher (requestMatcher);
 
-    synchronized (this)
-    {
-      // Request a user token.
-      Request<?> request = this.client_.getUserToken (
-          username,
-          password,
-          new ResponseListener<UserToken> ()
+    // Request a user token.
+    this.client_.getUserToken (
+        username,
+        password,
+        new ResponseListener<UserToken> ()
+        {
+          @Override
+          public void onErrorResponse (VolleyError error)
           {
-            @Override
-            public void onErrorResponse (VolleyError error)
+            synchronized (GatekeeperClientTest.this)
             {
-              synchronized (GatekeeperClientTest.this)
-              {
-                Assert.fail (error.getMessage ());
-              }
+              Assert.fail (error.getMessage ());
             }
+          }
 
-            @Override
-            public void onResponse (UserToken response)
+          @Override
+          public void onResponse (UserToken response)
+          {
+            synchronized (GatekeeperClientTest.this)
             {
-              synchronized (GatekeeperClientTest.this)
-              {
-                Assert.assertEquals (username, response.getUsername ());
-                Assert.assertEquals (fakeToken.accessToken, response.getAccessToken ());
-                Assert.assertEquals (fakeToken.refreshToken, response.getRefreshToken ());
-                Assert.assertNotNull (response.getExpiration ());
+              Assert.assertEquals (username, response.getUsername ());
+              Assert.assertEquals (fakeToken.accessToken, response.getAccessToken ());
+              Assert.assertEquals (fakeToken.refreshToken, response.getRefreshToken ());
+              Assert.assertNotNull (response.getExpiration ());
 
-                GatekeeperClientTest.this.notify ();
-              }
+              GatekeeperClientTest.this.notify ();
             }
-          });
+          }
+        });
 
-      if (request != null)
-        this.wait ();
+    this.mockNetwork_.removeMatcher (requestMatcher);
 
-      this.mockNetwork_.removeMatcher (requestMatcher);
-      return request;
-    }
+    return null;
   }
 
   /**
@@ -259,11 +254,11 @@ public class GatekeeperClientTest
   }
 
   @Override
-  public void onError (VolleyError error)
+  public void onError (Throwable e)
   {
     synchronized (GatekeeperClientTest.this)
     {
-      Assert.fail (error.getMessage ());
+      Assert.fail (e.getMessage ());
     }
   }
 }
