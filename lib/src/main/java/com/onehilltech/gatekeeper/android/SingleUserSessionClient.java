@@ -1,6 +1,7 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
@@ -10,7 +11,7 @@ import com.onehilltech.gatekeeper.android.model.Account;
 import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
-import com.raizlabs.android.dbflow.runtime.*;
+import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 
 public class SingleUserSessionClient extends UserSessionClient
 {
@@ -48,14 +49,18 @@ public class SingleUserSessionClient extends UserSessionClient
       @Override
       public void onInitialized (final GatekeeperClient client)
       {
-        UserToken userToken =
-            SQLite.select ()
-                  .from (UserToken.class)
-                  .limit (1)
-                  .querySingle ();
-
-        SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
-        listener.onInitialized (sessionClient);
+        SQLite.select ()
+              .from (UserToken.class)
+              .async ()
+              .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<UserToken> ()
+              {
+                @Override
+                public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
+                {
+                  SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
+                  listener.onInitialized (sessionClient);
+                }
+              }).execute ();
       }
 
       @Override
