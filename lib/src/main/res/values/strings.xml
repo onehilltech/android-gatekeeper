@@ -1,5 +1,11 @@
 <resources>
-	<string name="app_name">Gatekeeper</string>
+	<string name="gatekeeper_name">Gatekeeper</string>
+    <string name="gatekeeper_login_statement">Log in.</string>
+    <string name="gatekeeper_have_an_account">Have an account?</string>
+    <string name="gatekeeper_slogan">Simplifying and codifying the authentication process for mobile applications</string>
+
+    <string name="gatekeeper_title_new_account">New account</string>
+
 
     <string name="prompt_email">Email</string>
     <string name="prompt_confirm_password">Confirm password</string>
@@ -19,5 +25,4 @@
     <string name="error_invalid_password">Password is invalid</string>
     <string name="error_invalid_email">Email is invalid</string>
 
-    <string name="gatekeeper_title_new_account">New account</string>
 </resources>

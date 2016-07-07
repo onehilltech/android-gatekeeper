@@ -9,9 +9,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.onehilltech.gatekeeper.android.model.Account;
 import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.UserToken;
-import com.raizlabs.android.dbflow.runtime.TransactionManager;
-import com.raizlabs.android.dbflow.runtime.transaction.SelectSingleModelTransaction;
-import com.raizlabs.android.dbflow.runtime.transaction.TransactionListenerAdapter;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
+import com.raizlabs.android.dbflow.runtime.*;
 
 public class SingleUserSessionClient extends UserSessionClient
 {
@@ -49,17 +48,14 @@ public class SingleUserSessionClient extends UserSessionClient
       @Override
       public void onInitialized (final GatekeeperClient client)
       {
-        TransactionManager.getInstance ().addTransaction (
-            new SelectSingleModelTransaction (
-                UserToken.class,
-                new TransactionListenerAdapter<UserToken> () {
-                  @Override
-                  public void onResultReceived (UserToken token)
-                  {
-                    SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, token);
-                    listener.onInitialized (sessionClient);
-                  }
-                }));
+        UserToken userToken =
+            SQLite.select ()
+                  .from (UserToken.class)
+                  .limit (1)
+                  .querySingle ();
+
+        SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
+        listener.onInitialized (sessionClient);
       }
 
       @Override
