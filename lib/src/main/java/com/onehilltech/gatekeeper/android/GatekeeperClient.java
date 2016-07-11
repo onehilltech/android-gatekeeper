@@ -53,12 +53,12 @@ public class GatekeeperClient
   /// Authorization token for the client.
   private ClientToken clientToken_;
 
-  private static final int VERSION = 1;
+  public static final int VERSION = 1;
 
   /**
    * OnRegistrationCompleteListener interface for initializing the client.
    */
-  public interface Listener
+  public interface OnInitializedListener
   {
     /**
      * Callback for completion of the initialization process.
@@ -72,7 +72,7 @@ public class GatekeeperClient
      *
      * @param e       The error that occurred.
      */
-    void onError (Throwable e);
+    void onInitializeFailed (Throwable e);
   }
 
   public interface OnResultListener <T>
@@ -86,17 +86,17 @@ public class GatekeeperClient
    * AndroidManifest.xml.
    *
    * @param context         Target context
-   * @param listener   Callback for initialization
+   * @param onInitializedListener   Callback for initialization
    *
    * @throws PackageManager.NameNotFoundException
    * @throws IllegalAccessException
    * @throws ClassNotFoundException
    * @throws InvocationTargetException
    */
-  public static void initialize (Context context, Listener listener)
+  public static void initialize (Context context, OnInitializedListener onInitializedListener)
   {
     RequestQueue requestQueue = Volley.newRequestQueue (context);
-    initialize (context, requestQueue, listener);
+    initialize (context, requestQueue, onInitializedListener);
   }
 
   /**
@@ -104,23 +104,23 @@ public class GatekeeperClient
    *
    * @param context
    * @param requestQueue
-   * @param listener
+   * @param onInitializedListener
    * @return
    * @throws PackageManager.NameNotFoundException
    * @throws IllegalAccessException
    * @throws ClassNotFoundException
    * @throws InvocationTargetException
    */
-  public static void initialize (Context context, RequestQueue requestQueue, Listener listener)
+  public static void initialize (Context context, RequestQueue requestQueue, OnInitializedListener onInitializedListener)
   {
     try
     {
       Configuration configuration = Configuration.loadFromMetadata (context);
-      initialize (configuration, requestQueue, listener);
+      initialize (configuration, requestQueue, onInitializedListener);
     }
     catch (PackageManager.NameNotFoundException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e)
     {
-      listener.onError (new RuntimeException ("Invalid or missing configuration", e));
+      onInitializedListener.onInitializeFailed (new RuntimeException ("Invalid or missing configuration", e));
     }
   }
 
@@ -130,9 +130,9 @@ public class GatekeeperClient
    *
    * @param config            Client configuration
    * @param requestQueue      Volley RequestQueue for requests
-   * @param listener     Callback for initialization.
+   * @param onInitializedListener     Callback for initialization.
    */
-  public static void initialize (final Configuration config, final RequestQueue requestQueue, final Listener listener)
+  public static void initialize (final Configuration config, final RequestQueue requestQueue, final OnInitializedListener onInitializedListener)
   {
     // First, initialize the Gatekeeper DBFlow module.
     FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
@@ -146,7 +146,7 @@ public class GatekeeperClient
             @Override
             public void onSingleQueryResult (QueryTransaction transaction, @Nullable ClientToken clientToken)
             {
-              initialize (config, clientToken, requestQueue, listener);
+              initialize (config, clientToken, requestQueue, onInitializedListener);
             }
           }).execute ();
   }
@@ -157,17 +157,17 @@ public class GatekeeperClient
    * @param config
    * @param clientToken
    * @param requestQueue
-   * @param listener
+   * @param onInitializedListener
    */
   private static void initialize (Configuration config,
                                   ClientToken clientToken,
                                   RequestQueue requestQueue,
-                                  Listener listener)
+                                  OnInitializedListener onInitializedListener)
   {
     if (clientToken != null)
-      makeGatekeeperClient (config, clientToken, requestQueue, listener);
+      makeGatekeeperClient (config, clientToken, requestQueue, onInitializedListener);
     else
-      requestClientToken (config, requestQueue, listener);
+      requestClientToken (config, requestQueue, onInitializedListener);
   }
 
   /**
@@ -176,7 +176,7 @@ public class GatekeeperClient
    */
   private static void requestClientToken (final Configuration config,
                                           final RequestQueue requestQueue,
-                                          final Listener listener)
+                                          final OnInitializedListener onInitializedListener)
   {
     // To initialize the client, we must first get a token for the client. This
     // allows us to determine if the client is enabled. It also setups the client
@@ -194,7 +194,7 @@ public class GatekeeperClient
               @Override
               public void onErrorResponse (VolleyError error)
               {
-                listener.onError (error);
+                onInitializedListener.onInitializeFailed (error);
               }
 
               @Override
@@ -210,7 +210,7 @@ public class GatekeeperClient
                     ClientToken clientToken = ClientToken.fromToken (config.clientId, token);
                     clientToken.save ();
 
-                    makeGatekeeperClient (config, clientToken, requestQueue, listener);
+                    makeGatekeeperClient (config, clientToken, requestQueue, onInitializedListener);
                   }
                 });
               }
@@ -233,12 +233,12 @@ public class GatekeeperClient
    * @param config              Client configuration
    * @param clientToken         Client access token
    * @param requestQueue        Request queue for sending request to server
-   * @param listener       Callback for initialization complete
+   * @param onInitializedListener       Callback for initialization complete
    */
   private static void makeGatekeeperClient (Configuration config,
                                             ClientToken clientToken,
                                             RequestQueue requestQueue,
-                                            Listener listener)
+                                            OnInitializedListener onInitializedListener)
   {
     // Create a GatekeeperClient with the token.
     GatekeeperClient client =
@@ -247,7 +247,7 @@ public class GatekeeperClient
                               clientToken,
                               requestQueue);
 
-    listener.onInitialized (client);
+    onInitializedListener.onInitialized (client);
   }
 
   /**

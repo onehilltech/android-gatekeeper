@@ -45,7 +45,7 @@ public class SingleUserSessionClient extends UserSessionClient
    */
   public static void initialize (Context context, RequestQueue queue, final Listener listener)
   {
-    GatekeeperClient.initialize (context, queue, new GatekeeperClient.Listener () {
+    GatekeeperClient.initialize (context, queue, new GatekeeperClient.OnInitializedListener () {
       @Override
       public void onInitialized (final GatekeeperClient client)
       {
@@ -64,7 +64,7 @@ public class SingleUserSessionClient extends UserSessionClient
       }
 
       @Override
-      public void onError (Throwable e)
+      public void onInitializeFailed (Throwable e)
       {
         listener.onError (e);
       }

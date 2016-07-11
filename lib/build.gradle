@@ -22,7 +22,7 @@ android {
         versionName = project.property('build.version')
 
         testApplicationId project.property('android.testApplicationId')
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -58,7 +58,7 @@ android {
     }
 }
 
-def dbflow_version = "3.0.1"
+def dbflow_version = "3.1.1"
 
 dependencies {
     apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"

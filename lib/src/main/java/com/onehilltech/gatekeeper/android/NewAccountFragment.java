@@ -15,7 +15,7 @@ import com.android.volley.VolleyError;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class NewAccountFragment extends Fragment
-  implements GatekeeperClient.Listener
+  implements GatekeeperClient.OnInitializedListener
 {
   public interface Listener
   {
@@ -103,7 +103,7 @@ public class NewAccountFragment extends Fragment
   }
 
   @Override
-  public void onError (Throwable t)
+  public void onInitializeFailed (Throwable t)
   {
     if (this.listener_ != null)
       this.listener_.onError (this, t);

@@ -48,4 +48,9 @@ public class Configuration
 
     return config;
   }
+
+  public String getCompleteUrl (String path)
+  {
+    return this.baseUri + path;
+  }
 }
