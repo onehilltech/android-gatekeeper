@@ -30,6 +30,8 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
     /// Cursor for the loader.
     private TModel mResult;
 
+    private boolean mObserveModel = true;
+
     private class ForceLoadContentObserver extends FlowContentObserver
     {
         @Override
@@ -101,8 +103,13 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
         if (this.takeContentChanged () || this.mResult == null)
             this.forceLoad ();
 
-        if (this.mModel != null)
+        if (this.mObserveModel)
             this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
+    }
+
+    public void setObserveModel (boolean observeModel)
+    {
+        this.mObserveModel = observeModel;
     }
 
     /**
