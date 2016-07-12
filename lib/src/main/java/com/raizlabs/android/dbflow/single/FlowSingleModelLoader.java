@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
@@ -129,6 +130,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   @Override
   public void onCanceled (TModel result)
   {
+    Log.d ("FlowSingleModelLoader", "unregister for content changes");
     mObserver.unregisterForContentChanges (this.getContext ());
   }
 
@@ -141,6 +143,8 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     onStopLoading ();
 
     mResult = null;
+    
+    Log.d ("FlowSingleModelLoader", "unregister for content changes");
     mObserver.unregisterForContentChanges (this.getContext ());
   }
 
