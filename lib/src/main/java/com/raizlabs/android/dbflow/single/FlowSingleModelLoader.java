@@ -131,6 +131,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   public void onCanceled (TModel result)
   {
     Log.d ("FlowSingleModelLoader", "unregister for content changes");
+    Log.e ("FlowSingleModelLoader", "onCanceled ()", new Exception ("HELP"));
     mObserver.unregisterForContentChanges (this.getContext ());
   }
 
@@ -143,8 +144,9 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     onStopLoading ();
 
     mResult = null;
-    
+
     Log.d ("FlowSingleModelLoader", "unregister for content changes");
+    Log.e ("FlowSingleModelLoader", "onReset ()", new Exception ("HELP"));
     mObserver.unregisterForContentChanges (this.getContext ());
   }
 
