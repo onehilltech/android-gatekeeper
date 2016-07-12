@@ -9,8 +9,9 @@ import android.support.v4.content.AsyncTaskLoader;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
+import com.raizlabs.android.dbflow.structure.BaseModelView;
 import com.raizlabs.android.dbflow.structure.Model;
-import com.raizlabs.android.dbflow.structure.ModelAdapter;
+import com.raizlabs.android.dbflow.structure.ModelViewAdapter;
 
 /**
  * Utility class to be added to DBFlow.
@@ -18,17 +19,20 @@ import com.raizlabs.android.dbflow.structure.ModelAdapter;
  * @param <TModel>
  */
 @TargetApi(11)
-public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TModel>
+public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseModelView<TModel>>
+    extends AsyncTaskLoader<TModelView>
 {
   /// Models to be observed for changes.
   private final Class<TModel> mModel;
-  private final ModelAdapter<TModel> mModelAdapter;
+  private final Class<TModelView> mModelView;
+
+  private final ModelViewAdapter<? extends Model, TModelView> mModelViewAdapter;
 
   /// Queriable operation that the loader executes.
   private Queriable mQueriable;
 
   /// Cursor for the loader.
-  private TModel mResult;
+  private TModelView mResult;
 
   private class ForceLoadContentObserver extends FlowContentObserver
   {
@@ -55,26 +59,27 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
 
   private final ForceLoadContentObserver mObserver = new ForceLoadContentObserver ();
 
-  public FlowModelLoader (Context context, Class<TModel> model, Queriable queriable)
+  public FlowModelViewLoader (Context context, Class <TModel> model, Class<TModelView> modelView, Queriable queriable)
   {
     super (context);
 
     this.mQueriable = queriable;
     this.mModel = model;
-    this.mModelAdapter = FlowManager.getModelAdapter (model);
+    this.mModelView = modelView;
+    this.mModelViewAdapter = FlowManager.getModelViewAdapter (modelView);
   }
 
   /* Runs on a worker thread */
   @Override
-  public TModel loadInBackground ()
+  public TModelView loadInBackground ()
   {
     Cursor cursor = this.mQueriable.query ();
-    return cursor != null && cursor.moveToFirst () ? this.mModelAdapter.loadFromCursor (cursor) : null;
+    return cursor != null && cursor.moveToFirst () ? this.mModelViewAdapter.loadFromCursor (cursor) : null;
   }
 
   /* Runs on the UI thread */
   @Override
-  public void deliverResult (TModel result)
+  public void deliverResult (TModelView result)
   {
     if (this.isReset ())
       return;
@@ -114,9 +119,9 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
   }
 
   @Override
-  public void onCanceled (TModel result)
+  public void onCanceled (TModelView result)
   {
-    mObserver.unregisterForContentChanges (this.getContext ());
+    this.mObserver.unregisterForContentChanges (this.getContext ());
   }
 
   @Override
@@ -125,10 +130,10 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
     super.onReset ();
 
     // Ensure the loader is stopped
-    onStopLoading ();
+    this.onStopLoading ();
 
-    mResult = null;
-    mObserver.unregisterForContentChanges (this.getContext ());
+    this.mResult = null;
+    this.mObserver.unregisterForContentChanges (this.getContext ());
   }
 
   public Class<TModel> getModel ()
