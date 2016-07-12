@@ -101,7 +101,8 @@ public class FlowModelLoader <TModel extends Model> extends AsyncTaskLoader<TMod
         if (this.takeContentChanged () || this.mResult == null)
             this.forceLoad ();
 
-        this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
+        if (this.mModel != null)
+            this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
     }
 
     /**
