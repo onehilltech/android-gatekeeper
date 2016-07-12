@@ -55,7 +55,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     }
   }
 
-  private final ForceLoadContentObserver mObserver = new ForceLoadContentObserver ();
+  protected final FlowContentObserver mObserver = new ForceLoadContentObserver ();
 
   protected FlowSingleModelLoader (Context context,
                                    Class<TModel> model,
