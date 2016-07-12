@@ -1,4 +1,4 @@
-package com.raizlabs.android.dbflow.list;
+package com.raizlabs.android.dbflow.single;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -6,12 +6,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
 
-import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
-import com.raizlabs.android.dbflow.structure.BaseModelView;
+import com.raizlabs.android.dbflow.structure.InstanceAdapter;
 import com.raizlabs.android.dbflow.structure.Model;
-import com.raizlabs.android.dbflow.structure.ModelViewAdapter;
 
 /**
  * Utility class to be added to DBFlow.
@@ -19,20 +17,20 @@ import com.raizlabs.android.dbflow.structure.ModelViewAdapter;
  * @param <TModel>
  */
 @TargetApi(11)
-public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseModelView<TModel>>
-    extends AsyncTaskLoader<TModelView>
+public abstract class FlowSingleModelLoader <TModel extends Model, TTable extends Model>
+    extends AsyncTaskLoader<TModel>
 {
   /// Models to be observed for changes.
   private final Class<TModel> mModel;
-  private final Class<TModelView> mModelView;
-
-  private final ModelViewAdapter<? extends Model, TModelView> mModelViewAdapter;
+  private final InstanceAdapter<TModel, TTable> mAdapter;
 
   /// Queriable operation that the loader executes.
   private Queriable mQueriable;
 
   /// Cursor for the loader.
-  private TModelView mResult;
+  private TModel mResult;
+
+  private boolean mObserveModel = true;
 
   private class ForceLoadContentObserver extends FlowContentObserver
   {
@@ -59,27 +57,36 @@ public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseM
 
   private final ForceLoadContentObserver mObserver = new ForceLoadContentObserver ();
 
-  public FlowModelViewLoader (Context context, Class <TModel> model, Class<TModelView> modelView, Queriable queriable)
+  protected FlowSingleModelLoader (Context context,
+                                   Class<TModel> model,
+                                   InstanceAdapter <TModel, TTable> adapter,
+                                   Queriable queriable)
   {
     super (context);
 
     this.mQueriable = queriable;
     this.mModel = model;
-    this.mModelView = modelView;
-    this.mModelViewAdapter = FlowManager.getModelViewAdapter (modelView);
+    this.mAdapter = adapter;
   }
 
   /* Runs on a worker thread */
   @Override
-  public TModelView loadInBackground ()
+  public TModel loadInBackground ()
   {
     Cursor cursor = this.mQueriable.query ();
-    return cursor != null && cursor.moveToFirst () ? this.mModelViewAdapter.loadFromCursor (cursor) : null;
+
+    if (cursor == null || !cursor.moveToFirst ())
+      return null;
+
+    TModel model = this.mAdapter.newInstance ();
+    this.mAdapter.loadFromCursor (cursor, model);
+
+    return model;
   }
 
   /* Runs on the UI thread */
   @Override
-  public void deliverResult (TModelView result)
+  public void deliverResult (TModel result)
   {
     if (this.isReset ())
       return;
@@ -106,7 +113,8 @@ public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseM
     if (this.takeContentChanged () || this.mResult == null)
       this.forceLoad ();
 
-    this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
+    if (this.mObserveModel)
+      this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
   }
 
   /**
@@ -119,9 +127,9 @@ public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseM
   }
 
   @Override
-  public void onCanceled (TModelView result)
+  public void onCanceled (TModel result)
   {
-    this.mObserver.unregisterForContentChanges (this.getContext ());
+    mObserver.unregisterForContentChanges (this.getContext ());
   }
 
   @Override
@@ -130,14 +138,19 @@ public class FlowModelViewLoader <TModel extends Model, TModelView extends BaseM
     super.onReset ();
 
     // Ensure the loader is stopped
-    this.onStopLoading ();
+    onStopLoading ();
 
-    this.mResult = null;
-    this.mObserver.unregisterForContentChanges (this.getContext ());
+    mResult = null;
+    mObserver.unregisterForContentChanges (this.getContext ());
   }
 
   public Class<TModel> getModel ()
   {
     return this.mModel;
+  }
+
+  public void setObserveModel (boolean observeModel)
+  {
+    this.mObserveModel = observeModel;
   }
 }
