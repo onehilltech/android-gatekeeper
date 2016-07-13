@@ -80,7 +80,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   @Override
   public TModel loadInBackground ()
   {
-    Log.d (TAG, "Loading model in background");
+    Log.d (TAG, "Loading model in background [" + this.mModel.getSimpleName () + "]");
     Cursor cursor = this.mQueriable.query ();
 
     if (cursor == null || !cursor.moveToFirst ())
