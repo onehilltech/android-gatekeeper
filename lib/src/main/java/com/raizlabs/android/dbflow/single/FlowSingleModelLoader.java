@@ -47,6 +47,8 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     public void onChange (boolean selfChange)
     {
       super.onChange (selfChange);
+
+      Log.d (TAG, "onChange: " + selfChange);
       onContentChanged ();
     }
 
@@ -54,6 +56,8 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     public void onChange (boolean selfChange, Uri uri)
     {
       super.onChange (selfChange, uri);
+
+      Log.d (TAG, "onChange: " + uri);
       onContentChanged ();
     }
   }
@@ -76,6 +80,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   @Override
   public TModel loadInBackground ()
   {
+    Log.d (TAG, "Loading model in background");
     Cursor cursor = this.mQueriable.query ();
 
     if (cursor == null || !cursor.moveToFirst ())
