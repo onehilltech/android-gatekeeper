@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
@@ -89,13 +88,10 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   @Override
   public void deliverResult (TModel result)
   {
-    if (this.isReset ())
-      return;
-
     this.mResult = result;
 
     if (this.isStarted ())
-      super.deliverResult (this.mResult);
+      super.deliverResult (result);
   }
 
   /**
@@ -111,11 +107,12 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     if (mResult != null)
       this.deliverResult (mResult);
 
-    if (this.takeContentChanged () || this.mResult == null)
-      this.forceLoad ();
-
+    // Start watching for changes to the model.
     if (this.mObserveModel)
       this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
+
+    if (this.takeContentChanged () || this.mResult == null)
+      this.forceLoad ();
   }
 
   /**
@@ -128,26 +125,18 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   }
 
   @Override
-  public void onCanceled (TModel result)
-  {
-    Log.d ("FlowSingleModelLoader", "unregister for content changes");
-    Log.e ("FlowSingleModelLoader", "onCanceled ()", new Exception ("HELP"));
-    mObserver.unregisterForContentChanges (this.getContext ());
-  }
-
-  @Override
   protected void onReset ()
   {
     super.onReset ();
 
     // Ensure the loader is stopped
-    onStopLoading ();
+    this.onStopLoading ();
 
-    mResult = null;
+    if (this.mResult != null)
+      this.mResult = null;
 
-    Log.d ("FlowSingleModelLoader", "unregister for content changes");
-    Log.e ("FlowSingleModelLoader", "onReset ()", new Exception ("HELP"));
-    mObserver.unregisterForContentChanges (this.getContext ());
+    // Unregister the loader for content changes.
+    this.mObserver.unregisterForContentChanges (this.getContext ());
   }
 
   public Class<TModel> getModel ()
