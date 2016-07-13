@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
@@ -31,6 +32,8 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   private TModel mResult;
 
   private boolean mObserveModel = true;
+
+  private static final String TAG = "FlowSingleModelLoader";
 
   private class ForceLoadContentObserver extends FlowContentObserver
   {
@@ -109,7 +112,10 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
 
     // Start watching for changes to the model.
     if (this.mObserveModel)
+    {
+      Log.d (TAG, "Register for content changes [" + this.mModel.getSimpleName () + "]");
       this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
+    }
 
     if (this.takeContentChanged () || this.mResult == null)
       this.forceLoad ();
@@ -136,6 +142,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
       this.mResult = null;
 
     // Unregister the loader for content changes.
+    Log.d (TAG, "Unregister for content changes [" + this.mModel.getSimpleName () + "]");
     this.mObserver.unregisterForContentChanges (this.getContext ());
   }
 
