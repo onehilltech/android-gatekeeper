@@ -12,6 +12,8 @@ import com.raizlabs.android.dbflow.sql.queriable.Queriable;
 import com.raizlabs.android.dbflow.structure.InstanceAdapter;
 import com.raizlabs.android.dbflow.structure.Model;
 
+import java.util.HashSet;
+
 /**
  * Utility class to be added to DBFlow.
  *
@@ -34,6 +36,8 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   private boolean mObserveModel = true;
 
   private static final String TAG = "FlowSingleModelLoader";
+
+  protected HashSet<? extends Model> mModels = new HashSet<> ();
 
   private class ForceLoadContentObserver extends FlowContentObserver
   {
@@ -117,10 +121,7 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
 
     // Start watching for changes to the model.
     if (this.mObserveModel)
-    {
-      Log.d (TAG, "Register for content changes [" + this.mModel.getSimpleName () + "]");
-      this.mObserver.registerForContentChanges (this.getContext (), this.mModel);
-    }
+      this.registerForContentChanges (this.mModel);
 
     if (this.takeContentChanged () || this.mResult == null)
       this.forceLoad ();
@@ -159,5 +160,14 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   public void setObserveModel (boolean observeModel)
   {
     this.mObserveModel = observeModel;
+  }
+
+  public void registerForContentChanges (Class<? extends Model> model)
+  {
+    if (this.mModels.contains (model))
+      return;
+
+    Log.d (TAG, "Register for content changes [" + this.mModel.getSimpleName () + "]");
+    this.mObserver.registerForContentChanges (this.getContext (), model);
   }
 }
