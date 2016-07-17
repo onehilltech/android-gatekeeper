@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.queriable.Queriable;
@@ -52,7 +51,6 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     {
       super.onChange (selfChange);
 
-      Log.d (TAG, "onChange: " + selfChange);
       onContentChanged ();
     }
 
@@ -61,7 +59,6 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     {
       super.onChange (selfChange, uri);
 
-      Log.d (TAG, "onChange: " + uri);
       onContentChanged ();
     }
   }
@@ -84,7 +81,6 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
   @Override
   public TModel loadInBackground ()
   {
-    Log.d (TAG, "Loading model in background [" + this.mModel.getSimpleName () + "]");
     Cursor cursor = this.mQueriable.query ();
 
     if (cursor == null || !cursor.moveToFirst ())
@@ -148,7 +144,6 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
       this.mResult = null;
 
     // Unregister the loader for content changes.
-    Log.d (TAG, "Unregister for content changes [" + this.mModel.getSimpleName () + "]");
     this.mObserver.unregisterForContentChanges (this.getContext ());
   }
 
@@ -167,7 +162,6 @@ public abstract class FlowSingleModelLoader <TModel extends Model, TTable extend
     if (this.mModels.contains (model))
       return;
 
-    Log.d (TAG, "Register for content changes [" + this.mModel.getSimpleName () + "]");
     this.mObserver.registerForContentChanges (this.getContext (), model);
   }
 }
