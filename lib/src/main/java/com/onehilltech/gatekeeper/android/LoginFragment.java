@@ -105,7 +105,7 @@ public class LoginFragment extends Fragment
    */
   protected RequestQueue onCreateRequestQueue ()
   {
-    return null;
+    return Volley.newRequestQueue (this.getContext ());
   }
 
   @Override
@@ -181,10 +181,6 @@ public class LoginFragment extends Fragment
     // the subclass to provide its own RequestQueue. This is important since applications
     // may have special networking needs that still need to be honored.
     this.requestQueue_ = this.onCreateRequestQueue ();
-
-    if (this.requestQueue_ == null)
-      this.requestQueue_ = Volley.newRequestQueue (this.getContext ());
-
     SingleUserSessionClient.initialize (this.getActivity (), this.requestQueue_, this);
   }
 

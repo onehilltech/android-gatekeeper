@@ -76,10 +76,7 @@ public class LoginActivity extends AppCompatActivity
 
     // If we're being restored from a previous state, then we don't need to do
     // anything and should return or else we could end up with overlapping fragments.
-    LoginFragment loginFragment = this.onCreateLoginFragment ();
-
-    if (loginFragment == null)
-      loginFragment = LoginFragment.newInstance ();
+    LoginFragment loginFragment = this.onCreateFragment ();
 
     this.getSupportFragmentManager ()
         .beginTransaction ()
@@ -91,9 +88,9 @@ public class LoginActivity extends AppCompatActivity
     // property defined.
   }
 
-  protected LoginFragment onCreateLoginFragment ()
+  protected LoginFragment onCreateFragment ()
   {
-    return null;
+    return new LoginFragment ();
   }
 
   @Override

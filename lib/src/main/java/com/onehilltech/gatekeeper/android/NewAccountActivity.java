@@ -52,7 +52,20 @@ public class NewAccountActivity extends AppCompatActivity
   protected void onCreate (Bundle savedInstanceState)
   {
     super.onCreate (savedInstanceState);
+
     this.setContentView (R.layout.activity_new_account);
+
+    NewAccountFragment fragment = this.onCreateFragment ();
+
+    this.getSupportFragmentManager ()
+        .beginTransaction ()
+        .replace (R.id.container, fragment)
+        .commit ();
+  }
+
+  protected NewAccountFragment onCreateFragment ()
+  {
+    return new NewAccountFragment ();
   }
 }
 

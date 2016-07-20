@@ -11,7 +11,9 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class NewAccountFragment extends Fragment
@@ -44,6 +46,11 @@ public class NewAccountFragment extends Fragment
     // Required empty public constructor
   }
 
+  protected RequestQueue onCreateRequestQueue ()
+  {
+    return Volley.newRequestQueue (this.getContext ());
+  }
+
   @Override
   public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
   {
@@ -71,7 +78,8 @@ public class NewAccountFragment extends Fragment
     });
 
     // Initialize the client.
-    GatekeeperClient.initialize (this.getContext (), this);
+    RequestQueue requestQueue = this.onCreateRequestQueue ();
+    GatekeeperClient.initialize (this.getContext (), requestQueue, this);
   }
 
   @Override
