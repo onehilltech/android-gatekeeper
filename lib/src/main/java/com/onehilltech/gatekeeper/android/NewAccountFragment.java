@@ -14,6 +14,7 @@ import android.widget.EditText;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class NewAccountFragment extends Fragment
@@ -37,6 +38,7 @@ public class NewAccountFragment extends Fragment
   private AutoCompleteTextView emailView_;
   private EditText passwordView_;
 
+  private String id_;
   private String username_;
   private String password_;
   private String email_;
@@ -137,6 +139,17 @@ public class NewAccountFragment extends Fragment
     return this.passwordView_.getText ().toString ();
   }
 
+  public String getUserId ()
+  {
+    return this.id_;
+  }
+
+  public static class Response
+  {
+    @JsonProperty
+    public String _id;
+  }
+
   /**
    * Attempts to sign in or register the account specified by the login form. If
    * there are form errors (invalid email, missing fields, etc.), the errors are
@@ -154,12 +167,14 @@ public class NewAccountFragment extends Fragment
     this.password_ = this.passwordView_.getText ().toString ();
     this.email_ = this.emailView_.getText ().toString ();
 
-    final GatekeeperClient.OnResultListener <Boolean> resultListener =
-        new GatekeeperClient.OnResultListener<Boolean> ()
+    final GatekeeperClient.OnResultListener <AccountId> resultListener =
+        new GatekeeperClient.OnResultListener<AccountId> ()
         {
           @Override
-          public void onResult (Boolean result)
+          public void onResult (AccountId result)
           {
+            id_ = result._id;
+
             if (listener_ != null)
               listener_.onAccountCreated (NewAccountFragment.this);
           }
@@ -167,6 +182,8 @@ public class NewAccountFragment extends Fragment
           @Override
           public void onError (VolleyError error)
           {
+            if (listener_ != null)
+              listener_.onError (NewAccountFragment.this, error);
           }
         };
 

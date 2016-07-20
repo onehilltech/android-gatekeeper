@@ -302,7 +302,10 @@ public class GatekeeperClient
    * @param username        Username
    * @param password        Password
    */
-  public JsonRequest createAccount (String username, String password, String email, final OnResultListener <Boolean> listener)
+  public JsonRequest createAccount (String username,
+                                    String password,
+                                    String email,
+                                    final OnResultListener <AccountId> listener)
   {
     class Data
     {
@@ -318,13 +321,13 @@ public class GatekeeperClient
 
     String url = this.getCompleteUrl ("/accounts");
 
-    JsonRequest <Boolean> request =
+    JsonRequest <AccountId> request =
         new JsonRequest<> (
             Request.Method.POST,
             url,
             this.clientToken_,
-            new TypeReference<Boolean> () { },
-            new ResponseListener<Boolean> ()
+            new TypeReference<AccountId> () { },
+            new ResponseListener<AccountId> ()
             {
               @Override
               public void onErrorResponse (VolleyError error)
@@ -333,7 +336,7 @@ public class GatekeeperClient
               }
 
               @Override
-              public void onResponse (Boolean response)
+              public void onResponse (AccountId response)
               {
                 listener.onResult (response);
               }
