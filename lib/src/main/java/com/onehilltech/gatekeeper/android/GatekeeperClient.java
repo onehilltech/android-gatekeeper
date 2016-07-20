@@ -15,7 +15,6 @@ import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.data.Token;
 import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.gatekeeper.android.model.AccessToken;
-import com.onehilltech.gatekeeper.android.model.Account;
 import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
@@ -305,7 +304,7 @@ public class GatekeeperClient
   public JsonRequest createAccount (String username,
                                     String password,
                                     String email,
-                                    final OnResultListener <AccountId> listener)
+                                    final OnResultListener <JsonAccount> listener)
   {
     class Data
     {
@@ -321,13 +320,13 @@ public class GatekeeperClient
 
     String url = this.getCompleteUrl ("/accounts");
 
-    JsonRequest <AccountId> request =
+    JsonRequest <JsonAccount> request =
         new JsonRequest<> (
             Request.Method.POST,
             url,
             this.clientToken_,
-            new TypeReference<AccountId> () { },
-            new ResponseListener<AccountId> ()
+            new TypeReference<JsonAccount> () { },
+            new ResponseListener<JsonAccount> ()
             {
               @Override
               public void onErrorResponse (VolleyError error)
@@ -336,7 +335,7 @@ public class GatekeeperClient
               }
 
               @Override
-              public void onResponse (AccountId response)
+              public void onResponse (JsonAccount response)
               {
                 listener.onResult (response);
               }
@@ -509,7 +508,7 @@ public class GatekeeperClient
    *
    * @return
    */
-  public JsonRequest whoami (UserToken token, ResponseListener <Account> listener)
+  public JsonRequest whoami (UserToken token, ResponseListener <com.onehilltech.gatekeeper.android.model.Account> listener)
   {
     String url = this.getCompleteUrl ("/me/whoami");
 
@@ -518,7 +517,7 @@ public class GatekeeperClient
             Request.Method.GET,
             url,
             token,
-            new TypeReference <Account> () {},
+            new TypeReference <com.onehilltech.gatekeeper.android.model.Account> () {},
             listener);
 
     this.requestQueue_.add (request);

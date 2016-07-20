@@ -142,7 +142,7 @@ public class NewAccountFragment extends Fragment
   {
     return this.id_;
   }
-  
+
   /**
    * Attempts to sign in or register the account specified by the login form. If
    * there are form errors (invalid email, missing fields, etc.), the errors are
@@ -160,13 +160,13 @@ public class NewAccountFragment extends Fragment
     this.password_ = this.passwordView_.getText ().toString ();
     this.email_ = this.emailView_.getText ().toString ();
 
-    final GatekeeperClient.OnResultListener <AccountId> resultListener =
-        new GatekeeperClient.OnResultListener<AccountId> ()
+    final GatekeeperClient.OnResultListener <JsonAccount> resultListener =
+        new GatekeeperClient.OnResultListener<JsonAccount> ()
         {
           @Override
-          public void onResult (AccountId result)
+          public void onResult (JsonAccount result)
           {
-            id_ = result._id;
+            id_ = result.account._id;
 
             if (listener_ != null)
               listener_.onAccountCreated (NewAccountFragment.this);
