@@ -76,19 +76,24 @@ public class LoginActivity extends AppCompatActivity
 
     // If we're being restored from a previous state, then we don't need to do
     // anything and should return or else we could end up with overlapping fragments.
-    if (savedInstanceState == null)
-    {
-      LoginFragment loginFragment = LoginFragment.newInstance ();
+    LoginFragment loginFragment = this.onCreateLoginFragment ();
 
-      this.getSupportFragmentManager ()
-          .beginTransaction ()
-          .add (R.id.fragment_container, loginFragment)
-          .commit ();
-    }
+    if (loginFragment == null)
+      loginFragment = LoginFragment.newInstance ();
+
+    this.getSupportFragmentManager ()
+        .beginTransaction ()
+        .replace (R.id.fragment_container, loginFragment)
+        .commit ();
 
     // Load the metadata for this activity. There is a good chance that
     // the this activity has a LOGIN_SUCCESS_REDIRECT_ACTIVITY meta-data
     // property defined.
+  }
+
+  protected LoginFragment onCreateLoginFragment ()
+  {
+    return null;
   }
 
   @Override

@@ -13,7 +13,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.utils.ErrorMessageUtil;
 import com.onehilltech.gatekeeper.android.utils.InputError;
@@ -36,9 +38,11 @@ public class LoginFragment extends Fragment
 
   private boolean autoLogin_ = false;
 
-  private SingleUserSessionClient userSessionClient_;
+  private SingleUserSessionClient sessionClient_;
 
-  private Button signInButton_;
+  /// Target request use to use. If null after onCreate(), then a default
+  /// RequestQueue from Volley is used.
+  private RequestQueue requestQueue_;
 
   /**
    * Create a new instance of the fragment.
@@ -69,7 +73,6 @@ public class LoginFragment extends Fragment
     return fragment;
   }
 
-
   /**
    * Create an instance of the LoginFragment with the username/password initialized.
    *
@@ -95,6 +98,16 @@ public class LoginFragment extends Fragment
     // Required empty public constructor
   }
 
+  /**
+   * Allow the subclass to provide it's own request queue.
+   *
+   * @return
+   */
+  protected RequestQueue onCreateRequestQueue ()
+  {
+    return null;
+  }
+
   @Override
   public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
   {
@@ -110,8 +123,8 @@ public class LoginFragment extends Fragment
     this.usernameView_ = (TextView)view.findViewById (R.id.username);
     this.passwordView_ = (TextView)view.findViewById (R.id.password);
 
-    this.signInButton_ = (Button)view.findViewById (R.id.button_sign_in);
-    this.signInButton_.setOnClickListener (new View.OnClickListener ()
+    Button signInButton = (Button)view.findViewById (R.id.button_sign_in);
+    signInButton.setOnClickListener (new View.OnClickListener ()
     {
       @Override
       public void onClick (View v)
@@ -164,8 +177,15 @@ public class LoginFragment extends Fragment
         this.autoLogin_ = args.getBoolean (ARG_AUTO_LOGIN);
     }
 
-    // Initialize the Gatekeeper session client.
-    SingleUserSessionClient.initialize (this.getActivity (), this);
+    // Initialize the Gatekeeper session client. During the initialization process, allow
+    // the subclass to provide its own RequestQueue. This is important since applications
+    // may have special networking needs that still need to be honored.
+    this.requestQueue_ = this.onCreateRequestQueue ();
+
+    if (this.requestQueue_ == null)
+      this.requestQueue_ = Volley.newRequestQueue (this.getContext ());
+
+    SingleUserSessionClient.initialize (this.getActivity (), this.requestQueue_, this);
   }
 
   @Override
@@ -195,7 +215,7 @@ public class LoginFragment extends Fragment
   {
     // Store our reference to the client, and check if the client is logged in.
     // This way, we can short circuit the login process.
-    this.userSessionClient_ = client;
+    this.sessionClient_ = client;
 
     if (client.isLoggedIn ())
       this.loginFragmentListener_.onLoginComplete (this);
@@ -258,7 +278,7 @@ public class LoginFragment extends Fragment
 
     if (!inputError.hasError ())
     {
-      this.userSessionClient_.loginUser (
+      this.sessionClient_.loginUser (
           username,
           password,
           new ResponseListener<UserToken> ()
