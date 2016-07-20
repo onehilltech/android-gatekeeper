@@ -14,7 +14,6 @@ import android.widget.EditText;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class NewAccountFragment extends Fragment
@@ -143,13 +142,7 @@ public class NewAccountFragment extends Fragment
   {
     return this.id_;
   }
-
-  public static class Response
-  {
-    @JsonProperty
-    public String _id;
-  }
-
+  
   /**
    * Attempts to sign in or register the account specified by the login form. If
    * there are form errors (invalid email, missing fields, etc.), the errors are
