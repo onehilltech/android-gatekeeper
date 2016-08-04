@@ -10,11 +10,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     include=JsonTypeInfo.As.PROPERTY,
     property="grant_type")
 @JsonSubTypes({
-    @JsonSubTypes.Type (value=UserCredentials.class, name="password"),
-    @JsonSubTypes.Type (value=ClientCredentials.class, name="client_credentials"),
-    @JsonSubTypes.Type (value=RefreshToken.class, name="refresh_token")})
+    @JsonSubTypes.Type (value=JsonUserCredentials.class, name="password"),
+    @JsonSubTypes.Type (value=JsonClientCredentials.class, name="client_credentials"),
+    @JsonSubTypes.Type (value=JsonRefreshToken.class, name="refresh_token")})
 @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
-public abstract class Grant
+abstract class JsonGrant
 {
   @JsonProperty("client_id")
   public String clientId;

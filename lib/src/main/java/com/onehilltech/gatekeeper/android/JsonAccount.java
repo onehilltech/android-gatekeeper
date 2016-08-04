@@ -2,7 +2,7 @@ package com.onehilltech.gatekeeper.android;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonAccount
+class JsonAccount
 {
   public static class Account
   {

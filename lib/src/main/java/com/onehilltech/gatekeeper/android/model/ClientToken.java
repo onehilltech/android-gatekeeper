@@ -1,6 +1,6 @@
 package com.onehilltech.gatekeeper.android.model;
 
-import com.onehilltech.gatekeeper.android.data.BearerToken;
+import com.onehilltech.gatekeeper.android.JsonBearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
@@ -15,7 +15,7 @@ public class ClientToken extends AccessToken
   @PrimaryKey
   String clientId_;
 
-  public static ClientToken fromToken (String clientId, BearerToken token)
+  public static ClientToken fromToken (String clientId, JsonBearerToken token)
   {
     return new ClientToken (clientId, token.accessToken, token.getExpiration ());
   }

@@ -14,7 +14,7 @@ import com.onehilltech.gatekeeper.android.ResponseListener;
 import com.onehilltech.gatekeeper.android.SingleUserSessionClient;
 
 public class MainActivity extends AppCompatActivity
-  implements SingleUserSessionClient.Listener
+  implements SingleUserSessionClient.OnInitializedListener
 {
   private SingleUserSessionClient client_;
   private TextView errMsg_;
@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity
   }
 
   @Override
-  public void onError (Throwable t)
+  public void onInitializeFailed (Throwable t)
   {
     this.errMsg_.setText (t.getLocalizedMessage ());
   }

@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,7 +8,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.Date;
 
-public class BearerToken extends Token
+public class JsonBearerToken extends JsonToken
 {
   @JsonIgnore
   int id;
@@ -26,12 +26,12 @@ public class BearerToken extends Token
 
   public static final int DEFAULT_EXPIRES_IN = 3600;
 
-  public static BearerToken generateRandomToken ()
+  public static JsonBearerToken generateRandomToken ()
   {
-    BearerToken token =
-        new BearerToken (RandomStringUtils.random (48, VALID_CHARS),
-                         RandomStringUtils.random (48, VALID_CHARS),
-                         DEFAULT_EXPIRES_IN);
+    JsonBearerToken token =
+        new JsonBearerToken (RandomStringUtils.random (48, VALID_CHARS),
+                             RandomStringUtils.random (48, VALID_CHARS),
+                             DEFAULT_EXPIRES_IN);
 
     return token;
   }
@@ -44,9 +44,9 @@ public class BearerToken extends Token
    * @param expiresIn
    */
   @JsonCreator
-  public BearerToken (@JsonProperty("access_token") String accessToken,
-                      @JsonProperty("refresh_token") String refreshToken,
-                      @JsonProperty("expires_in") int expiresIn)
+  public JsonBearerToken (@JsonProperty("access_token") String accessToken,
+                          @JsonProperty("refresh_token") String refreshToken,
+                          @JsonProperty("expires_in") int expiresIn)
   {
     super (new Date (System.currentTimeMillis () + (expiresIn * 1000)));
 
@@ -55,7 +55,7 @@ public class BearerToken extends Token
   }
 
   @Override
-  public void accept (TokenVisitor v)
+  public void accept (JsonTokenVisitor v)
   {
     v.visitBearerToken (this);
   }
@@ -75,10 +75,10 @@ public class BearerToken extends Token
   @Override
   public boolean equals (Object obj)
   {
-    if (!(obj instanceof BearerToken))
+    if (!(obj instanceof JsonBearerToken))
       return false;
 
-    BearerToken token = (BearerToken)obj;
+    JsonBearerToken token = (JsonBearerToken)obj;
 
     if (!this.tag.equals (token.tag) ||
         !this.accessToken.equals (token.accessToken))

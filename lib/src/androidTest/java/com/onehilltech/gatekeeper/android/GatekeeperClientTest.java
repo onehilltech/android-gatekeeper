@@ -11,7 +11,6 @@ import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.onehilltech.gatekeeper.android.data.BearerToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
@@ -123,7 +122,7 @@ public class GatekeeperClientTest
   private void getUserToken (final String username, final String password) throws Exception
   {
     // Setup the mocked routes.
-    final BearerToken fakeToken = BearerToken.generateRandomToken ();
+    final JsonBearerToken fakeToken = JsonBearerToken.generateRandomToken ();
 
     final MockNetwork.RequestMatcher requestMatcher = new MockNetwork.RequestMatcher ()
     {
@@ -138,8 +137,8 @@ public class GatekeeperClientTest
         if (!request.getUrl ().equals (url))
           return false;
 
-        JsonRequest jsonRequest = (JsonRequest) request;
-        UserCredentials userCredentials = (UserCredentials) jsonRequest.getData ();
+        SignedRequest signedRequest = (SignedRequest) request;
+        JsonUserCredentials userCredentials = (JsonUserCredentials) signedRequest.getData ();
 
         return
             userCredentials.username.equals (username) &&
@@ -206,7 +205,7 @@ public class GatekeeperClientTest
   private void initializeClient ()
       throws Exception
   {
-    final BearerToken fakeToken = BearerToken.generateRandomToken ();
+    final JsonBearerToken fakeToken = JsonBearerToken.generateRandomToken ();
     Log.d (TAG, "Initializing client");
 
     MockNetwork.RequestMatcher requestMatcher = new MockNetwork.RequestMatcher ()
@@ -220,8 +219,8 @@ public class GatekeeperClientTest
           return false;
 
         Log.d (TAG, "Checking client credentials");
-        JsonRequest jsonRequest = (JsonRequest) request;
-        ClientCredentials clientCredentials = (ClientCredentials) jsonRequest.getData ();
+        SignedRequest signedRequest = (SignedRequest) request;
+        JsonClientCredentials clientCredentials = (JsonClientCredentials) signedRequest.getData ();
 
         return
             clientCredentials.clientId.equals (clientConfig_.clientId) &&

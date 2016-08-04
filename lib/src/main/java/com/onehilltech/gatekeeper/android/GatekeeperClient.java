@@ -9,28 +9,18 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.onehilltech.gatekeeper.android.data.BearerToken;
-import com.onehilltech.gatekeeper.android.data.Token;
-import com.onehilltech.gatekeeper.android.data.TokenVisitor;
 import com.onehilltech.gatekeeper.android.model.AccessToken;
-import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken_Table;
+import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.config.*;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 
 import java.lang.reflect.InvocationTargetException;
-
-// There is a nasty bug that we cannot figure out. The only want to get the line below
-// to actually import the database holder is to use wildcard import. Hopefully, we can
-// remove the wildcard import statement when we have more time to investigate the problem.
-//
-//import com.raizlabs.android.dbflow.config.GatekeeperGeneratedDatabaseHolder;
 
 /**
  * Client interface for communicating with a Gatekeeper service.
@@ -53,6 +43,8 @@ public class GatekeeperClient
   private ClientToken clientToken_;
 
   public static final int VERSION = 1;
+
+  private String tag_;
 
   /**
    * OnRegistrationCompleteListener interface for initializing the client.
@@ -110,7 +102,9 @@ public class GatekeeperClient
    * @throws ClassNotFoundException
    * @throws InvocationTargetException
    */
-  public static void initialize (Context context, RequestQueue requestQueue, OnInitializedListener onInitializedListener)
+  public static void initialize (Context context,
+                                 RequestQueue requestQueue,
+                                 OnInitializedListener onInitializedListener)
   {
     try
     {
@@ -123,7 +117,6 @@ public class GatekeeperClient
     }
   }
 
-
   /**
    * Initialize a new GatekeeperClient object.
    *
@@ -131,7 +124,9 @@ public class GatekeeperClient
    * @param requestQueue      Volley RequestQueue for requests
    * @param onInitializedListener     Callback for initialization.
    */
-  public static void initialize (final Configuration config, final RequestQueue requestQueue, final OnInitializedListener onInitializedListener)
+  public static void initialize (final Configuration config,
+                                 final RequestQueue requestQueue,
+                                 final OnInitializedListener onInitializedListener)
   {
     // First, initialize the Gatekeeper DBFlow module.
     FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
@@ -182,13 +177,13 @@ public class GatekeeperClient
     // object with the required token.
     String url = config.baseUri + "/v" + VERSION + "/oauth2/token";
 
-    JsonRequest<Token> request =
-        new JsonRequest<> (
+    SignedRequest<JsonToken> request =
+        new SignedRequest<> (
             Request.Method.POST,
             url,
             null,
-            new TypeReference<Token> () { },
-            new ResponseListener<Token> ()
+            new TypeReference<JsonToken> () { },
+            new ResponseListener<JsonToken> ()
             {
               @Override
               public void onErrorResponse (VolleyError error)
@@ -197,12 +192,12 @@ public class GatekeeperClient
               }
 
               @Override
-              public void onResponse (Token response)
+              public void onResponse (JsonToken response)
               {
-                response.accept (new TokenVisitor ()
+                response.accept (new JsonTokenVisitor ()
                 {
                   @Override
-                  public void visitBearerToken (BearerToken token)
+                  public void visitBearerToken (JsonBearerToken token)
                   {
                     // Set remaining properties on the bearer token, then save token to database.
                     Log.d (TAG, "Saving client token to database");
@@ -215,7 +210,7 @@ public class GatekeeperClient
               }
             });
 
-    ClientCredentials clientCredentials = new ClientCredentials ();
+    JsonClientCredentials clientCredentials = new JsonClientCredentials ();
     clientCredentials.clientId = config.clientId;
     clientCredentials.clientSecret = config.clientSecret;
 
@@ -293,6 +288,16 @@ public class GatekeeperClient
     return this.clientId_;
   }
 
+  public String getTag ()
+  {
+    return this.tag_;
+  }
+
+  public void setTag (String tag)
+  {
+    this.tag_ = tag;
+  }
+
   /**
    * Create a new account on the Gatekeeper server. The result of this method is a Boolean
    * value that determines if the account was created. Once the account has been created,
@@ -301,31 +306,26 @@ public class GatekeeperClient
    * @param username        Username
    * @param password        Password
    */
-  public JsonRequest createAccount (String username,
-                                    String password,
-                                    String email,
-                                    final OnResultListener <JsonAccount> listener)
+  public SignedRequest <?> createAccount (String username,
+                                          String password,
+                                          String email,
+                                          final OnResultListener <JsonAccount> listener)
   {
-    class Data
-    {
-      @JsonProperty("client_id")
-      public String clientId;
-
-      public String username;
-
-      public String password;
-
-      public String email;
-    }
+    JsonNewAccount newAccount = new JsonNewAccount ();
+    newAccount.clientId = this.clientId_;
+    newAccount.username = username;
+    newAccount.password = password;
+    newAccount.email = email;
 
     String url = this.getCompleteUrl ("/accounts");
 
-    JsonRequest <JsonAccount> request =
-        new JsonRequest<> (
+    SignedRequest<JsonAccount> request =
+        new SignedRequest<> (
             Request.Method.POST,
             url,
             this.clientToken_,
             new TypeReference<JsonAccount> () { },
+            newAccount,
             new ResponseListener<JsonAccount> ()
             {
               @Override
@@ -341,39 +341,8 @@ public class GatekeeperClient
               }
             });
 
-    Data data = new Data ();
-    data.clientId = this.clientId_;
-    data.username = username;
-    data.password = password;
-    data.email = email;
+    this.addRequest (request);
 
-    request.setData (data);
-
-    this.requestQueue_.add (request);
-
-    return request;
-  }
-
-  /**
-   * Get the account profile for the user associated with the token.
-   *
-   * @param token
-   * @param listener
-   * @return
-   */
-  public JsonRequest getAccountProfile (UserToken token, ResponseListener <AccountProfile> listener)
-  {
-    String url = this.getCompleteUrl ("/me/profile");
-
-    JsonRequest <AccountProfile> request =
-        new JsonRequest<> (
-            Request.Method.GET,
-            url,
-            token,
-            new TypeReference <AccountProfile> () {},
-            listener);
-
-    this.requestQueue_.add (request);
     return request;
   }
 
@@ -384,7 +353,9 @@ public class GatekeeperClient
    * @param password        Password
    * @param listener        Callback listener
    */
-  public void getUserToken (final String username, final String password, final ResponseListener<UserToken> listener)
+  public void getUserToken (final String username,
+                            final String password,
+                            final ResponseListener<UserToken> listener)
   {
     // First, see if there is a token on the device for the username/password
     // combination. If it does not exist, then we need to request the token
@@ -404,7 +375,7 @@ public class GatekeeperClient
               }
               else
               {
-                UserCredentials userCredentials = new UserCredentials ();
+                JsonUserCredentials userCredentials = new JsonUserCredentials ();
                 userCredentials.clientId = clientId_;
                 userCredentials.username = username;
                 userCredentials.password = password;
@@ -420,12 +391,12 @@ public class GatekeeperClient
    *
    * @param listener        Callback listener
    */
-  public JsonRequest refreshToken (UserToken token, ResponseListener <UserToken> listener)
+  public SignedRequest <?> refreshToken (UserToken token, ResponseListener <UserToken> listener)
   {
     if (!token.canRefresh ())
       throw new IllegalStateException ("Current token cannot be refreshed");
 
-    RefreshToken refreshToken = new RefreshToken ();
+    JsonRefreshToken refreshToken = new JsonRefreshToken ();
     refreshToken.clientId = this.clientId_;
     refreshToken.refreshToken = token.getRefreshToken ();
 
@@ -433,30 +404,29 @@ public class GatekeeperClient
   }
 
   /**
-   * Get a BearerToken for the grant information. The token can come from the database, if
+   * Get a JsonBearerToken for the jsonGrant information. The token can come from the database, if
    * it already exists, or it can come from the service.
    *
-   * @param grant           Grant object
+   * @param grantType           JsonGrant object
    * @param listener
    * @return
    */
-  private JsonRequest requestUserToken (final String username,
-                                        final Grant grant,
-                                        final ResponseListener<UserToken> listener)
+  private SignedRequest <?> requestUserToken (final String username,
+                                              final JsonGrant grantType,
+                                              final ResponseListener<UserToken> listener)
   {
     // Since we do not have this as a token, we must contact the server to get a
-    // token for the grant.
+    // token for the jsonGrant.
     final String url = this.getCompleteUrl ("/oauth2/token");
 
-    JsonRequest<Token> request =
-        this.makeJsonRequest (
+    SignedRequest<JsonToken> request =
+        this.newSignedRequest (
             Request.Method.POST,
             url,
             this.clientToken_,
-            new TypeReference<Token> ()
-            {
-            },
-            new ResponseListener<Token> ()
+            new TypeReference<JsonToken> () { },
+            grantType,
+            new ResponseListener<JsonToken> ()
             {
               @Override
               public void onErrorResponse (VolleyError error)
@@ -465,12 +435,12 @@ public class GatekeeperClient
               }
 
               @Override
-              public void onResponse (Token response)
+              public void onResponse (JsonToken response)
               {
-                response.accept (new TokenVisitor ()
+                response.accept (new JsonTokenVisitor ()
                 {
                   @Override
-                  public void visitBearerToken (BearerToken token)
+                  public void visitBearerToken (JsonBearerToken token)
                   {
                     completeUserLogin (username, token, listener);
                   }
@@ -478,10 +448,7 @@ public class GatekeeperClient
               }
             });
 
-    request.setShouldCache (false);
-    request.setData (grant);
-
-    this.requestQueue_.add (request);
+    this.addRequest (request);
 
     return request;
   }
@@ -493,7 +460,9 @@ public class GatekeeperClient
    * @param token
    * @param listener
    */
-  private void completeUserLogin (String username, BearerToken token, ResponseListener<UserToken> listener)
+  private void completeUserLogin (String username,
+                                  JsonBearerToken token,
+                                  ResponseListener<UserToken> listener)
   {
     // Save the token to the database.
     UserToken userToken = UserToken.fromToken (username, token);
@@ -504,37 +473,16 @@ public class GatekeeperClient
   }
 
   /**
-   * Get the id of the current user.
-   *
-   * @return
-   */
-  public JsonRequest whoami (UserToken token, ResponseListener <com.onehilltech.gatekeeper.android.model.Account> listener)
-  {
-    String url = this.getCompleteUrl ("/me/whoami");
-
-    JsonRequest request =
-        this.makeJsonRequest (
-            Request.Method.GET,
-            url,
-            token,
-            new TypeReference <com.onehilltech.gatekeeper.android.model.Account> () {},
-            listener);
-
-    this.requestQueue_.add (request);
-
-    return request;
-  }
-
-  /**
    * Logout the current user.
    *
    * @param listener      Response listener
    */
-  public JsonRequest logout (final UserToken token, final ResponseListener <Boolean> listener)
+  public SignedRequest <?> logout (final UserToken token, final ResponseListener <Boolean> listener)
   {
     String url = this.getCompleteUrl ("/oauth2/logout");
-    JsonRequest<Boolean> request =
-        this.makeJsonRequest (
+
+    SignedRequest<Boolean> request =
+        this.newSignedRequest (
             Request.Method.GET,
             url,
             token,
@@ -558,28 +506,29 @@ public class GatekeeperClient
             });
 
     request.setShouldCache (false);
-    this.requestQueue_.add (request);
+
+    this.addRequest (request);
 
     return request;
   }
 
-  /**
-   * Factory method for creating a protected request. The request will include the
-   * current token in the HTTP request header.
-   *
-   * @param method        HTTP method
-   * @param path          Full path of the resource
-   * @param listener      Response listener
-   * @param <T>           Object type of response body
-   * @return              Request object
-   */
-  public <T> JsonRequest<T> makeJsonRequest (int method,
-                                             String path,
-                                             AccessToken token,
-                                             TypeReference<T> typeReference,
-                                             ResponseListener<T> listener)
+  public <T> SignedRequest<T> newSignedRequest (int method,
+                                                String path,
+                                                AccessToken token,
+                                                TypeReference<T> typeReference,
+                                                ResponseListener<T> listener)
   {
-    return new JsonRequest<> (method, path, token, typeReference, listener);
+    return new SignedRequest<> (method, path, token, typeReference, listener);
+  }
+
+  public <T> SignedRequest<T> newSignedRequest (int method,
+                                                String path,
+                                                AccessToken token,
+                                                TypeReference<T> typeReference,
+                                                Object data,
+                                                ResponseListener<T> listener)
+  {
+    return new SignedRequest<> (method, path, token, typeReference, data, listener);
   }
 
   /**
@@ -589,6 +538,9 @@ public class GatekeeperClient
    */
   public void addRequest (Request <?> request)
   {
+    if (this.tag_ != null)
+      request.setTag (this.tag_);
+
     this.requestQueue_.add (request);
   }
 

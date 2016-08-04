@@ -21,7 +21,7 @@ import com.onehilltech.gatekeeper.android.utils.ErrorMessageUtil;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 public class LoginFragment extends Fragment
-  implements SingleUserSessionClient.Listener
+  implements SingleUserSessionClient.OnInitializedListener
 {
   private static final String TAG = "LoginFragment";
 
@@ -223,7 +223,7 @@ public class LoginFragment extends Fragment
   }
 
   @Override
-  public void onError (Throwable t)
+  public void onInitializeFailed (Throwable t)
   {
     if ((t instanceof VolleyError))
       this.handleVolleyError ((VolleyError)t);

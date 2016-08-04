@@ -17,14 +17,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @class SignedRequest
  *
+ * Request object that has been signed with an access token.
  */
-public class JsonRequest <T> extends Request <T>
+public class SignedRequest <T> extends Request <T>
 {
   public static final String CHARSET = "utf-8";
-
-  public static final String CONTENT_TYPE =
-      String.format ("application/json; charset=%s", CHARSET);
+  public static final String CONTENT_TYPE = String.format ("application/json; charset=%s", CHARSET);
 
   private final ObjectMapper objMapper_ = new ObjectMapper ();
 
@@ -44,17 +44,36 @@ public class JsonRequest <T> extends Request <T>
    * @param token
    * @param listener
    */
-  public JsonRequest (int method,
-                      String url,
-                      AccessToken token,
-                      TypeReference<T> typeReference,
-                      ResponseListener<T> listener)
+  public SignedRequest (int method,
+                        String url,
+                        AccessToken token,
+                        TypeReference<T> typeReference,
+                        ResponseListener<T> listener)
+  {
+    this (method, url, token, typeReference, null, listener);
+  }
+
+  /**
+   * Initializing constructor.
+   *
+   * @param method
+   * @param url
+   * @param token
+   * @param listener
+   */
+  public SignedRequest (int method,
+                        String url,
+                        AccessToken token,
+                        TypeReference<T> typeReference,
+                        Object postData,
+                        ResponseListener<T> listener)
   {
     super (method, url, listener);
 
     this.token_ = token;
     this.listener_ = listener;
     this.typeReference_ = typeReference;
+    this.dataObj_ = postData;
   }
 
   /**

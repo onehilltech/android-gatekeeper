@@ -12,7 +12,7 @@ import com.onehilltech.gatekeeper.android.R;
 import com.onehilltech.gatekeeper.android.SingleUserSessionClient;
 
 public abstract class BaseLoginFragment extends Fragment
-  implements SingleUserSessionClient.Listener
+  implements SingleUserSessionClient.OnInitializedListener
 {
   private static final String TAG = "BaseLoginFragment";
 
@@ -67,7 +67,7 @@ public abstract class BaseLoginFragment extends Fragment
   }
 
   @Override
-  public void onError (Throwable t)
+  public void onInitializeFailed (Throwable t)
   {
     Log.e (TAG, t.getLocalizedMessage (), t);
   }

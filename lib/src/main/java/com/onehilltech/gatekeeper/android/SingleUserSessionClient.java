@@ -1,14 +1,13 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.onehilltech.gatekeeper.android.model.Account;
-import com.onehilltech.gatekeeper.android.model.AccountProfile;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
@@ -17,23 +16,22 @@ public class SingleUserSessionClient extends UserSessionClient
 {
   private UserToken userToken_;
 
-  private Account whoami_;
-
-  public interface Listener
+  public interface OnInitializedListener
   {
     void onInitialized (SingleUserSessionClient sessionClient);
-    void onError (Throwable t);
+    void onInitializeFailed (Throwable t);
   }
 
   /**
    * Initialize the single user session client.
    *
    * @param context
-   * @param listener
+   * @param onInitializedListener
    */
-  public static void initialize (Context context, Listener listener)
+  public static void initialize (Context context,
+                                 @NonNull OnInitializedListener onInitializedListener)
   {
-    initialize (context, Volley.newRequestQueue (context), listener);
+    initialize (context, Volley.newRequestQueue (context), onInitializedListener);
   }
 
   /**
@@ -41,9 +39,11 @@ public class SingleUserSessionClient extends UserSessionClient
    *
    * @param context
    * @param queue
-   * @param listener
+   * @param onInitializedListener
    */
-  public static void initialize (Context context, RequestQueue queue, final Listener listener)
+  public static void initialize (Context context,
+                                 RequestQueue queue,
+                                 @NonNull final OnInitializedListener onInitializedListener)
   {
     GatekeeperClient.initialize (context, queue, new GatekeeperClient.OnInitializedListener () {
       @Override
@@ -58,7 +58,7 @@ public class SingleUserSessionClient extends UserSessionClient
                 public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
                 {
                   SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
-                  listener.onInitialized (sessionClient);
+                  onInitializedListener.onInitialized (sessionClient);
                 }
               }).execute ();
       }
@@ -66,7 +66,7 @@ public class SingleUserSessionClient extends UserSessionClient
       @Override
       public void onInitializeFailed (Throwable e)
       {
-        listener.onError (e);
+        onInitializedListener.onInitializeFailed (e);
       }
     });
   }
@@ -79,6 +79,7 @@ public class SingleUserSessionClient extends UserSessionClient
   private SingleUserSessionClient (GatekeeperClient client, UserToken userToken)
   {
     super (client);
+
     this.userToken_ = userToken;
   }
 
@@ -116,9 +117,6 @@ public class SingleUserSessionClient extends UserSessionClient
   {
     this.userToken_.delete ();
     this.userToken_ = null;
-
-    if (this.whoami_ != null)
-      this.whoami_ = null;
   }
 
   /**
@@ -132,47 +130,6 @@ public class SingleUserSessionClient extends UserSessionClient
   }
 
   /**
-   * Get the account information for the current user.
-   *
-   * @return
-   */
-  public void getMyAccount (final ResponseListener<Account> listener)
-  {
-    if (this.whoami_ != null)
-    {
-      listener.onResponse (this.whoami_);
-      return;
-    }
-
-    this.client_.whoami (this.userToken_, new ResponseListener<Account> ()
-    {
-      @Override
-      public void onErrorResponse (VolleyError error)
-      {
-        listener.onErrorResponse (new VolleyError ("Failed to get account information", error));
-      }
-
-      @Override
-      public void onResponse (Account response)
-      {
-        whoami_ = response;
-        listener.onResponse (response);
-      }
-    });
-  }
-
-  /**
-   * Get the profile for an account.
-   *
-   * @param listener
-   * @return
-   */
-  public JsonRequest getAccountProfile (ResponseListener <AccountProfile> listener)
-  {
-    return this.getClient ().getAccountProfile (this.userToken_, listener);
-  }
-
-  /**
    * Test if the client is logged in.
    *
    * @return
@@ -182,23 +139,20 @@ public class SingleUserSessionClient extends UserSessionClient
     return this.userToken_ != null;
   }
 
-
-  /**
-   * Make a JsonRequest object for the current user. The request will set the
-   * authorization header for the server to validate.
-   *
-   * @param method
-   * @param path
-   * @param typeReference
-   * @param listener
-   * @param <T>
-   * @return
-   */
-  public <T> JsonRequest <T> makeJsonRequest (int method,
-                                              String path,
-                                              TypeReference<T> typeReference,
-                                              ResponseListener<T> listener)
+  public <T> SignedRequest<T> newSignedRequest (int method,
+                                               String path,
+                                               TypeReference<T> typeReference,
+                                               ResponseListener<T> listener)
   {
-    return this.client_.makeJsonRequest (method, path, this.userToken_, typeReference, listener);
+    return this.client_.newSignedRequest (method, path, this.userToken_, typeReference, listener);
+  }
+
+  public <T> SignedRequest<T> newSignedRequest (int method,
+                                                String path,
+                                                TypeReference<T> typeReference,
+                                                Object data,
+                                                ResponseListener<T> listener)
+  {
+    return this.client_.newSignedRequest (method, path, this.userToken_, typeReference, data, listener);
   }
 }

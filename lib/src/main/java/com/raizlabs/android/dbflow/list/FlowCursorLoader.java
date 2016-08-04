@@ -130,8 +130,9 @@ public class FlowCursorLoader extends AsyncTaskLoader<Cursor>
   @Override
   protected void onReset ()
   {
-    // Ensure the loader is stopped
-    this.onStopLoading ();
+    super.onReset ();
+
+    this.startLoading ();
 
     if (mCursor != null && !mCursor.isClosed ())
       mCursor.close ();

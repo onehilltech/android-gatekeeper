@@ -66,7 +66,7 @@ dependencies {
     compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
 
     compile 'com.github.onehilltech:android-design:-SNAPSHOT'
-    compile 'com.github.onehilltech:android-metadata:1.5.0'
+    compile 'com.github.onehilltech:android-metadata:1.5.1'
 
     compile 'com.android.volley:volley:1.0.0'
 
@@ -74,13 +74,10 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.2'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.2'
     compile 'org.apache.commons:commons-lang3:3.0'
-    compile 'com.google.android.gms:play-services-gcm:9.2.0'
 
-    compile 'com.android.support:appcompat-v7:24.0.0'
-    compile 'com.android.support:support-v4:24.0.0'
-    compile 'com.android.support:design:24.0.0'
-
-    compile 'com.facebook.android:facebook-android-sdk:[4,5)'
+    compile 'com.android.support:appcompat-v7:24.1.0'
+    compile 'com.android.support:support-v4:24.1.0'
+    compile 'com.android.support:design:24.1.0'
 
     androidTestCompile 'junit:junit:4.11'
     androidTestCompile('com.android.support.test:testing-support-lib:0.1') {

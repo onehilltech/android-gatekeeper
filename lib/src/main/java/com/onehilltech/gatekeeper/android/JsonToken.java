@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,9 +20,9 @@ import java.util.Date;
     include=JsonTypeInfo.As.PROPERTY,
     property="token_type")
 @JsonSubTypes({
-    @Type(value=BearerToken.class, name="Bearer")})
+    @Type(value=JsonBearerToken.class, name="Bearer")})
 @JsonAutoDetect(getterVisibility= JsonAutoDetect.Visibility.NONE)
-public abstract class Token
+abstract class JsonToken
 {
   /// FastXML object mapper reading/writing Json.
   private static final ObjectMapper objMapper = new ObjectMapper();
@@ -30,12 +30,12 @@ public abstract class Token
   @JsonIgnore
   private Date expiration_;
 
-  public Token ()
+  public JsonToken ()
   {
 
   }
 
-  public Token (Date expiration)
+  public JsonToken (Date expiration)
   {
     this.expiration_ = expiration;
   }
@@ -68,10 +68,10 @@ public abstract class Token
    * @param json
    * @return
    */
-  public static Token fromJSON (String json)
+  public static JsonToken fromJSON (String json)
       throws IOException
   {
-    return objMapper.readValue (json, Token.class);
+    return objMapper.readValue (json, JsonToken.class);
   }
 
   /**
@@ -95,19 +95,19 @@ public abstract class Token
   }
 
   /**
-   * Accept a TokenVisitor object.
+   * Accept a JsonTokenVisitor object.
    *
    * @param v   The visitor object
    */
-  public abstract void accept (TokenVisitor v);
+  public abstract void accept (JsonTokenVisitor v);
 
   @Override
   public boolean equals (Object obj)
   {
-    if (!(obj instanceof Token))
+    if (!(obj instanceof JsonToken))
       return false;
 
-    Token token = (Token)obj;
+    JsonToken token = (JsonToken)obj;
     return this.expiration_.equals (token.expiration_);
   }
 

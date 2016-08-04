@@ -1,6 +1,6 @@
 package com.onehilltech.gatekeeper.android.model;
 
-import com.onehilltech.gatekeeper.android.data.BearerToken;
+import com.onehilltech.gatekeeper.android.JsonBearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
@@ -19,7 +19,7 @@ public class UserToken extends AccessToken
   @Column(name="refresh_token")
   String refreshToken_;
 
-  public static UserToken fromToken (String username, BearerToken token)
+  public static UserToken fromToken (String username, JsonBearerToken token)
   {
     return new UserToken (username, token.accessToken, token.refreshToken, token.getExpiration ());
   }

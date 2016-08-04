@@ -1,4 +1,4 @@
-package com.onehilltech.gatekeeper.android.data;
+package com.onehilltech.gatekeeper.android;
 
 import android.support.test.runner.AndroidJUnit4;
 
@@ -15,7 +15,7 @@ public class BearerTokenTest
   @Test
   public void testConstructor ()
   {
-    BearerToken token = new BearerToken ("access_token", "refresh_token", 1);
+    JsonBearerToken token = new JsonBearerToken ("access_token", "refresh_token", 1);
 
     Assert.assertEquals ("access_token", token.accessToken);
     Assert.assertEquals ("refresh_token", token.refreshToken);
@@ -24,17 +24,17 @@ public class BearerTokenTest
   @Test
   public void testCanRefresh ()
   {
-    BearerToken token = new BearerToken ("access_token", "refresh_token", 1);
+    JsonBearerToken token = new JsonBearerToken ("access_token", "refresh_token", 1);
     Assert.assertTrue (token.getCanRefresh ());
 
-    token = new BearerToken ("access_token", null, 1);
+    token = new JsonBearerToken ("access_token", null, 1);
     Assert.assertFalse (token.getCanRefresh ());
   }
 
   @Test
   public void testHasExpired () throws Exception
   {
-    BearerToken token = new BearerToken ("access_token", "refresh_token", 1);
+    JsonBearerToken token = new JsonBearerToken ("access_token", "refresh_token", 1);
     Assert.assertFalse (token.hasExpired ());
 
     Thread.sleep (2000);
@@ -46,7 +46,7 @@ public class BearerTokenTest
   public void testJSON () throws Exception
   {
     String tag = "id";
-    BearerToken fakeToken = BearerToken.generateRandomToken ();
+    JsonBearerToken fakeToken = JsonBearerToken.generateRandomToken ();
     fakeToken.tag = tag;
 
     String jsonString = fakeToken.toJsonString ();
@@ -61,11 +61,11 @@ public class BearerTokenTest
     Assert.assertTrue (jsonNode.has ("expires_in"));
 
     // Test creating a BaseToken from the json string.
-    Token token = Token.fromJSON (jsonString);
-    Assert.assertTrue ((token instanceof BearerToken));
+    JsonToken token = JsonToken.fromJSON (jsonString);
+    Assert.assertTrue ((token instanceof JsonBearerToken));
 
     // Make sure the original token was constructed.
-    BearerToken bearerToken = (BearerToken)token;
+    JsonBearerToken bearerToken = (JsonBearerToken)token;
     bearerToken.tag = tag;
 
     Assert.assertEquals (fakeToken, bearerToken);

@@ -3,9 +3,9 @@ package com.onehilltech.gatekeeper.android;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Grant kind for refreshing an existing access token.
+ * JsonGrant kind for refreshing an existing access token.
  */
-public class RefreshToken extends Grant
+class JsonRefreshToken extends JsonGrant
 {
   @JsonProperty("refresh_token")
   public String refreshToken;

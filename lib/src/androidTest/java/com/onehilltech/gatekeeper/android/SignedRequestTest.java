@@ -16,7 +16,7 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 
 @RunWith (AndroidJUnit4.class)
-public class JsonRequestTest
+public class SignedRequestTest
 {
   public static class Message
   {
@@ -39,8 +39,8 @@ public class JsonRequestTest
             headers,
             false);
 
-    JsonRequest<Boolean> req1 =
-        new JsonRequest<> (
+    SignedRequest<Boolean> req1 =
+        new SignedRequest<> (
             Request.Method.GET,
             "/does-not-matter",
             null,
@@ -73,8 +73,8 @@ public class JsonRequestTest
             headers,
             false);
 
-    JsonRequest<Message> req2 =
-        new JsonRequest<> (
+    SignedRequest<Message> req2 =
+        new SignedRequest<> (
             Request.Method.GET,
             "/does-not-matter",
             null,
