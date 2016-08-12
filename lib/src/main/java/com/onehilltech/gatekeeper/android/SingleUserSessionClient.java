@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
@@ -139,20 +140,136 @@ public class SingleUserSessionClient extends UserSessionClient
     return this.userToken_ != null;
   }
 
+  /**
+   * Create a new signed request.
+   *
+   * @param method
+   * @param path
+   * @param typeReference
+   * @param listener
+   * @param <T>
+   * @return
+   */
   public <T> SignedRequest<T> newSignedRequest (int method,
                                                String path,
                                                TypeReference<T> typeReference,
                                                ResponseListener<T> listener)
   {
-    return this.client_.newSignedRequest (method, path, this.userToken_, typeReference, listener);
+    AutoRefreshResponseListener <T> autoRefresh = new AutoRefreshResponseListener<> (listener);
+
+    SignedRequest <T> signedRequest =
+        this.client_.newSignedRequest (
+            method,
+            path,
+            this.userToken_,
+            typeReference,
+            autoRefresh);
+
+    autoRefresh.setOriginalRequest (signedRequest);
+
+    return signedRequest;
   }
 
+  /**
+   * Create a new signed request.
+   *
+   * @param method
+   * @param path
+   * @param typeReference
+   * @param data
+   * @param listener
+   * @param <T>
+   * @return
+   */
   public <T> SignedRequest<T> newSignedRequest (int method,
                                                 String path,
                                                 TypeReference<T> typeReference,
                                                 Object data,
                                                 ResponseListener<T> listener)
   {
-    return this.client_.newSignedRequest (method, path, this.userToken_, typeReference, data, listener);
+    AutoRefreshResponseListener <T> autoRefresh = new AutoRefreshResponseListener<> (listener);
+
+    SignedRequest <T> signedRequest =
+        this.client_.newSignedRequest (
+            method,
+            path,
+            this.userToken_,
+            typeReference,
+            data,
+            autoRefresh);
+
+    autoRefresh.setOriginalRequest (signedRequest);
+
+    return signedRequest;
+  }
+
+  /**
+   *
+   * @param <T>
+   */
+  private class AutoRefreshResponseListener <T> implements ResponseListener <T>
+  {
+    private Request<T> request_;
+    private final ResponseListener <T> responseListener_;
+
+    private final ResponseListener<UserToken> refreshResponseListener_ =
+        new ResponseListener<UserToken> ()
+        {
+          @Override
+          public void onErrorResponse (VolleyError error)
+          {
+            // We failed to refresh to user token. So, we need to just return control
+            // to the original response listener.
+            responseListener_.onErrorResponse (error);
+          }
+
+          @Override
+          public void onResponse (UserToken response)
+          {
+            // The token is refreshed. Let's try the same request again.
+            client_.addRequest (request_);
+          }
+        };
+
+    public AutoRefreshResponseListener (ResponseListener<T> responseListener)
+    {
+      this.responseListener_ = responseListener;
+    }
+
+    public void setOriginalRequest (Request <T> request)
+    {
+      this.request_ = request;
+    }
+
+    @Override
+    public void onErrorResponse (VolleyError error)
+    {
+      if (error.networkResponse != null)
+      {
+        int statusCode = error.networkResponse.statusCode;
+
+        if (statusCode == 401)
+        {
+          // Check if unauthorized access because of bad token.
+          client_.refreshToken (userToken_, refreshResponseListener_);
+        }
+        else
+        {
+          // Pass the response to the original response listener.
+          this.responseListener_.onErrorResponse (error);
+        }
+      }
+      else
+      {
+        // Pass the response to the origin response listener.
+        this.responseListener_.onErrorResponse (error);
+      }
+    }
+
+    @Override
+    public void onResponse (T response)
+    {
+      this.responseListener_.onResponse (response);
+    }
   }
 }
