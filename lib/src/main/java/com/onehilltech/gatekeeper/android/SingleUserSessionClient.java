@@ -247,7 +247,8 @@ public class SingleUserSessionClient extends UserSessionClient
       if (error.networkResponse != null)
       {
         int statusCode = error.networkResponse.statusCode;
-
+        String body = new String (error.networkResponse.data);
+        
         if (statusCode == 401)
         {
           // Check if unauthorized access because of bad token.
