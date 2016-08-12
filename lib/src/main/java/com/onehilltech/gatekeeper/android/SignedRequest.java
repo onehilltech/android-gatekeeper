@@ -30,7 +30,7 @@ public class SignedRequest <T> extends Request <T>
 
   private final ResponseListener <T> listener_;
 
-  private final AccessToken token_;
+  private AccessToken token_;
 
   private final TypeReference <T> typeReference_;
 
@@ -74,6 +74,18 @@ public class SignedRequest <T> extends Request <T>
     this.listener_ = listener;
     this.typeReference_ = typeReference;
     this.dataObj_ = postData;
+  }
+
+  /**
+   *
+   * @param token
+   */
+  public AccessToken setToken (AccessToken token)
+  {
+    AccessToken oldToken = this.token_;
+    this.token_ = token;
+
+    return oldToken;
   }
 
   /**

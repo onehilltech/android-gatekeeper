@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
@@ -211,7 +210,7 @@ public class SingleUserSessionClient extends UserSessionClient
    */
   private class AutoRefreshResponseListener <T> implements ResponseListener <T>
   {
-    private Request<T> request_;
+    private SignedRequest<T> request_;
     private final ResponseListener <T> responseListener_;
 
     private final ResponseListener<UserToken> refreshResponseListener_ =
@@ -228,8 +227,7 @@ public class SingleUserSessionClient extends UserSessionClient
           @Override
           public void onResponse (UserToken response)
           {
-            // The token is refreshed. Let's try the same request again.
-            client_.addRequest (request_);
+            onTokenResponse (response);
           }
         };
 
@@ -238,7 +236,17 @@ public class SingleUserSessionClient extends UserSessionClient
       this.responseListener_ = responseListener;
     }
 
-    public void setOriginalRequest (Request <T> request)
+    private void onTokenResponse (UserToken userToken)
+    {
+      // Save the token, and replace the token in the request.
+      userToken_ = userToken;
+      this.request_.setToken (userToken);
+
+      // Re-run the request with the new access token.
+      client_.addRequest (this.request_);
+    }
+
+    public void setOriginalRequest (SignedRequest <T> request)
     {
       this.request_ = request;
     }
