@@ -203,6 +203,8 @@ public class SingleUserSessionClient extends UserSessionClient
     return signedRequest;
   }
 
+  private static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
+
   /**
    *
    * @param <T>
@@ -247,12 +249,16 @@ public class SingleUserSessionClient extends UserSessionClient
       if (error.networkResponse != null)
       {
         int statusCode = error.networkResponse.statusCode;
-        String body = new String (error.networkResponse.data);
-        
+
         if (statusCode == 401)
         {
-          // Check if unauthorized access because of bad token.
-          client_.refreshToken (userToken_, refreshResponseListener_);
+          // TODO Parse header value, and determine best plan of action.
+          String authenticate = error.networkResponse.headers.get (HEADER_WWW_AUTHENTICATE);
+
+          if (authenticate.contains ("Token has expired"))
+            client_.refreshToken (userToken_, refreshResponseListener_);
+          else
+            responseListener_.onErrorResponse (error);
         }
         else
         {
