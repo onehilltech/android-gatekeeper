@@ -483,7 +483,7 @@ public class GatekeeperClient
 
     SignedRequest<Boolean> request =
         this.newSignedRequest (
-            Request.Method.GET,
+            Request.Method.POST,
             url,
             token,
             new TypeReference<Boolean> () { },
