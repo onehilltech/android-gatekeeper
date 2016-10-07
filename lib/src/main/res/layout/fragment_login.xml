@@ -5,16 +5,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context="com.onehilltech.gatekeeper.android.LoginFragment">
+    tools:context="com.onehilltech.gatekeeper.android.SimpleLoginFragment">
 
     <!-- application logo -->
-
-    <ImageView
-        android:id="@+id/app_logo"
-        android:layout_height="64dp"
-        android:layout_width="wrap_content"
-        android:visibility="gone"
-        />
 
     <!-- error message -->
 

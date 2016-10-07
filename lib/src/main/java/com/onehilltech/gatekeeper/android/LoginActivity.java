@@ -1,67 +1,25 @@
 package com.onehilltech.gatekeeper.android;
 
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.onehilltech.metadata.ManifestMetadata;
-import com.onehilltech.metadata.MetadataProperty;
 
 /**
- * Activity for using Gatekeeper to login
+ * @class LoginActivity
+ *
+ * Simple activity that displays the login fragment.
  */
 public class LoginActivity extends AppCompatActivity
-    implements LoginFragment.LoginFragmentListener
+    implements SimpleLoginFragment.LoginFragmentListener
 {
   private static final String TAG = "LoginActivity";
 
   private static final int REQUEST_USER_CREDENTIALS = 9000;
 
-  private static final String METADATA_LOGIN_SUCCESS_REDIRECT_ACTIVITY = "com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY";
-  private static final String METADATA_NEW_ACCOUNT_ACTIVITY = "com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY";
-
-  private final LocalMetadata metadata_ = new LocalMetadata ();
-
-  private static class LocalMetadata
-  {
-    @MetadataProperty(name=METADATA_LOGIN_SUCCESS_REDIRECT_ACTIVITY)
-    public String loginSuccessRedirectActivity;
-
-    @MetadataProperty(name=METADATA_NEW_ACCOUNT_ACTIVITY)
-    public String newAccountActivity;
-
-    public Intent getLoginSuccessRedirectIntent (Context context)
-    {
-      String className = this.getClassName (context, this.loginSuccessRedirectActivity);
-      Intent intent = new Intent ();
-      intent.setComponent (new ComponentName (context, className));
-
-      return intent;
-    }
-
-    public boolean hasNewAccountActivity ()
-    {
-      return this.newAccountActivity != null;
-    }
-
-    public Intent getNewAccountActivity (Context context)
-    {
-      String className = this.getClassName (context, this.newAccountActivity);
-      Intent intent = new Intent ();
-      intent.setComponent (new ComponentName (context, className));
-
-      return intent;
-    }
-
-    private String getClassName (Context context, String name)
-    {
-      return name != null && name.startsWith (".") ? context.getPackageName () + name : name;
-    }
-  }
+  private final LoginMetadata metadata_ = new LoginMetadata ();
 
   @Override
   protected void onActivityResult (int requestCode, int resultCode, Intent data)
@@ -76,12 +34,25 @@ public class LoginActivity extends AppCompatActivity
         String username = data.getStringExtra (NewAccountActivity.RESULT_DATA_USERNAME);
         String password = data.getStringExtra (NewAccountActivity.RESULT_DATA_PASSWORD);
 
-        LoginFragment loginFragment = LoginFragment.newInstance (username, password);
-        FragmentTransaction transaction = this.getSupportFragmentManager ().beginTransaction ();
-        transaction.replace (R.id.fragment_container, loginFragment);
-        transaction.commitAllowingStateLoss ();
+        onAccountCreated (username, password);
       }
     }
+  }
+
+  /**
+   * Handle account creation.
+   *
+   * @param username
+   * @param password
+   */
+  private void onAccountCreated (String username, String password)
+  {
+    LoginFragment loginFragment = this.onCreateFragment (username, password);
+
+    this.getSupportFragmentManager ()
+        .beginTransaction ()
+        .replace (R.id.fragment_container, loginFragment)
+        .commitAllowingStateLoss ();
   }
 
   @Override
@@ -115,9 +86,26 @@ public class LoginActivity extends AppCompatActivity
     }
   }
 
+  /**
+   * Create the LoginFragment for the activity.
+   *
+   * @return
+   */
   protected LoginFragment onCreateFragment ()
   {
-    return new LoginFragment ();
+    return new SimpleLoginFragment ();
+  }
+
+  /**
+   * Create the LoginFragment initialized with the username and password.
+   *
+   * @param username
+   * @param password
+   * @return
+   */
+  protected LoginFragment onCreateFragment (String username, String password)
+  {
+    return SimpleLoginFragment.newInstance (username, password);
   }
 
   @Override
@@ -138,11 +126,10 @@ public class LoginActivity extends AppCompatActivity
   @Override
   public void onCreateNewAccount (LoginFragment fragment)
   {
-    Intent intent =
-        this.metadata_.hasNewAccountActivity () ?
-            this.metadata_.getNewAccountActivity (this) :
-            NewAccountActivity.newIntent (this);
+    if (!this.metadata_.hasNewAccountActivity ())
+      return;
 
+    Intent intent = this.metadata_.getNewAccountActivity (this);
     this.startActivityForResult (intent, REQUEST_USER_CREDENTIALS);
   }
 
