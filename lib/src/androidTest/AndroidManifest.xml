@@ -10,6 +10,12 @@
 
         <meta-data android:name="com.onehilltech.gatekeeper.android.baseuri"
                    android:resource="@string/gatekeeper_baseuri" />
+
+        <meta-data android:name="com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY"
+                   android:value="redirect" />
+
+        <meta-data android:name="com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY"
+                   android:value="new_account" />
     </application>
 
 </manifest>
