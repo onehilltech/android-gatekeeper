@@ -6,10 +6,7 @@ import android.content.Intent;
 
 import com.onehilltech.metadata.MetadataProperty;
 
-/**
- * Created by hilljh on 10/7/16.
- */
-class LoginMetadata
+final class LoginMetadata
 {
   private static final String METADATA_LOGIN_SUCCESS_REDIRECT_ACTIVITY =
       "com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY";
@@ -18,10 +15,10 @@ class LoginMetadata
       "com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY";
 
   @MetadataProperty(name = METADATA_LOGIN_SUCCESS_REDIRECT_ACTIVITY)
-  String loginSuccessRedirectActivity;
+  public String loginSuccessRedirectActivity;
 
   @MetadataProperty(name = METADATA_NEW_ACCOUNT_ACTIVITY)
-  String newAccountActivity;
+  public String newAccountActivity;
 
   Intent getLoginSuccessRedirectIntent (Context context)
   {
