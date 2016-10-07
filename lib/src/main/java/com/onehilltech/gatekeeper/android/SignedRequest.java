@@ -36,6 +36,8 @@ public class SignedRequest <T> extends Request <T>
 
   private Object dataObj_;
 
+  private static final byte [] EMPTY_BODY = "".getBytes ();
+
   /**
    * Initializing constructor.
    *
@@ -120,7 +122,7 @@ public class SignedRequest <T> extends Request <T>
   {
     try
     {
-      return this.objMapper_.writeValueAsBytes (this.dataObj_);
+      return this.dataObj_ != null ? this.objMapper_.writeValueAsBytes (this.dataObj_) : EMPTY_BODY;
     }
     catch (JsonProcessingException e)
     {
