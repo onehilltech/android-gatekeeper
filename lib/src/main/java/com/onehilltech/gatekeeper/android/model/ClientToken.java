@@ -1,11 +1,9 @@
 package com.onehilltech.gatekeeper.android.model;
 
-import com.onehilltech.gatekeeper.android.JsonBearerToken;
+import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
-
-import java.util.Date;
 
 @Table(database=GatekeeperDatabase.class, name="client_token")
 public class ClientToken extends AccessToken
@@ -17,7 +15,7 @@ public class ClientToken extends AccessToken
 
   public static ClientToken fromToken (String clientId, JsonBearerToken token)
   {
-    return new ClientToken (clientId, token.accessToken, token.getExpiration ());
+    return new ClientToken (clientId, token.accessToken);
   }
 
   ClientToken ()
@@ -25,11 +23,10 @@ public class ClientToken extends AccessToken
 
   }
 
-  private ClientToken (String clientId, String accessToken, Date expiration)
+  private ClientToken (String clientId, String accessToken)
   {
     this.clientId_ = clientId;
-    this.accessToken_ = accessToken;
-    this.expiration_ = expiration;
+    this.accessToken = accessToken;
   }
 
   public String getClientId ()
@@ -39,12 +36,7 @@ public class ClientToken extends AccessToken
 
   public String getAccessToken ()
   {
-    return this.accessToken_;
-  }
-
-  public Date getExpiration ()
-  {
-    return this.expiration_;
+    return this.accessToken;
   }
 
   @Override

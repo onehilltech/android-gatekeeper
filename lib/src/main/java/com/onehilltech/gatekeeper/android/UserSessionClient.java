@@ -1,13 +1,25 @@
 package com.onehilltech.gatekeeper.android;
 
-import com.onehilltech.gatekeeper.android.model.UserToken;
+import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.http.POST;
 
 /**
  * Base class for all session client objects.
  */
 public abstract class UserSessionClient
 {
+  protected interface Service
+  {
+    @POST("oauth2/logout")
+    Call <Boolean> logout ();
+  }
+
   protected final GatekeeperClient client_;
+
+  protected Service service_;
 
   /**
    * Initializing constructor.
@@ -20,15 +32,15 @@ public abstract class UserSessionClient
   }
 
   /**
-   * Login the user.
+   * Login a user by username/password
    *
    * @param username
    * @param password
-   * @param listener
+   * @param callback
    */
-  public void loginUser (String username, String password, final ResponseListener <UserToken> listener)
+  public void login (String username, String password, Callback <JsonBearerToken> callback)
   {
-    this.client_.getUserToken (username, password, listener);
+    this.client_.getUserToken (username, password).enqueue (callback);
   }
 
   /**

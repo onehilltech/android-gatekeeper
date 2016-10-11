@@ -1,11 +1,11 @@
 package com.onehilltech.gatekeeper.android.model;
 
-import com.onehilltech.gatekeeper.android.JsonBearerToken;
+import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 
-import java.util.Date;
+import java.util.Arrays;
 
 @Table(database=GatekeeperDatabase.class, name="user_token")
 public class UserToken extends AccessToken
@@ -13,15 +13,15 @@ public class UserToken extends AccessToken
   /// Client id.
   @Column(name="username")
   @PrimaryKey
-  String username_;
+  public String username;
 
   /// Access token for the client.
   @Column(name="refresh_token")
-  String refreshToken_;
+  public String refreshToken;
 
   public static UserToken fromToken (String username, JsonBearerToken token)
   {
-    return new UserToken (username, token.accessToken, token.refreshToken, token.getExpiration ());
+    return new UserToken (username, token.accessToken, token.refreshToken);
   }
 
   UserToken ()
@@ -29,33 +29,23 @@ public class UserToken extends AccessToken
 
   }
 
-  private UserToken (String username, String accessToken, String refreshToken, Date expiration)
+  private UserToken (String username, String accessToken, String refreshToken)
   {
-    this.username_ = username;
-    this.accessToken_ = accessToken;
-    this.refreshToken_ = refreshToken;
-    this.expiration_ = expiration;
-  }
-
-  public String getUsername ()
-  {
-    return this.username_;
-  }
-
-  public String getRefreshToken ()
-  {
-    return this.refreshToken_;
+    this.username = username;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
   }
 
   public boolean canRefresh ()
   {
-    return this.refreshToken_ != null;
+    return this.refreshToken != null;
   }
 
   @Override
   public int hashCode ()
   {
-    return this.username_.hashCode ();
+    Object [] objs = new Object[] { this.username, this.accessToken, this.refreshToken};
+    return Arrays.hashCode (objs);
   }
 
   @Override
@@ -69,15 +59,15 @@ public class UserToken extends AccessToken
 
     UserToken userToken = (UserToken)obj;
 
-    if (!userToken.username_.equals (this.username_))
+    if (!userToken.username.equals (this.username))
       return false;
 
-    if (userToken.refreshToken_ == null && this.refreshToken_ != null ||
-        userToken.refreshToken_ != null && this.refreshToken_ == null)
+    if (userToken.refreshToken == null && this.refreshToken != null ||
+        userToken.refreshToken != null && this.refreshToken == null)
     {
       return false;
     }
 
-    return userToken.refreshToken_.equals (this.refreshToken_);
+    return userToken.refreshToken.equals (this.refreshToken);
   }
 }

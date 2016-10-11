@@ -1,5 +1,5 @@
 <resources>
-    <string name="gatekeeper_baseuri">http://localhost:5000</string>
+    <string name="gatekeeper_baseuri">http://localhost/</string>
     <string name="gatekeeper_client_id">my_client_id</string>
     <string name="gatekeeper_client_secret">my_client_secret</string>
 </resources>

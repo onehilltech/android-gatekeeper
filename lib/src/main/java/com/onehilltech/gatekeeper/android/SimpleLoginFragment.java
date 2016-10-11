@@ -8,8 +8,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.volley.VolleyError;
-import com.onehilltech.gatekeeper.android.utils.ErrorMessageUtil;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 /**
@@ -136,16 +134,7 @@ public class SimpleLoginFragment extends LoginFragment
   @Override
   public void onInitializeFailed (Throwable t)
   {
-    if ((t instanceof VolleyError))
-      this.handleVolleyError ((VolleyError)t);
-
-    super.onInitializeFailed (t);
-  }
-
-  private void handleVolleyError (VolleyError e)
-  {
-    String errorMsg = ErrorMessageUtil.instance ().getErrorMessage (e);
-    this.showErrorMessage (errorMsg);
+    this.showErrorMessage (t.getLocalizedMessage ());
   }
 
   /**

@@ -4,71 +4,111 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.Volley;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
+import com.onehilltech.gatekeeper.android.model.AccessToken;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
+
+import java.io.IOException;
+
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SingleUserSessionClient extends UserSessionClient
 {
   private UserToken userToken_;
 
+  private OkHttpClient httpClient_;
+
+  private Retrofit retrofit_;
+
+  /**
+   * Interceptor that adds the Authorization header to a request.
+   */
+  private final Interceptor authHeaderInterceptor_ = new Interceptor ()
+  {
+    @Override
+    public Response intercept (Chain chain) throws IOException
+    {
+      String authorization = "Bearer " + getToken ().getAccessToken ();
+
+      okhttp3.Request original = chain.request ();
+      okhttp3.Request request =
+          original.newBuilder ()
+                  .header ("User-Agent", "FundAll Android")
+                  .header ("Authorization", authorization)
+                  .method (original.method (), original.body ())
+                  .build ();
+
+      return chain.proceed (request);
+    }
+  };
+
   public interface OnInitializedListener
   {
     void onInitialized (SingleUserSessionClient sessionClient);
+
     void onInitializeFailed (Throwable t);
   }
 
-  /**
-   * Initialize the single user session client.
-   *
-   * @param context
-   * @param onInitializedListener
-   */
-  public static void initialize (Context context,
-                                 @NonNull OnInitializedListener onInitializedListener)
+  private static class OnInitialized implements GatekeeperClient.OnInitializedListener
   {
-    initialize (context, Volley.newRequestQueue (context), onInitializedListener);
+    private OnInitializedListener onInitializedListener_;
+
+    public OnInitialized (OnInitializedListener onInitializedListener)
+    {
+      this.onInitializedListener_ = onInitializedListener;
+    }
+
+    @Override
+    public void onInitialized (final GatekeeperClient client)
+    {
+      SQLite.select ()
+            .from (UserToken.class)
+            .async ()
+            .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<UserToken> ()
+            {
+              @Override
+              public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
+              {
+                SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
+                onInitializedListener_.onInitialized (sessionClient);
+              }
+            }).execute ();
+    }
+
+    @Override
+    public void onInitializeFailed (Throwable e)
+    {
+      onInitializedListener_.onInitializeFailed (e);
+    }
+  }
+
+  public static void initialize (Configuration config,
+                                 OkHttpClient httpClient,
+                                 OnInitializedListener onInitializedListener)
+  {
+    GatekeeperClient.initialize (config, httpClient, new OnInitialized (onInitializedListener));
   }
 
   /**
    * Initialize the single user session client.
    *
    * @param context
-   * @param queue
+   * @param httpClient
    * @param onInitializedListener
    */
   public static void initialize (Context context,
-                                 RequestQueue queue,
+                                 OkHttpClient httpClient,
                                  @NonNull final OnInitializedListener onInitializedListener)
   {
-    GatekeeperClient.initialize (context, queue, new GatekeeperClient.OnInitializedListener () {
-      @Override
-      public void onInitialized (final GatekeeperClient client)
-      {
-        SQLite.select ()
-              .from (UserToken.class)
-              .async ()
-              .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<UserToken> ()
-              {
-                @Override
-                public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
-                {
-                  SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
-                  onInitializedListener.onInitialized (sessionClient);
-                }
-              }).execute ();
-      }
-
-      @Override
-      public void onInitializeFailed (Throwable e)
-      {
-        onInitializedListener.onInitializeFailed (e);
-      }
-    });
+    GatekeeperClient.initialize (context, httpClient, new OnInitialized (onInitializedListener));
   }
 
   /**
@@ -80,32 +120,59 @@ public class SingleUserSessionClient extends UserSessionClient
   {
     super (client);
 
+    // Build a new HttpClient for the user session. This client is responsible for
+    // adding the authentication header to each request.
+    OkHttpClient.Builder builder = client.getHttpClient ().newBuilder ();
+    builder.addInterceptor (this.authHeaderInterceptor_);
+    this.httpClient_ = builder.build ();
+
+    // Build the Retrofit object for this client.
+
+    this.retrofit_ = new Retrofit.Builder ()
+        .baseUrl (client.getBaseUrlWithVersion ())
+        .addConverterFactory (GsonConverterFactory.create (client.getGson ()))
+        .client (this.httpClient_)
+        .build ();
+
     this.userToken_ = userToken;
+    this.service_ = this.retrofit_.create (UserSessionClient.Service.class);
+  }
+
+  /**
+   * Get the underlying HTTP client.
+   *
+   * @return
+   */
+  public OkHttpClient getHttpClient ()
+  {
+    return this.httpClient_;
   }
 
   /**
    * Log out the current user.
    */
-  public void logout (final ResponseListener <Boolean> listener)
+  public void logout (final Callback<Boolean> callback)
   {
     if (this.userToken_ == null)
       throw new IllegalStateException ("User is already logged out");
 
-    this.client_.logout (this.userToken_, new ResponseListener<Boolean> ()
+    this.service_.logout ().enqueue (new Callback<Boolean> ()
     {
       @Override
-      public void onErrorResponse (VolleyError error)
+      public void onResponse (Call<Boolean> call, retrofit2.Response<Boolean> response)
       {
-        listener.onErrorResponse (new VolleyError ("Failed to logout user", error));
+        // Complete the logout process.
+        if (response.body ())
+          completeLogout ();
+
+        // Pass control to the caller.
+        callback.onResponse (call, response);
       }
 
       @Override
-      public void onResponse (Boolean response)
+      public void onFailure (Call<Boolean> call, Throwable t)
       {
-        if (response)
-          completeLogout ();
-
-        listener.onResponse (response);
+        callback.onFailure (call, t);
       }
     });
   }
@@ -119,14 +186,22 @@ public class SingleUserSessionClient extends UserSessionClient
     this.userToken_ = null;
   }
 
-  /**
-   * Get the user token.
-   *
-   * @return
-   */
   public UserToken getUserToken ()
   {
     return this.userToken_;
+  }
+
+  public void updateUserToken (JsonBearerToken token)
+  {
+    this.userToken_.accessToken = token.accessToken;
+    this.userToken_.refreshToken = token.refreshToken;
+
+    this.userToken_.save ();
+  }
+
+  private AccessToken getToken ()
+  {
+    return this.userToken_ != null ? this.userToken_ : this.client_.getClientToken ();
   }
 
   /**
@@ -137,154 +212,5 @@ public class SingleUserSessionClient extends UserSessionClient
   public boolean isLoggedIn ()
   {
     return this.userToken_ != null;
-  }
-
-  /**
-   * Create a new signed request.
-   *
-   * @param method
-   * @param path
-   * @param typeReference
-   * @param listener
-   * @param <T>
-   * @return
-   */
-  public <T> SignedRequest<T> newSignedRequest (int method,
-                                               String path,
-                                               TypeReference<T> typeReference,
-                                               ResponseListener<T> listener)
-  {
-    AutoRefreshResponseListener <T> autoRefresh = new AutoRefreshResponseListener<> (listener);
-
-    SignedRequest <T> signedRequest =
-        this.client_.newSignedRequest (
-            method,
-            path,
-            this.userToken_,
-            typeReference,
-            autoRefresh);
-
-    autoRefresh.setOriginalRequest (signedRequest);
-
-    return signedRequest;
-  }
-
-  /**
-   * Create a new signed request.
-   *
-   * @param method
-   * @param path
-   * @param typeReference
-   * @param data
-   * @param listener
-   * @param <T>
-   * @return
-   */
-  public <T> SignedRequest<T> newSignedRequest (int method,
-                                                String path,
-                                                TypeReference<T> typeReference,
-                                                Object data,
-                                                ResponseListener<T> listener)
-  {
-    AutoRefreshResponseListener <T> autoRefresh = new AutoRefreshResponseListener<> (listener);
-
-    SignedRequest <T> signedRequest =
-        this.client_.newSignedRequest (
-            method,
-            path,
-            this.userToken_,
-            typeReference,
-            data,
-            autoRefresh);
-
-    autoRefresh.setOriginalRequest (signedRequest);
-
-    return signedRequest;
-  }
-
-  private static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
-
-  /**
-   *
-   * @param <T>
-   */
-  private class AutoRefreshResponseListener <T> implements ResponseListener <T>
-  {
-    private SignedRequest<T> request_;
-    private final ResponseListener <T> responseListener_;
-
-    private final ResponseListener<UserToken> refreshResponseListener_ =
-        new ResponseListener<UserToken> ()
-        {
-          @Override
-          public void onErrorResponse (VolleyError error)
-          {
-            // We failed to refresh to user token. So, we need to just return control
-            // to the original response listener.
-            responseListener_.onErrorResponse (error);
-          }
-
-          @Override
-          public void onResponse (UserToken response)
-          {
-            onTokenResponse (response);
-          }
-        };
-
-    public AutoRefreshResponseListener (ResponseListener<T> responseListener)
-    {
-      this.responseListener_ = responseListener;
-    }
-
-    private void onTokenResponse (UserToken userToken)
-    {
-      // Save the token, and replace the token in the request.
-      userToken_ = userToken;
-      this.request_.setToken (userToken);
-
-      // Re-run the request with the new access token.
-      client_.addRequest (this.request_);
-    }
-
-    public void setOriginalRequest (SignedRequest <T> request)
-    {
-      this.request_ = request;
-    }
-
-    @Override
-    public void onErrorResponse (VolleyError error)
-    {
-      if (error.networkResponse != null)
-      {
-        int statusCode = error.networkResponse.statusCode;
-
-        if (statusCode == 401)
-        {
-          // TODO Parse header value, and determine best plan of action.
-          String authenticate = error.networkResponse.headers.get (HEADER_WWW_AUTHENTICATE);
-
-          if (authenticate.contains ("Token has expired"))
-            client_.refreshToken (userToken_, refreshResponseListener_);
-          else
-            responseListener_.onErrorResponse (error);
-        }
-        else
-        {
-          // Pass the response to the original response listener.
-          this.responseListener_.onErrorResponse (error);
-        }
-      }
-      else
-      {
-        // Pass the response to the origin response listener.
-        this.responseListener_.onErrorResponse (error);
-      }
-    }
-
-    @Override
-    public void onResponse (T response)
-    {
-      this.responseListener_.onResponse (response);
-    }
   }
 }

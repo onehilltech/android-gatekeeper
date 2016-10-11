@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.onehilltech.gatekeeper.android.http.JsonAccount;
+
 /**
  * Activity that allows the user to create a new account.
  */
@@ -30,7 +32,7 @@ public class NewAccountActivity extends AppCompatActivity
   }
 
   @Override
-  public void onAccountCreated (NewAccountFragment fragment)
+  public void onAccountCreated (NewAccountFragment fragment, JsonAccount account)
   {
     // Finish the activity and go back. Or, we could automatically login the user
     // to their account by passing their username/password back to the login activity.

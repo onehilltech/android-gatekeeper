@@ -5,10 +5,12 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.View;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.Volley;
-import com.onehilltech.gatekeeper.android.model.UserToken;
+import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * @class LoginFragment
@@ -23,8 +25,6 @@ public abstract class LoginFragment extends Fragment
 
   private SingleUserSessionClient sessionClient_;
 
-  private RequestQueue requestQueue_;
-
   public LoginFragment ()
   {
     // Required empty public constructor
@@ -35,14 +35,9 @@ public abstract class LoginFragment extends Fragment
     return this.loginFragmentListener_;
   }
 
-  /**
-   * Allow the subclass to provide it's own request queue.
-   *
-   * @return
-   */
-  protected RequestQueue onCreateRequestQueue ()
+  protected OkHttpClient getHttpClient ()
   {
-    return Volley.newRequestQueue (this.getContext ());
+    return new OkHttpClient.Builder ().build ();
   }
 
   @Override
@@ -50,11 +45,7 @@ public abstract class LoginFragment extends Fragment
   {
     super.onViewCreated (view, savedInstanceState);
 
-    // Initialize the Gatekeeper session client. During the initialization process, allow
-    // the subclass to provide its own RequestQueue. This is important since applications
-    // may have special networking needs that still need to be honored.
-    this.requestQueue_ = this.onCreateRequestQueue ();
-    SingleUserSessionClient.initialize (this.getActivity (), this.requestQueue_, this);
+    SingleUserSessionClient.initialize (this.getActivity (), this.getHttpClient (), this);
   }
 
   @Override
@@ -101,23 +92,21 @@ public abstract class LoginFragment extends Fragment
    */
   protected void login (String username, String password)
   {
-    this.sessionClient_.loginUser (
-        username,
-        password,
-        new ResponseListener<UserToken> ()
-        {
-          @Override
-          public void onErrorResponse (VolleyError error)
-          {
-            loginFragmentListener_.onLoginError (LoginFragment.this, error);
-          }
+    this.sessionClient_.login (username, password, new Callback<JsonBearerToken> ()
+    {
+      @Override
+      public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
+      {
+        if (response.isSuccessful ())
+          loginFragmentListener_.onLoginComplete (LoginFragment.this);
+      }
 
-          @Override
-          public void onResponse (UserToken response)
-          {
-            loginFragmentListener_.onLoginComplete (LoginFragment.this);
-          }
-        });
+      @Override
+      public void onFailure (Call<JsonBearerToken> call, Throwable t)
+      {
+        loginFragmentListener_.onLoginError (LoginFragment.this, t);
+      }
+    });
   }
 
   /**

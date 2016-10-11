@@ -11,17 +11,21 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.Volley;
+import com.onehilltech.gatekeeper.android.http.JsonAccount;
+import com.onehilltech.gatekeeper.android.http.jsonapi.Resource;
 import com.onehilltech.gatekeeper.android.utils.InputError;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class NewAccountFragment extends Fragment
   implements GatekeeperClient.OnInitializedListener
 {
   public interface Listener
   {
-    void onAccountCreated (NewAccountFragment fragment);
+    void onAccountCreated (NewAccountFragment fragment, JsonAccount account);
     void onError (NewAccountFragment fragment, Throwable t);
   }
 
@@ -37,19 +41,9 @@ public class NewAccountFragment extends Fragment
   private AutoCompleteTextView emailView_;
   private EditText passwordView_;
 
-  private String id_;
-  private String username_;
-  private String password_;
-  private String email_;
-
   public NewAccountFragment ()
   {
     // Required empty public constructor
-  }
-
-  protected RequestQueue onCreateRequestQueue ()
-  {
-    return Volley.newRequestQueue (this.getContext ());
   }
 
   @Override
@@ -79,8 +73,7 @@ public class NewAccountFragment extends Fragment
     });
 
     // Initialize the client.
-    RequestQueue requestQueue = this.onCreateRequestQueue ();
-    GatekeeperClient.initialize (this.getContext (), requestQueue, this);
+    GatekeeperClient.initialize (this.getContext (), this.getHttpClient (), this);
   }
 
   @Override
@@ -103,6 +96,11 @@ public class NewAccountFragment extends Fragment
   {
     super.onDetach ();
     this.listener_ = null;
+  }
+
+  protected OkHttpClient getHttpClient ()
+  {
+    return new OkHttpClient.Builder ().build ();
   }
 
   @Override
@@ -138,11 +136,6 @@ public class NewAccountFragment extends Fragment
     return this.passwordView_.getText ().toString ();
   }
 
-  public String getUserId ()
-  {
-    return this.id_;
-  }
-
   /**
    * Attempts to sign in or register the account specified by the login form. If
    * there are form errors (invalid email, missing fields, etc.), the errors are
@@ -156,31 +149,34 @@ public class NewAccountFragment extends Fragment
     if (!this.validateInput ())
       return;
 
-    this.username_ = this.usernameView_.getText ().toString ();
-    this.password_ = this.passwordView_.getText ().toString ();
-    this.email_ = this.emailView_.getText ().toString ();
+    String username = this.usernameView_.getText ().toString ();
+    String password = this.passwordView_.getText ().toString ();
+    String email = this.emailView_.getText ().toString ();
 
-    final GatekeeperClient.OnResultListener <JsonAccount> resultListener =
-        new GatekeeperClient.OnResultListener<JsonAccount> ()
-        {
-          @Override
-          public void onResult (JsonAccount result)
-          {
-            id_ = result.account._id;
+    this.gatekeeper_.createAccount (username, password, email)
+                    .enqueue (new Callback<Resource> ()
+                    {
+                      @Override
+                      public void onResponse (Call<Resource> call, Response<Resource> response)
+                      {
+                        if (response.isSuccessful ())
+                          onAccountCreated ((JsonAccount)response.body ().get ("account"));
+                      }
 
-            if (listener_ != null)
-              listener_.onAccountCreated (NewAccountFragment.this);
-          }
+                      @Override
+                      public void onFailure (Call<Resource> call, Throwable t)
+                      {
+                        listener_.onError (NewAccountFragment.this, t);
+                      }
+                    });
+  }
 
-          @Override
-          public void onError (VolleyError error)
-          {
-            if (listener_ != null)
-              listener_.onError (NewAccountFragment.this, error);
-          }
-        };
+  public void onAccountCreated (JsonAccount account)
+  {
+    // Save the account to our local database.
 
-    this.gatekeeper_.createAccount (this.username_, this.password_, this.email_, resultListener);
+    // Notify the listener the account has been created.
+    this.listener_.onAccountCreated (this, account);
   }
 
   /**
