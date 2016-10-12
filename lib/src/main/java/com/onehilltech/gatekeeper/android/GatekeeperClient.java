@@ -216,14 +216,14 @@ public class GatekeeperClient
     this.httpClient_ = httpClient;
     this.clientToken_ = clientToken;
 
-    // Initialize the Retrofit.
-    ResourceMarshaller resourceMarshaller = new ResourceMarshaller ();
-
     RuntimeTypeAdapterFactory <JsonGrant> grantTypes =
         RuntimeTypeAdapterFactory.of (JsonGrant.class, "grant_type")
                                  .registerSubtype (JsonClientCredentials.class, "client_credentials")
                                  .registerSubtype (JsonPassword.class, "password")
                                  .registerSubtype (JsonRefreshToken.class, "refresh_token");
+
+    // Initialize the Retrofit.
+    ResourceMarshaller resourceMarshaller = new ResourceMarshaller ();
 
     this.gson_ =
         new GsonBuilder ()

@@ -26,18 +26,9 @@ public abstract class RefreshTokenCallback <T> implements Callback <T>
     int statusCode = response.code ();
 
     if (statusCode == 401 && !this.retried_)
-    {
-      String authenticate = response.headers ().get (HEADER_WWW_AUTHENTICATE);
-
-      if (authenticate.contains ("Token has expired"))
-        this.refreshToken (call, response);
-      else
-        this.onHandleResponse (call, response);
-    }
+      this.refreshToken (call, response);
     else
-    {
       this.onHandleResponse (call, response);
-    }
   }
 
   private void refreshToken (final Call <T> origCall, final Response <T> origResp)
