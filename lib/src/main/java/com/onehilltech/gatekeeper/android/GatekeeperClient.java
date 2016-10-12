@@ -39,6 +39,9 @@ import retrofit2.http.POST;
  */
 public class GatekeeperClient
 {
+  /**
+   *
+   */
   public interface OnInitializedListener
   {
     /**
@@ -61,7 +64,6 @@ public class GatekeeperClient
     @POST("oauth2/token")
     Call<JsonBearerToken> getBearerToken (@Body JsonGrant grant);
   }
-
 
   public static final int VERSION = 1;
 
@@ -173,11 +175,18 @@ public class GatekeeperClient
       @Override
       public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
       {
-        // Store the response in the client, and save the token to the database.
-        client.clientToken_ = ClientToken.fromToken (config.clientId, response.body ());
-        client.clientToken_.save ();
+        if (response.isSuccessful ())
+        {
+          // Store the response in the client, and save the token to the database.
+          client.clientToken_ = ClientToken.fromToken (config.clientId, response.body ());
+          client.clientToken_.save ();
 
-        onInitializedListener.onInitialized (client);
+          onInitializedListener.onInitialized (client);
+        }
+        else
+        {
+          onInitializedListener.onInitializeFailed (new IllegalStateException ("Failed to initialize client"));
+        }
       }
 
       @Override
