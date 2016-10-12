@@ -13,19 +13,19 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * @class LoginFragment
+ * @class SingleUserLoginFragment
  *
- * Base class for all login fragments. The LoginFragment initializes a
+ * Base class for all login fragments. The SingleUserLoginFragment initializes a
  * session client, and provide a login() method to perform the login task.
  */
-public abstract class LoginFragment extends Fragment
+public abstract class SingleUserLoginFragment extends Fragment
   implements SingleUserSessionClient.OnInitializedListener
 {
   private LoginFragmentListener loginFragmentListener_;
 
   private SingleUserSessionClient sessionClient_;
 
-  public LoginFragment ()
+  public SingleUserLoginFragment ()
   {
     // Required empty public constructor
   }
@@ -90,7 +90,7 @@ public abstract class LoginFragment extends Fragment
   /**
    * Perform the signin process with the Gatekeeper client.
    */
-  protected void login (String username, String password)
+  protected void login (final String username, String password)
   {
     this.sessionClient_.login (username, password, new Callback<JsonBearerToken> ()
     {
@@ -98,13 +98,13 @@ public abstract class LoginFragment extends Fragment
       public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
       {
         if (response.isSuccessful ())
-          loginFragmentListener_.onLoginComplete (LoginFragment.this);
+          loginFragmentListener_.onLoginComplete (SingleUserLoginFragment.this);
       }
 
       @Override
       public void onFailure (Call<JsonBearerToken> call, Throwable t)
       {
-        loginFragmentListener_.onLoginError (LoginFragment.this, t);
+        loginFragmentListener_.onLoginError (SingleUserLoginFragment.this, t);
       }
     });
   }
@@ -121,10 +121,10 @@ public abstract class LoginFragment extends Fragment
    */
   public interface LoginFragmentListener
   {
-    void onLoginComplete (LoginFragment fragment);
+    void onLoginComplete (SingleUserLoginFragment fragment);
 
-    void onLoginError (LoginFragment fragment, Throwable t);
+    void onLoginError (SingleUserLoginFragment fragment, Throwable t);
 
-    void onCreateNewAccount (LoginFragment fragment);
+    void onCreateNewAccount (SingleUserLoginFragment fragment);
   }
 }

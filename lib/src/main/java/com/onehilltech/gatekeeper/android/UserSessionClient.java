@@ -1,9 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
-import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
-
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.http.POST;
 
 /**
@@ -32,23 +29,11 @@ public abstract class UserSessionClient
   }
 
   /**
-   * Login a user by username/password
-   *
-   * @param username
-   * @param password
-   * @param callback
-   */
-  public void login (String username, String password, Callback <JsonBearerToken> callback)
-  {
-    this.client_.getUserToken (username, password).enqueue (callback);
-  }
-
-  /**
    * Get the underlying client for making the requests.
    *
    * @return
    */
-  public GatekeeperClient getClient ()
+  public GatekeeperClient getGatekeeper ()
   {
     return this.client_;
   }

@@ -11,13 +11,13 @@ public abstract class RefreshTokenCallback <T> implements Callback <T>
 {
   private static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
 
-  private SingleUserSessionClient client_;
+  private SingleUserSessionClient sessionClient_;
 
   private boolean retried_ = false;
 
   public RefreshTokenCallback (SingleUserSessionClient client)
   {
-    this.client_ = client;
+    this.sessionClient_ = client;
   }
 
   @Override
@@ -34,13 +34,13 @@ public abstract class RefreshTokenCallback <T> implements Callback <T>
   private void refreshToken (final Call <T> origCall, final Response <T> origResp)
   {
     // refresh the token.
-    GatekeeperClient gatekeeperClient = this.client_.getClient ();
-    UserToken userToken = this.client_.getUserToken ();
+    UserToken userToken = this.sessionClient_.getUserToken ();
 
     // Mark the call as retried.
     this.retried_ = true;
 
-    Call <JsonBearerToken> refreshCall = gatekeeperClient.refreshToken (userToken.refreshToken);
+    GatekeeperClient gatekeeper = this.sessionClient_.getGatekeeper ();
+    Call <JsonBearerToken> refreshCall = gatekeeper.refreshToken (userToken.refreshToken);
     refreshCall.enqueue (new Impl (origCall, origResp));
   }
 
@@ -70,7 +70,7 @@ public abstract class RefreshTokenCallback <T> implements Callback <T>
       {
         // Update the user token in the client.
         JsonBearerToken token = response.body ();
-        client_.updateUserToken (token);
+        sessionClient_.refreshToken (token);
 
         // Retry the call again using this callback object.
         Call <T> retryCall = this.origCall_.clone ();

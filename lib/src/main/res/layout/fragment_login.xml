@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context="com.onehilltech.gatekeeper.android.SimpleLoginFragment">
+    tools:context="com.onehilltech.gatekeeper.android.SimpleSingleUserLoginFragment">
 
     <!-- application logo -->
 

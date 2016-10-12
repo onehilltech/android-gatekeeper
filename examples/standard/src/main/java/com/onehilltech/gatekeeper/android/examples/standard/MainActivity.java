@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.android.volley.VolleyError;
-import com.onehilltech.gatekeeper.android.LoginActivity;
+import com.onehilltech.gatekeeper.android.SingleUserLoginActivity;
 import com.onehilltech.gatekeeper.android.ResponseListener;
 import com.onehilltech.gatekeeper.android.SingleUserSessionClient;
 
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity
   private void onSignOut ()
   {
     // Show the login activity.
-    Intent intent = new Intent (this, LoginActivity.class);
+    Intent intent = new Intent (this, SingleUserLoginActivity.class);
     this.startActivity (intent);
 
     // Finish this activity.

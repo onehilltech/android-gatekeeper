@@ -11,15 +11,15 @@ import android.widget.TextView;
 import com.onehilltech.gatekeeper.android.utils.InputError;
 
 /**
- * @class SimpleLoginFragment
+ * @class SimpleSingleUserLoginFragment
  *
- * Simple implementation of the LoginFragment that displays a view for
+ * Simple implementation of the SingleUserLoginFragment that displays a view for
  * entering the username and password. The view also has a button for logging
  * in and creating a new account.
  */
-public class SimpleLoginFragment extends LoginFragment
+public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
 {
-  private static final String TAG = "SimpleLoginFragment";
+  private static final String TAG = "SimpleSingleUserLoginFragment";
 
   private static final String ARG_USERNAME = "username";
 
@@ -34,23 +34,23 @@ public class SimpleLoginFragment extends LoginFragment
   /**
    * Create a new instance of the fragment.
    *
-   * @return  SimpleLoginFragment object
+   * @return  SimpleSingleUserLoginFragment object
    */
-  public static SimpleLoginFragment newInstance ()
+  public static SimpleSingleUserLoginFragment newInstance ()
   {
-    return new SimpleLoginFragment ();
+    return new SimpleSingleUserLoginFragment ();
   }
 
   /**
-   * Create an instance of the SimpleLoginFragment with the username initialized.
+   * Create an instance of the SimpleSingleUserLoginFragment with the username initialized.
    *
    * @param username
    * @return
    */
   @SuppressWarnings ("unused")
-  public static SimpleLoginFragment newInstance (String username)
+  public static SimpleSingleUserLoginFragment newInstance (String username)
   {
-    SimpleLoginFragment fragment = new SimpleLoginFragment ();
+    SimpleSingleUserLoginFragment fragment = new SimpleSingleUserLoginFragment ();
 
     Bundle args = new Bundle ();
     args.putString (ARG_USERNAME, username);
@@ -61,15 +61,15 @@ public class SimpleLoginFragment extends LoginFragment
   }
 
   /**
-   * Create an instance of the SimpleLoginFragment with the username/password initialized.
+   * Create an instance of the SimpleSingleUserLoginFragment with the username/password initialized.
    *
    * @param username
    * @param password
    * @return
    */
-  public static SimpleLoginFragment newInstance (String username, String password)
+  public static SimpleSingleUserLoginFragment newInstance (String username, String password)
   {
-    SimpleLoginFragment fragment = new SimpleLoginFragment ();
+    SimpleSingleUserLoginFragment fragment = new SimpleSingleUserLoginFragment ();
 
     Bundle args = new Bundle ();
     args.putString (ARG_USERNAME, username);
@@ -80,7 +80,7 @@ public class SimpleLoginFragment extends LoginFragment
     return fragment;
   }
 
-  public SimpleLoginFragment ()
+  public SimpleSingleUserLoginFragment ()
   {
     // Required empty public constructor
   }
@@ -110,7 +110,7 @@ public class SimpleLoginFragment extends LoginFragment
       @Override
       public void onClick (View v)
       {
-        getLoginFragmentListener ().onCreateNewAccount (SimpleLoginFragment.this);
+        getLoginFragmentListener ().onCreateNewAccount (SimpleSingleUserLoginFragment.this);
       }
     });
 

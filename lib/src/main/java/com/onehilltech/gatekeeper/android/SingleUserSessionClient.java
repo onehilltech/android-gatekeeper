@@ -149,6 +149,23 @@ public class SingleUserSessionClient extends UserSessionClient
   }
 
   /**
+   * Get the token for the currently logged in user.
+   *
+   * @return    A UserToken object
+   */
+  UserToken getUserToken ()
+  {
+    return this.userToken_;
+  }
+
+  void refreshToken (JsonBearerToken token)
+  {
+    this.userToken_.accessToken = token.accessToken;
+    this.userToken_.refreshToken = token.refreshToken;
+    this.userToken_.save ();
+  }
+
+  /**
    * Log out the current user.
    */
   public void logout (final Callback<Boolean> callback)
@@ -162,7 +179,7 @@ public class SingleUserSessionClient extends UserSessionClient
       public void onResponse (Call<Boolean> call, retrofit2.Response<Boolean> response)
       {
         // Complete the logout process.
-        if (response.body ())
+        if (response.isSuccessful () && response.body ())
           completeLogout ();
 
         // Pass control to the caller.
@@ -186,19 +203,11 @@ public class SingleUserSessionClient extends UserSessionClient
     this.userToken_ = null;
   }
 
-  public UserToken getUserToken ()
-  {
-    return this.userToken_;
-  }
-
-  public void updateUserToken (JsonBearerToken token)
-  {
-    this.userToken_.accessToken = token.accessToken;
-    this.userToken_.refreshToken = token.refreshToken;
-
-    this.userToken_.save ();
-  }
-
+  /**
+   * Get the user or client access token.
+   *
+   * @return
+   */
   private AccessToken getToken ()
   {
     return this.userToken_ != null ? this.userToken_ : this.client_.getClientToken ();
@@ -212,5 +221,30 @@ public class SingleUserSessionClient extends UserSessionClient
   public boolean isLoggedIn ()
   {
     return this.userToken_ != null;
+  }
+
+  /**
+   * Login the user.
+   *
+   * @param username
+   * @param password
+   * @param callback
+   */
+  public void login (final String username, final String password, Callback <JsonBearerToken> callback)
+  {
+    this.client_.getUserToken (username, password).enqueue (new CallbackProxy<JsonBearerToken> (callback) {
+      @Override
+      public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
+      {
+        if (response.isSuccessful ())
+        {
+          // Save the user token in memory, and in the database.
+          userToken_ = UserToken.fromToken (username, response.body ());
+          userToken_.save ();
+        }
+
+        super.onResponse (call, response);
+      }
+    });
   }
 }

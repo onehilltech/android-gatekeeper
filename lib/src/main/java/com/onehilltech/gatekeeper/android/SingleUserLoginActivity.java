@@ -8,14 +8,14 @@ import android.util.Log;
 import com.onehilltech.metadata.ManifestMetadata;
 
 /**
- * @class LoginActivity
+ * @class SingleUserLoginActivity
  *
  * Simple activity that displays the login fragment.
  */
-public class LoginActivity extends AppCompatActivity
-    implements SimpleLoginFragment.LoginFragmentListener
+public class SingleUserLoginActivity extends AppCompatActivity
+    implements SimpleSingleUserLoginFragment.LoginFragmentListener
 {
-  private static final String TAG = "LoginActivity";
+  private static final String TAG = "SingleUserLoginActivity";
 
   private static final int REQUEST_USER_CREDENTIALS = 9000;
 
@@ -47,7 +47,7 @@ public class LoginActivity extends AppCompatActivity
    */
   private void onAccountCreated (String username, String password)
   {
-    LoginFragment loginFragment = this.onCreateFragment (username, password);
+    SingleUserLoginFragment loginFragment = this.onCreateFragment (username, password);
 
     this.getSupportFragmentManager ()
         .beginTransaction ()
@@ -69,7 +69,7 @@ public class LoginActivity extends AppCompatActivity
 
       // If we're being restored from a previous state, then we don't need to do
       // anything and should return or else we could end up with overlapping fragments.
-      LoginFragment loginFragment = this.onCreateFragment ();
+      SingleUserLoginFragment loginFragment = this.onCreateFragment ();
 
       this.getSupportFragmentManager ()
           .beginTransaction ()
@@ -87,29 +87,29 @@ public class LoginActivity extends AppCompatActivity
   }
 
   /**
-   * Create the LoginFragment for the activity.
+   * Create the SingleUserLoginFragment for the activity.
    *
    * @return
    */
-  protected LoginFragment onCreateFragment ()
+  protected SingleUserLoginFragment onCreateFragment ()
   {
-    return new SimpleLoginFragment ();
+    return new SimpleSingleUserLoginFragment ();
   }
 
   /**
-   * Create the LoginFragment initialized with the username and password.
+   * Create the SingleUserLoginFragment initialized with the username and password.
    *
    * @param username
    * @param password
    * @return
    */
-  protected LoginFragment onCreateFragment (String username, String password)
+  protected SingleUserLoginFragment onCreateFragment (String username, String password)
   {
-    return SimpleLoginFragment.newInstance (username, password);
+    return SimpleSingleUserLoginFragment.newInstance (username, password);
   }
 
   @Override
-  public void onLoginComplete (LoginFragment loginFragment)
+  public void onLoginComplete (SingleUserLoginFragment loginFragment)
   {
     if (this.metadata_.loginSuccessRedirectActivity != null)
     {
@@ -124,7 +124,7 @@ public class LoginActivity extends AppCompatActivity
   }
 
   @Override
-  public void onCreateNewAccount (LoginFragment fragment)
+  public void onCreateNewAccount (SingleUserLoginFragment fragment)
   {
     if (!this.metadata_.hasNewAccountActivity ())
       return;
@@ -134,7 +134,7 @@ public class LoginActivity extends AppCompatActivity
   }
 
   @Override
-  public void onLoginError (LoginFragment loginFragment, Throwable t)
+  public void onLoginError (SingleUserLoginFragment loginFragment, Throwable t)
   {
     Log.e (TAG, t.getLocalizedMessage (), t);
   }
