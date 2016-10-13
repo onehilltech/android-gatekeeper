@@ -1,7 +1,6 @@
 package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
@@ -57,39 +56,6 @@ public class SingleUserSessionClient extends UserSessionClient
     void onInitializeFailed (Throwable t);
   }
 
-  private static class OnInitialized implements GatekeeperClient.OnInitializedListener
-  {
-    private OnInitializedListener onInitializedListener_;
-
-    public OnInitialized (OnInitializedListener onInitializedListener)
-    {
-      this.onInitializedListener_ = onInitializedListener;
-    }
-
-    @Override
-    public void onInitialized (final GatekeeperClient client)
-    {
-      SQLite.select ()
-            .from (UserToken.class)
-            .async ()
-            .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<UserToken> ()
-            {
-              @Override
-              public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
-              {
-                SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
-                onInitializedListener_.onInitialized (sessionClient);
-              }
-            }).execute ();
-    }
-
-    @Override
-    public void onInitializeFailed (Throwable e)
-    {
-      onInitializedListener_.onInitializeFailed (e);
-    }
-  }
-
   public static void initialize (Configuration config,
                                  OkHttpClient httpClient,
                                  OnInitializedListener onInitializedListener)
@@ -106,7 +72,7 @@ public class SingleUserSessionClient extends UserSessionClient
    */
   public static void initialize (Context context,
                                  OkHttpClient httpClient,
-                                 @NonNull final OnInitializedListener onInitializedListener)
+                                 OnInitializedListener onInitializedListener)
   {
     GatekeeperClient.initialize (context, httpClient, new OnInitialized (onInitializedListener));
   }
@@ -246,5 +212,38 @@ public class SingleUserSessionClient extends UserSessionClient
         super.onResponse (call, response);
       }
     });
+  }
+
+  private static class OnInitialized implements GatekeeperClient.OnInitializedListener
+  {
+    private OnInitializedListener onInitializedListener_;
+
+    public OnInitialized (OnInitializedListener onInitializedListener)
+    {
+      this.onInitializedListener_ = onInitializedListener;
+    }
+
+    @Override
+    public void onInitialized (final GatekeeperClient client)
+    {
+      SQLite.select ()
+            .from (UserToken.class)
+            .async ()
+            .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<UserToken> ()
+            {
+              @Override
+              public void onSingleQueryResult (QueryTransaction transaction, @Nullable UserToken userToken)
+              {
+                SingleUserSessionClient sessionClient = new SingleUserSessionClient (client, userToken);
+                onInitializedListener_.onInitialized (sessionClient);
+              }
+            }).execute ();
+    }
+
+    @Override
+    public void onInitializeFailed (Throwable e)
+    {
+      onInitializedListener_.onInitializeFailed (e);
+    }
   }
 }
