@@ -28,7 +28,9 @@ Use the `gatekeeper-cli` to add a new client that represents the mobile applicat
 the database. Then, define the following values in `strings.xml`:
 
 ```
+<!-- make sure to add trailing / -->
 <string name="gatekeeper_baseuri">URL for Gatekeeper</string>
+
 <string name="gatekeeper_client_id">CLIENT ID</string>
 <string name="gatekeeper_client_secret">CLIENT SECRET</string>
 ```
