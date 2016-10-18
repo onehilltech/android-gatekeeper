@@ -48,7 +48,7 @@ before proceeding to the main activity. Define the
 attribute in the login activity to specify the main activity to start after
 the login process is complete.
 
-```
+```xml
 <activity
     android:name="com.onehilltech.gatekeeper.android.SingleUserLoginActivity"
     <intent-filter>
