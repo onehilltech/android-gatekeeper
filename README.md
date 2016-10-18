@@ -45,8 +45,13 @@ check if the user is currently logged in. If so, then the login activity will
 start the main activity. If not, then the login activity will show the login screen
 before proceeding to the main activity. Define the 
 `com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY` meta-data
-attribute in the login activity to specify the main activity to start after
+element in the login activity to specify the main activity to start after
 the login process is complete.
+
+The default login activity also supports creating a new account. Define the
+`com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY` meta-data element
+in the login activity to specify the activity to start when the user elects
+to create a new account.
 
 ```xml
 <activity
@@ -56,10 +61,12 @@ the login process is complete.
         <category android:name="android.intent.category.LAUNCHER"/>
     </intent-filter>
 
+    <!-- launches the MainActivity upon successful login -->
     <meta-data
         android:name="com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY"
         android:value=".MainActivity" />
 
+    <!-- activity that allows user to create new account -->
     <meta-data
         android:name="com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY"
         android:value="com.onehilltech.gatekeeper.android.NewAccountActivity" />
