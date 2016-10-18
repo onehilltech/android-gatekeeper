@@ -27,7 +27,7 @@ dependencies {
 Use the `gatekeeper-cli` to add a new client that represents the mobile application to 
 the database. Then, define the following values in `strings.xml`:
 
-```
+```xml
 <!-- make sure to add trailing / -->
 <string name="gatekeeper_baseuri">URL for Gatekeeper</string>
 
