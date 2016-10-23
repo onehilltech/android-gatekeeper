@@ -74,13 +74,8 @@ public class Resource
     this.values_.put (name, value);
   }
 
-  public Object get (String name)
-  {
-    return this.values_.get (name);
-  }
-
   @SuppressWarnings ("unchecked")
-  public <T> T getAs (String name)
+  public <T> T get (String name)
   {
     return (T)this.values_.get (name);
   }

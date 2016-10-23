@@ -1,5 +1,5 @@
 <resources>
-    <string name="gatekeeper_baseuri">http://10.0.2.2:5000</string>
-    <string name="gatekeeper_client_id">56e9e8a88efd9a3e4f12477b</string>
-    <string name="gatekeeper_client_secret">SDAO-QBmRM2-bZH02TSMrw7Ooe38Co6xt_FORwY3fALK8jg-V_NIK7r0Wd8Z79C__jeF14SxIigVyXNx61UtzYJW1WZs4UbQl7mzheWYacgOTGxROoIRdKxLB_9jC8T4Jt8oJ5KSRSLRs7d5agfcO9pAaXhJya7ZtGAxXTNesd4</string>
+    <string name="gatekeeper_baseuri">http://10.0.2.2:8080/gatekeeper/</string>
+    <string name="gatekeeper_client_id">57ce45bb540fd18d1f027aa7</string>
+    <string name="gatekeeper_client_secret">S2rh85v6lJYRGukIb7LuhCu0p3lzd60fMOwHvhud4IfsK8pwY70rKNUb-AEsGlGz_ogJrA1p4sC-RBFfNtLfGvXmoxm2_ixqz7nNUNJL7cD70myi9mFjwzzXiLzfvR8aFONLCWePvmCwt0Xi-D61uzP3hKiNceaaMLtea0jUx30</string>
 </resources>

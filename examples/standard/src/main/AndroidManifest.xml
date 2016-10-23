@@ -3,8 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.onehilltech.gatekeeper.android.examples.standard">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-
     <application
         android:name=".TheApplication"
         android:allowBackup="true"
@@ -13,18 +11,14 @@
         android:supportsRtl="true"
         android:theme="@style/MaterialDesign">
 
-        <activity android:name="com.onehilltech.gatekeeper.android.SocialMediaLoginActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <meta-data
-                android:name="com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY"
-                android:value=".MainActivity" />
         </activity>
 
-        <activity android:name=".MainActivity" />
+        <activity android:name="com.onehilltech.gatekeeper.android.SingleUserLoginActivity" />
 
         <!-- Gatekeeper metadata -->
         <meta-data

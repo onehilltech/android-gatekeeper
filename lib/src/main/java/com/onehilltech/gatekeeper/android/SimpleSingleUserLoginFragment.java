@@ -110,7 +110,7 @@ public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
       @Override
       public void onClick (View v)
       {
-        getLoginFragmentListener ().onCreateNewAccount (SimpleSingleUserLoginFragment.this);
+        //getLoginFragmentListener ().onCreateNewAccount (SimpleSingleUserLoginFragment.this);
       }
     });
 
@@ -129,12 +129,6 @@ public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
     }
 
     return view;
-  }
-
-  @Override
-  public void onInitializeFailed (Throwable t)
-  {
-    this.showErrorMessage (t.getLocalizedMessage ());
   }
 
   /**

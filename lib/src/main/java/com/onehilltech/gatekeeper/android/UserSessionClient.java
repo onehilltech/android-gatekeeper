@@ -14,7 +14,7 @@ public abstract class UserSessionClient
     Call <Boolean> logout ();
   }
 
-  protected final GatekeeperClient client_;
+  protected final GatekeeperClient gatekeeper_;
 
   protected Service service_;
 
@@ -25,7 +25,7 @@ public abstract class UserSessionClient
    */
   protected UserSessionClient (GatekeeperClient client)
   {
-    this.client_ = client;
+    this.gatekeeper_ = client;
   }
 
   /**
@@ -33,8 +33,8 @@ public abstract class UserSessionClient
    *
    * @return
    */
-  public GatekeeperClient getGatekeeper ()
+  public GatekeeperClient getGatekeeperClient ()
   {
-    return this.client_;
+    return this.gatekeeper_;
   }
 }

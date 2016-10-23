@@ -39,7 +39,7 @@ public abstract class RefreshTokenCallback <T> implements Callback <T>
     // Mark the call as retried.
     this.retried_ = true;
 
-    GatekeeperClient gatekeeper = this.sessionClient_.getGatekeeper ();
+    GatekeeperClient gatekeeper = this.sessionClient_.getGatekeeperClient ();
     Call <JsonBearerToken> refreshCall = gatekeeper.refreshToken (userToken.refreshToken);
     refreshCall.enqueue (new Impl (origCall, origResp));
   }

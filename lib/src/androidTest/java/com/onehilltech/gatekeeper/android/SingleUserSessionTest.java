@@ -7,8 +7,6 @@ import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.raizlabs.android.dbflow.config.FlowConfig;
 import com.raizlabs.android.dbflow.config.FlowManager;
 
-import junit.framework.Assert;
-
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -17,9 +15,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SingleUserSessionTest
-  implements SingleUserSessionClient.OnInitializedListener
 {
-  protected Configuration clientConfig_;
+  protected GatekeeperClient.Configuration clientConfig_;
   protected SingleUserSessionClient sessionClient_;
   protected MockWebServer server_;
   protected HttpUrl serverUrl_;
@@ -53,7 +50,7 @@ public class SingleUserSessionTest
             .build ();
 
     // Prepare data needs to initialize the client.
-    this.clientConfig_ = Configuration.loadFromMetadata (targetContext);
+    this.clientConfig_ = GatekeeperClient.Configuration.loadFromMetadata (targetContext);
     this.clientConfig_.baseUri = this.serverUrl_.uri ().toString ();
 
     this.initializeGatekeeperClient ();
@@ -70,29 +67,8 @@ public class SingleUserSessionTest
               .setResponseCode (200)
               .setBody (token.toString ()));
 
-      SingleUserSessionClient.initialize (clientConfig_, this.httpClient_, this);
 
       this.wait ();
-    }
-  }
-
-  @Override
-  public void onInitialized (SingleUserSessionClient sessionClient)
-  {
-    synchronized (this)
-    {
-      this.sessionClient_ = sessionClient;
-      this.notify ();
-    }
-  }
-
-  @Override
-  public void onInitializeFailed (Throwable t)
-  {
-    synchronized (this)
-    {
-      Assert.fail (t.getLocalizedMessage ());
-      this.notify ();
     }
   }
 }

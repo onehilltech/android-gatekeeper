@@ -17,7 +17,7 @@ public class ConfigurationTest
   public void testLoadFromMetadata () throws Exception
   {
     Context targetContext = InstrumentationRegistry.getTargetContext ();
-    Configuration config = Configuration.loadFromMetadata (targetContext);
+    GatekeeperClient.Configuration config = GatekeeperClient.Configuration.loadFromMetadata (targetContext);
 
     Assert.assertEquals (targetContext.getString (R.string.gatekeeper_baseuri), config.baseUri);
     Assert.assertEquals (targetContext.getString (R.string.gatekeeper_client_id), config.clientId);

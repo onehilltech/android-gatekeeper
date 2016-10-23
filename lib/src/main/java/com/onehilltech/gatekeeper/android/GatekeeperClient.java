@@ -2,10 +2,10 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
@@ -17,18 +17,20 @@ import com.onehilltech.gatekeeper.android.http.jsonapi.Resource;
 import com.onehilltech.gatekeeper.android.http.jsonapi.ResourceEndpoint;
 import com.onehilltech.gatekeeper.android.http.jsonapi.ResourceMarshaller;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
-import com.onehilltech.gatekeeper.android.model.ClientToken_Table;
-import com.raizlabs.android.dbflow.config.FlowManager;
-import com.raizlabs.android.dbflow.config.*;
-import com.raizlabs.android.dbflow.sql.language.SQLite;
-import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
+import com.onehilltech.metadata.ManifestMetadata;
+import com.onehilltech.metadata.MetadataProperty;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Response;
 import retrofit2.Call;
 import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -40,41 +42,88 @@ import retrofit2.http.POST;
 public class GatekeeperClient
 {
   /**
-   *
+   * Gatekeeper client configuration. The configuration can be initialized manually
+   * or loaded from the meta-data section in AndroidManifest.xml.
    */
-  public interface OnInitializedListener
+  public static final class Configuration
   {
-    /**
-     * Callback for completion of the initialization process.
-     *
-     * @param client      Initialized client
-     */
-    void onInitialized (GatekeeperClient client);
+    private static final String CLIENT_ID = "com.onehilltech.gatekeeper.android.client_id";
+    private static final String CLIENT_SECRET = "com.onehilltech.gatekeeper.android.client_secret";
+    private static final String BASE_URI = "com.onehilltech.gatekeeper.android.baseuri";
 
-    /**
-     * Callback for an error.
-     *
-     * @param e       The error that occurred.
-     */
-    void onInitializeFailed (Throwable e);
+    @MetadataProperty(name=CLIENT_ID, fromResource=true)
+    public String clientId;
+
+    @MetadataProperty(name=CLIENT_SECRET, fromResource=true)
+    public String clientSecret;
+
+    @MetadataProperty(name=BASE_URI, fromResource=true)
+    public String baseUri;
+
+    public static Configuration loadFromMetadata (Context context)
+        throws PackageManager.NameNotFoundException, InvocationTargetException, IllegalAccessException, ClassNotFoundException
+    {
+      Configuration configuration = new Configuration ();
+      ManifestMetadata.get (context).initFromMetadata (configuration);
+
+      return configuration;
+    }
   }
 
-  private interface Service
+  /**
+   * @class Builder
+   *
+   * Builder for creating GatekeeperClient objects.
+   */
+  public static final class Builder
   {
-    @POST("oauth2/token")
-    Call<JsonBearerToken> getBearerToken (@Body JsonGrant grant);
+    private OkHttpClient httpClient_;
+
+    private Configuration config_;
+
+    private Context context_;
+
+    public Builder (Context context)
+    {
+      this.context_ = context;
+    }
+
+    public Builder setClient (OkHttpClient httpClient)
+    {
+      this.httpClient_ = httpClient;
+      return this;
+    }
+
+    public Builder setConfiguration (Configuration config)
+    {
+      this.config_ = config;
+      return this;
+    }
+
+    public GatekeeperClient build ()
+    {
+      try
+      {
+        Configuration config = this.config_;
+
+        if (config == null)
+          config = Configuration.loadFromMetadata (this.context_);
+
+        OkHttpClient httpClient = this.httpClient_;
+
+        if (httpClient == null)
+          httpClient = new OkHttpClient.Builder ().build ();
+
+        return new GatekeeperClient (config, httpClient);
+      }
+      catch (PackageManager.NameNotFoundException | IllegalAccessException | ClassNotFoundException | InvocationTargetException e)
+      {
+        throw new IllegalStateException ("Failed to load default configuration", e);
+      }
+    }
   }
 
   public static final int VERSION = 1;
-
-  /// Logging tag.
-  private static final String TAG = "GatekeeperClient";
-
-  /// Base URI for the Gatekeeper service.
-  private final String baseUri_;
-
-  /// Authorization token for the client.
-  private ClientToken clientToken_;
 
   private final Retrofit retrofit_;
 
@@ -82,149 +131,54 @@ public class GatekeeperClient
 
   private final Service service_;
 
-  private final ResourceEndpoint <JsonAccount> accounts_;
-
   private Gson gson_;
 
-  /**
-   * Initialize a new GatekeeperClient using information from the metadata in
-   * AndroidManifest.xml.
-   *
-   * @param context         Target context
-   * @param onInitializedListener   Callback for initialization
-   */
-  public static void initialize (Context context, OkHttpClient httpClient, OnInitializedListener onInitializedListener)
+  /// Configuration for the client.
+  private Configuration config_;
+
+  private ClientToken clientToken_;
+
+  private ResourceEndpoint <JsonAccount> accounts_;
+
+  static
   {
-    try
+    Resource.registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
+    Resource.registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
+  }
+
+  /**
+   * Interceptor that adds the Authorization header to a request.
+   */
+  private final Interceptor authHeaderInterceptor_ = new Interceptor ()
+  {
+    @Override
+    public Response intercept (Chain chain) throws IOException
     {
-      Configuration configuration = Configuration.loadFromMetadata (context);
-      initialize (configuration, httpClient, onInitializedListener);
+      String authorization = "Bearer " + clientToken_.accessToken;
+
+      okhttp3.Request original = chain.request ();
+      okhttp3.Request request =
+          original.newBuilder ()
+                  .header ("User-Agent", "FundAll Android")
+                  .header ("Authorization", authorization)
+                  .method (original.method (), original.body ())
+                  .build ();
+
+      return chain.proceed (request);
     }
-    catch (PackageManager.NameNotFoundException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e)
-    {
-      onInitializedListener.onInitializeFailed (new RuntimeException ("Invalid or missing configuration", e));
-    }
-  }
-
-  /**
-   * Initialize a new GatekeeperClient object.
-   *
-   * @param config                  Client configuration
-   * @param httpClient              Volley RequestQueue for requests
-   * @param onInitializedListener   Callback for initialization.
-   */
-  public static void initialize (final Configuration config,
-                                 final OkHttpClient httpClient,
-                                 final OnInitializedListener onInitializedListener)
-  {
-    // First, initialize the Gatekeeper DBFlow module.
-    FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
-
-    SQLite.select ()
-          .from (ClientToken.class)
-          .where (ClientToken_Table.client_id.eq (config.clientId))
-          .async ()
-          .querySingleResultCallback (new QueryTransaction.QueryResultSingleCallback<ClientToken> ()
-          {
-            @Override
-            public void onSingleQueryResult (QueryTransaction transaction, @Nullable ClientToken clientToken)
-            {
-              initialize (config, clientToken, httpClient, onInitializedListener);
-            }
-          }).execute ();
-  }
-
-  /**
-   * Initialize a new GatekeeperClient object.
-   *
-   * @param config
-   * @param clientToken
-   * @param httpClient
-   * @param onInitializedListener
-   */
-  private static void initialize (Configuration config,
-                                  ClientToken clientToken,
-                                  OkHttpClient httpClient,
-                                  OnInitializedListener onInitializedListener)
-  {
-    if (clientToken != null)
-      makeGatekeeperClient (config, clientToken, httpClient, onInitializedListener);
-    else
-      requestClientToken (config, httpClient, onInitializedListener);
-  }
-
-  /**
-   * Request a new client token. Requesting a new client token will result a initializing
-   * a new GatekeeperClient object.
-   */
-  private static void requestClientToken (final Configuration config,
-                                          final OkHttpClient httpClient,
-                                          final OnInitializedListener onInitializedListener)
-  {
-    // Create a client that does not have a token.
-    final GatekeeperClient client = new GatekeeperClient (config.baseUri, null, httpClient);
-
-    // Request a new token from the server for the client.
-    JsonClientCredentials clientCredentials = new JsonClientCredentials ();
-    clientCredentials.clientId = config.clientId;
-    clientCredentials.clientSecret = config.clientSecret;
-
-    Call <JsonBearerToken> call = client.getToken (clientCredentials);
-    call.enqueue (new Callback<JsonBearerToken> ()
-    {
-      @Override
-      public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
-      {
-        if (response.isSuccessful ())
-        {
-          // Store the response in the client, and save the token to the database.
-          client.clientToken_ = ClientToken.fromToken (config.clientId, response.body ());
-          client.clientToken_.save ();
-
-          onInitializedListener.onInitialized (client);
-        }
-        else
-        {
-          onInitializedListener.onInitializeFailed (new IllegalStateException ("Failed to initialize client"));
-        }
-      }
-
-      @Override
-      public void onFailure (Call<JsonBearerToken> call, Throwable t)
-      {
-        onInitializedListener.onInitializeFailed (t);
-      }
-    });
-  }
-
-  /**
-   * Helper method to make the GatekeeperClient object, and call the onRegistrationComplete
-   * callback with the client.
-   *
-   * @param config                    Client configuration
-   * @param httpClient                Request queue for sending request to server
-   * @param onInitializedListener     Callback for initialization complete
-   */
-  private static void makeGatekeeperClient (Configuration config,
-                                            ClientToken clientToken,
-                                            OkHttpClient httpClient,
-                                            OnInitializedListener onInitializedListener)
-  {
-    GatekeeperClient client = new GatekeeperClient (config.baseUri, clientToken, httpClient);
-    onInitializedListener.onInitialized (client);
-  }
-
+  };
   /**
    * Initializing constructor.
    *
-   * @param baseUri
+   * @param config
+   * @param httpClient
    */
-  GatekeeperClient (String baseUri, ClientToken clientToken, OkHttpClient httpClient)
+  GatekeeperClient (Configuration config, OkHttpClient httpClient)
   {
-    this.baseUri_ = baseUri;
+    this.config_ = config;
     this.httpClient_ = httpClient;
-    this.clientToken_ = clientToken;
 
+    // Initialize the type factories for Gson.
     RuntimeTypeAdapterFactory <JsonGrant> grantTypes =
         RuntimeTypeAdapterFactory.of (JsonGrant.class, "grant_type")
                                  .registerSubtype (JsonClientCredentials.class, "client_credentials")
@@ -242,72 +196,87 @@ public class GatekeeperClient
 
     resourceMarshaller.setGson (this.gson_);
 
-    this.retrofit_ = new Retrofit.Builder ()
-        .baseUrl (this.getBaseUrlWithVersion ())
-        .addConverterFactory (GsonConverterFactory.create (this.gson_))
-        .client (this.httpClient_)
-        .build ();
+    this.retrofit_ =
+        new Retrofit.Builder ()
+            .baseUrl (this.getBaseUrlWithVersion ())
+            .addConverterFactory (GsonConverterFactory.create (this.gson_))
+            .client (this.httpClient_)
+            .build ();
 
-    this.accounts_ = ResourceEndpoint.get (this.retrofit_, "account", "accounts");
+    // Create the remoting endpoints.
     this.service_ = this.retrofit_.create (Service.class);
+
+    // Initialize the authenticated endpoints.
+    this.initAuthEndpoints ();
   }
 
+  private void initAuthEndpoints ()
+  {
+    OkHttpClient authHttpClient =
+        this.httpClient_.newBuilder ()
+                  .addInterceptor (this.authHeaderInterceptor_)
+                  .build ();
+
+    Retrofit authRetrofit =
+        new Retrofit.Builder ()
+            .baseUrl (this.getBaseUrlWithVersion ())
+            .addConverterFactory (GsonConverterFactory.create (this.gson_))
+            .client (authHttpClient)
+            .build ();
+
+    this.accounts_ = ResourceEndpoint.get (authRetrofit, "account", "accounts");
+  }
+
+  /**
+   * Get the http client for the client.
+   *
+   * @return        OkHttpClient object
+   */
   public OkHttpClient getHttpClient ()
   {
     return this.httpClient_;
   }
 
+  /**
+   * Get the Gson object used by the client.
+   *
+   * @return         Gson object
+   */
   public Gson getGson ()
   {
     return this.gson_;
   }
 
+  /**
+   * Get the client id.
+   *
+   * @return      Client id string
+   * */
   public String getClientId ()
   {
-    return this.clientToken_.getClientId ();
+    return this.config_.clientId;
   }
 
-  public String getCompleteUrl (String relativePath)
+  /**
+   * Compute the complete URL relative to the versioned Gatekeeper URL.
+   *
+   * @param relativePath      Relative path
+   * @return                  URL object
+   */
+  public URL computeCompleteUrl (String relativePath)
+    throws MalformedURLException
   {
-    return this.baseUri_ + "/v" + VERSION + relativePath;
+    return new URL (this.getBaseUrlWithVersion () + relativePath);
   }
 
   public String getBaseUrl ()
   {
-    return this.baseUri_;
+    return this.config_.baseUri;
   }
 
   public String getBaseUrlWithVersion ()
   {
-    return this.baseUri_ + "v" + VERSION + "/";
-  }
-
-  /**
-   * Get the client token.
-   *
-   * @return
-   */
-  public ClientToken getClientToken ()
-  {
-    return this.clientToken_;
-  }
-
-  /**
-   * Create a new account on the Gatekeeper server. The result of this method is a Boolean
-   * value that determines if the account was created. Once the account has been created,
-   * the application should request a token on behalf of the newly created user.
-   *
-   * @param username        Username
-   * @param password        Password
-   */
-  public Call <Resource> createAccount (String username, String password, String email)
-  {
-    JsonAccount account = new JsonAccount ();
-    account.username = username;
-    account.password = password;
-    account.email = email;
-
-    return this.accounts_.create (account);
+    return this.getBaseUrl () + "v" + VERSION + "/";
   }
 
   /**
@@ -319,24 +288,95 @@ public class GatekeeperClient
   public Call<JsonBearerToken> getUserToken (String username, String password)
   {
     JsonPassword grant = new JsonPassword ();
-    grant.clientId = this.clientToken_.getClientId ();
+    grant.clientId = this.config_.clientId;
     grant.username = username;
     grant.password = password;
 
     return this.getToken (grant);
   }
 
+  /**
+   * Get an access token for this client.
+   *
+   * @return
+   */
+  public Call <JsonBearerToken> getClientToken ()
+  {
+    JsonClientCredentials credentials = new JsonClientCredentials ();
+    credentials.clientId = this.config_.clientId;
+    credentials.clientSecret = this.config_.clientSecret;
+
+    return this.getToken (credentials);
+  }
+
+  /**
+   * Refresh an existing token.
+   *
+   * @param refreshToken        Refresh token
+   * @return
+   */
   public Call <JsonBearerToken> refreshToken (String refreshToken)
   {
     JsonRefreshToken grant = new JsonRefreshToken ();
-    grant.clientId = this.clientToken_.getClientId ();
+    grant.clientId = this.config_.clientId;
     grant.refreshToken = refreshToken;
 
     return this.getToken (grant);
   }
 
+  /**
+   * Create a new account.
+   *
+   * @param username
+   * @param password
+   * @param email
+   * @param callback
+   */
+  public void createAccount (final String username,
+                             final String password,
+                             final String email,
+                             final Callback<Resource> callback)
+  {
+    this.getClientToken ().enqueue (new Callback<JsonBearerToken> ()
+    {
+      @Override
+      public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
+      {
+        // Insert the client token into the database.
+        clientToken_ = ClientToken.fromToken (config_.clientId, response.body ());
+        clientToken_.insert ();
+
+        // Make a call to get the
+        JsonAccount account = new JsonAccount ();
+        account.username = username;
+        account.password = password;
+        account.email = email;
+
+        accounts_.create (account).enqueue (callback);
+      }
+
+      @Override
+      public void onFailure (Call<JsonBearerToken> call, Throwable t)
+      {
+        callback.onFailure (null, t) ;
+      }
+    });
+  }
+
+  /**
+   * Helper method for requesting an access token.
+   *
+   * @param grantType     JsonGrant object
+   * @return
+   */
   private Call <JsonBearerToken> getToken (JsonGrant grantType)
   {
     return this.service_.getBearerToken (grantType);
+  }
+
+  private interface Service
+  {
+    @POST("oauth2/token")
+    Call<JsonBearerToken> getBearerToken (@Body JsonGrant grant);
   }
 }

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Default Gatekeeper Example</string>
 
-    <string name="gatekeeper_baseuri">https://localhost:5000</string>
+    <string name="gatekeeper_baseuri">https://localhost:5000/</string>
     <string name="gatekeeper_client_id">client_id</string>
     <string name="gatekeeper_client_secret">client_secret</string>
 

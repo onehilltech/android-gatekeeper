@@ -21,7 +21,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class NewAccountFragment extends Fragment
-  implements GatekeeperClient.OnInitializedListener
 {
   public interface Listener
   {
@@ -29,16 +28,17 @@ public class NewAccountFragment extends Fragment
     void onError (NewAccountFragment fragment, Throwable t);
   }
 
-  private static final String TAG = "NewAccountFragment";
-
   private Listener listener_;
 
-  private GatekeeperClient gatekeeper_;
+  private SingleUserSessionClient sessionClient_;
 
   // UI references.
   private EditText usernameView_;
+
   private EditText confirmPasswordView_;
+
   private AutoCompleteTextView emailView_;
+
   private EditText passwordView_;
 
   public NewAccountFragment ()
@@ -62,8 +62,8 @@ public class NewAccountFragment extends Fragment
     this.passwordView_ = (EditText) view.findViewById (R.id.password);
     this.confirmPasswordView_ = (EditText) view.findViewById (R.id.confirm_password);
 
-    Button buttonCreateAccount = (Button) view.findViewById (R.id.button_create_account);
-    buttonCreateAccount.setOnClickListener (new View.OnClickListener ()
+    Button btnCreate = (Button) view.findViewById (R.id.button_create_account);
+    btnCreate.setOnClickListener (new View.OnClickListener ()
     {
       @Override
       public void onClick (View view)
@@ -71,9 +71,6 @@ public class NewAccountFragment extends Fragment
         onCreateAccount ();
       }
     });
-
-    // Initialize the client.
-    GatekeeperClient.initialize (this.getContext (), this.getHttpClient (), this);
   }
 
   @Override
@@ -95,25 +92,13 @@ public class NewAccountFragment extends Fragment
   public void onDetach ()
   {
     super.onDetach ();
+
     this.listener_ = null;
   }
 
   protected OkHttpClient getHttpClient ()
   {
     return new OkHttpClient.Builder ().build ();
-  }
-
-  @Override
-  public void onInitialized (GatekeeperClient client)
-  {
-    this.gatekeeper_ = client;
-  }
-
-  @Override
-  public void onInitializeFailed (Throwable t)
-  {
-    if (this.listener_ != null)
-      this.listener_.onError (this, t);
   }
 
   /**
@@ -143,9 +128,6 @@ public class NewAccountFragment extends Fragment
    */
   private void onCreateAccount ()
   {
-    if (this.gatekeeper_ == null)
-      throw new IllegalStateException ("Gatekeeper client is not initialized");
-
     if (!this.validateInput ())
       return;
 
@@ -153,30 +135,24 @@ public class NewAccountFragment extends Fragment
     String password = this.passwordView_.getText ().toString ();
     String email = this.emailView_.getText ().toString ();
 
-    this.gatekeeper_.createAccount (username, password, email)
-                    .enqueue (new Callback<Resource> ()
-                    {
-                      @Override
-                      public void onResponse (Call<Resource> call, Response<Resource> response)
-                      {
-                        if (response.isSuccessful ())
-                          onAccountCreated ((JsonAccount)response.body ().get ("account"));
-                      }
+    this.sessionClient_.createAccount (username, password, email, new Callback<Resource> ()
+    {
+      @Override
+      public void onResponse (Call<Resource> call, Response<Resource> response)
+      {
+        if (response.isSuccessful ())
+        {
+          JsonAccount account = response.body ().get ("account");
+          listener_.onAccountCreated (NewAccountFragment.this, account);
+        }
+      }
 
-                      @Override
-                      public void onFailure (Call<Resource> call, Throwable t)
-                      {
-                        listener_.onError (NewAccountFragment.this, t);
-                      }
-                    });
-  }
-
-  public void onAccountCreated (JsonAccount account)
-  {
-    // Save the account to our local database.
-
-    // Notify the listener the account has been created.
-    this.listener_.onAccountCreated (this, account);
+      @Override
+      public void onFailure (Call<Resource> call, Throwable t)
+      {
+        listener_.onError (NewAccountFragment.this, t);
+      }
+    });
   }
 
   /**

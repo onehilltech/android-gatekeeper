@@ -66,7 +66,7 @@ dependencies {
     compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
 
     compile 'com.github.onehilltech:android-design:-SNAPSHOT'
-    compile 'com.github.onehilltech:android-metadata:1.5.1'
+    compile 'com.github.onehilltech:android-metadata:1.5.2'
 
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
@@ -74,9 +74,11 @@ dependencies {
 
     compile 'org.apache.commons:commons-lang3:3.0'
 
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile 'com.android.support:support-v4:24.2.0'
-    compile 'com.android.support:design:24.2.0'
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:support-v4:24.2.1'
+    compile 'com.android.support:design:24.2.1'
+
+    compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.21'
 
     androidTestCompile 'junit:junit:4.11'
     androidTestCompile 'com.squareup.okhttp3:mockwebserver:3.4.1'

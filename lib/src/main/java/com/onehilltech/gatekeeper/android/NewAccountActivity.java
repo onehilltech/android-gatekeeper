@@ -3,10 +3,13 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Activity that allows the user to create a new account.
@@ -14,40 +17,22 @@ import com.onehilltech.gatekeeper.android.http.JsonAccount;
 public class NewAccountActivity extends AppCompatActivity
     implements NewAccountFragment.Listener
 {
-  public static final String RESULT_DATA_USERNAME = "username";
+  private final Logger logger_ = LoggerFactory.getLogger (NewAccountActivity.class);
 
-  public static final String RESULT_DATA_PASSWORD = "password";
-
-  private static final String TAG = "NewAccountActivity";
+  private static final String EXTRA_UP_INTENT = "upIntent";
 
   /**
-   * Factory method for the activity intents.
+   * Factory method for creating a new Intent for this activity.
    *
-   * @param context
-   * @return
+   * @param context       Target context
+   * @return              Intent object
    */
-  public static Intent newIntent (Context context)
+  public static Intent newIntent (Context context, Intent upIntent)
   {
+    Intent intent = new Intent (context, NewAccountActivity.class);
+    intent.putExtra (EXTRA_UP_INTENT, upIntent);
+
     return new Intent (context, NewAccountActivity.class);
-  }
-
-  @Override
-  public void onAccountCreated (NewAccountFragment fragment, JsonAccount account)
-  {
-    // Finish the activity and go back. Or, we could automatically login the user
-    // to their account by passing their username/password back to the login activity.
-    Intent intent = new Intent ();
-    intent.putExtra (RESULT_DATA_USERNAME, fragment.getUsername ());
-    intent.putExtra (RESULT_DATA_PASSWORD, fragment.getPassword ());
-    this.setResult (RESULT_OK, intent);
-
-    this.finish ();
-  }
-
-  @Override
-  public void onError (NewAccountFragment fragment, Throwable t)
-  {
-    Log.e (TAG, t.getLocalizedMessage (), t);
   }
 
   @Override
@@ -57,6 +42,7 @@ public class NewAccountActivity extends AppCompatActivity
 
     this.setContentView (R.layout.activity_new_account);
 
+    // Show the fragment for creating the new account.
     NewAccountFragment fragment = this.onCreateFragment ();
 
     this.getSupportFragmentManager ()
@@ -68,6 +54,31 @@ public class NewAccountActivity extends AppCompatActivity
   protected NewAccountFragment onCreateFragment ()
   {
     return new NewAccountFragment ();
+  }
+
+  @Override
+  public void onAccountCreated (NewAccountFragment fragment, JsonAccount account)
+  {
+    Intent upIntent = this.getIntent ().getParcelableExtra (EXTRA_UP_INTENT);
+
+    if (upIntent != null)
+    {
+      upIntent.putExtra (MessageConstants.ARG_USERNAME, fragment.getUsername ());
+      upIntent.putExtra (MessageConstants.ARG_PASSWORD, fragment.getPassword ());
+
+      NavUtils.navigateUpTo (this, upIntent);
+    }
+    else
+    {
+      // Just finish the activity.
+      this.finish ();
+    }
+  }
+
+  @Override
+  public void onError (NewAccountFragment fragment, Throwable t)
+  {
+    this.logger_.error (t.getLocalizedMessage (), t);
   }
 }
 

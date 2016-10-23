@@ -1,11 +1,14 @@
 package com.onehilltech.gatekeeper.android;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.onehilltech.metadata.ManifestMetadata;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @class SingleUserLoginActivity
@@ -15,44 +18,17 @@ import com.onehilltech.metadata.ManifestMetadata;
 public class SingleUserLoginActivity extends AppCompatActivity
     implements SimpleSingleUserLoginFragment.LoginFragmentListener
 {
-  private static final String TAG = "SingleUserLoginActivity";
-
-  private static final int REQUEST_USER_CREDENTIALS = 9000;
-
   private final LoginMetadata metadata_ = new LoginMetadata ();
+  private final Logger logger_ = LoggerFactory.getLogger (SingleUserLoginActivity.class);
 
-  @Override
-  protected void onActivityResult (int requestCode, int resultCode, Intent data)
+  public static final String ARG_ON_LOGIN_COMPLETE_INTENT = "onLoginCompleteIntent";
+
+  public static Intent newIntent (Context context, Intent loginComplete)
   {
-    if (requestCode == REQUEST_USER_CREDENTIALS)
-    {
-      if (resultCode == RESULT_OK)
-      {
-        // Update the current fragment with the username/password. We are going to replace
-        // the current fragment since we want to make sure the username/password is retained
-        // across the lifetime of the fragment.
-        String username = data.getStringExtra (NewAccountActivity.RESULT_DATA_USERNAME);
-        String password = data.getStringExtra (NewAccountActivity.RESULT_DATA_PASSWORD);
+    Intent intent = new Intent (context, SingleUserLoginActivity.class);
+    intent.putExtra (ARG_ON_LOGIN_COMPLETE_INTENT, loginComplete);
 
-        onAccountCreated (username, password);
-      }
-    }
-  }
-
-  /**
-   * Handle account creation.
-   *
-   * @param username
-   * @param password
-   */
-  private void onAccountCreated (String username, String password)
-  {
-    SingleUserLoginFragment loginFragment = this.onCreateFragment (username, password);
-
-    this.getSupportFragmentManager ()
-        .beginTransaction ()
-        .replace (R.id.fragment_container, loginFragment)
-        .commitAllowingStateLoss ();
+    return intent;
   }
 
   @Override
@@ -67,9 +43,17 @@ public class SingleUserLoginActivity extends AppCompatActivity
     {
       ManifestMetadata.get (this).initFromMetadata (this.metadata_);
 
+      Bundle extras = this.getIntent ().getExtras ();
+      String username = extras.getString (MessageConstants.ARG_USERNAME);
+      String password = extras.getString (MessageConstants.ARG_PASSWORD);
+
+      SingleUserLoginFragment loginFragment =
+          username != null && password != null ?
+              this.onCreateFragment (username, password) :
+              this.onCreateFragment ();
+
       // If we're being restored from a previous state, then we don't need to do
       // anything and should return or else we could end up with overlapping fragments.
-      SingleUserLoginFragment loginFragment = this.onCreateFragment ();
 
       this.getSupportFragmentManager ()
           .beginTransaction ()
@@ -111,32 +95,24 @@ public class SingleUserLoginActivity extends AppCompatActivity
   @Override
   public void onLoginComplete (SingleUserLoginFragment loginFragment)
   {
-    if (this.metadata_.loginSuccessRedirectActivity != null)
-    {
-      // There is an activity to be started after success login. Get its intent
-      // and start it before finishing this activity.
-      Intent intent = this.metadata_.getLoginSuccessRedirectIntent (this);
-      this.startActivity (intent);
-    }
+    Intent targetIntent = null;
 
-    // Finish this activity.
+    if (this.getIntent ().hasExtra (ARG_ON_LOGIN_COMPLETE_INTENT))
+      targetIntent = this.getIntent ().getParcelableExtra (ARG_ON_LOGIN_COMPLETE_INTENT);
+    else if (this.metadata_.loginSuccessRedirectActivity != null)
+      targetIntent = this.metadata_.getLoginSuccessRedirectIntent (this);
+
+    int flags = targetIntent.getFlags ();
+    targetIntent.setFlags (flags | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+    this.startActivity (targetIntent);
     this.finish ();
-  }
-
-  @Override
-  public void onCreateNewAccount (SingleUserLoginFragment fragment)
-  {
-    if (!this.metadata_.hasNewAccountActivity ())
-      return;
-
-    Intent intent = this.metadata_.getNewAccountActivity (this);
-    this.startActivityForResult (intent, REQUEST_USER_CREDENTIALS);
   }
 
   @Override
   public void onLoginError (SingleUserLoginFragment loginFragment, Throwable t)
   {
-    Log.e (TAG, t.getLocalizedMessage (), t);
+    this.logger_.error (t.getLocalizedMessage (), t);
   }
 }
 
