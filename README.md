@@ -38,39 +38,63 @@ the database. Then, define the following values in `strings.xml`:
 
 ## Built-in Activities
 
-### Login
+### Login / New account
 
-The login activity should be the launcher activity for your application. It will
-check if the user is currently logged in. If so, then the login activity will
-start the main activity. If not, then the login activity will show the login screen
-before proceeding to the main activity. Define the 
-`com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY` meta-data
-element in the login activity to specify the main activity to start after
-the login process is complete.
-
-The default login activity also supports creating a new account. Define the
-`com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY` meta-data element
-in the login activity to specify the activity to start when the user elects
-to create a new account.
+Add the activities for login and creating a new account, if applicable, to 
+`AndroidManifest.xml`.
 
 ```xml
-<activity
-    android:name="com.onehilltech.gatekeeper.android.SingleUserLoginActivity"
-    <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-    </intent-filter>
+<activity android:name="com.onehilltech.gatekeeper.android.SingleUserLoginActivity" />
+<activity android:name="com.onehilltech.gatekeeper.android.NewAccountActivity" />
+```
 
-    <!-- launches the MainActivity upon successful login -->
-    <meta-data
-        android:name="com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY"
-        android:value=".MainActivity" />
+Create a `SingleUserSessionClient` in each activity, and make sure the user is logged 
+in before continuing on the `Activity.onStart()` method. This will ensure that regardless
+of how the user enter the application, they must be logged in.
 
-    <!-- activity that allows user to create new account -->
-    <meta-data
-        android:name="com.onehilltech.gatekeeper.android.NEW_ACCOUNT_ACTIVITY"
-        android:value="com.onehilltech.gatekeeper.android.NewAccountActivity" />
-</activity>
+```java
+public class MyActivity extends AppCompatActivity
+  implements SingleUserSessionClient.Listener
+{
+  private SingleUserSessionClient session_;
+
+  @Override
+  protected void onCreate (@Nullable Bundle savedInstanceState)
+  {
+    super.onCreate (savedInstanceState);
+
+    this.setContentView (R.layout.activity_main);
+
+    this.session_ = new SingleUserSessionClient.Builder (this).build ();
+    this.session_.setListener (this);
+  }
+
+  @Override
+  protected void onStart ()
+  {
+    super.onStart ();
+
+    // Make sure the user it logged in.
+    this.sessionClient_.checkLoggedIn (this, SingleUserLoginActivity.class);
+    
+    // If you do not want create a SingleUserSessionClient object, 
+    // then use:
+    //
+    // SingleUserSessionClient.ensureLoggedIn (this, SingleUserLoginActivity.class);
+  }
+
+  @Override
+  public void onLogin (SingleUserSessionClient client)
+  {
+    // Handle the user logging in
+  }
+
+  @Override
+  public void onLogout (SingleUserSessionClient client)
+  {
+    // Handle the user logging out
+  }
+}
 ```
 
 ## Custom Activities
