@@ -19,6 +19,7 @@
         </activity>
 
         <activity android:name="com.onehilltech.gatekeeper.android.SingleUserLoginActivity" />
+        <activity android:name="com.onehilltech.gatekeeper.android.NewAccountActivity" />
 
         <!-- Gatekeeper metadata -->
         <meta-data

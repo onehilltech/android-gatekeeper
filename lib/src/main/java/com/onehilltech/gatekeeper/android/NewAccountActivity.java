@@ -3,7 +3,6 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
@@ -20,9 +19,9 @@ public class NewAccountActivity extends AppCompatActivity
   private final Logger logger_ = LoggerFactory.getLogger (NewAccountActivity.class);
 
   private static final String EXTRA_UP_INTENT = "upIntent";
-
+  
   /**
-   * Factory method for creating a new Intent for this activity.
+   * Create a new Intent object for starting this activity.
    *
    * @param context       Target context
    * @return              Intent object
@@ -32,7 +31,7 @@ public class NewAccountActivity extends AppCompatActivity
     Intent intent = new Intent (context, NewAccountActivity.class);
     intent.putExtra (EXTRA_UP_INTENT, upIntent);
 
-    return new Intent (context, NewAccountActivity.class);
+    return intent;
   }
 
   @Override
@@ -66,13 +65,13 @@ public class NewAccountActivity extends AppCompatActivity
       upIntent.putExtra (MessageConstants.ARG_USERNAME, fragment.getUsername ());
       upIntent.putExtra (MessageConstants.ARG_PASSWORD, fragment.getPassword ());
 
-      NavUtils.navigateUpTo (this, upIntent);
+      int flags = upIntent.getFlags ();
+      upIntent.setFlags (flags | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+      this.startActivity (upIntent);
     }
-    else
-    {
-      // Just finish the activity.
-      this.finish ();
-    }
+
+    this.finish ();
   }
 
   @Override

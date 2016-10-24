@@ -43,9 +43,10 @@ public class SingleUserSessionClient extends UserSessionClient
       this.client_ = new GatekeeperClient.Builder (context).build ();
     }
 
-    public void setGatekeeperClient (GatekeeperClient client)
+    public Builder setGatekeeperClient (GatekeeperClient client)
     {
       this.client_ = client;
+      return this;
     }
 
     public SingleUserSessionClient build ()

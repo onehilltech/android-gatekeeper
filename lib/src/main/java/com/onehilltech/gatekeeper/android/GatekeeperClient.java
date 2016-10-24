@@ -342,9 +342,10 @@ public class GatekeeperClient
       @Override
       public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
       {
-        // Insert the client token into the database.
+        // Save the client token. We are either going to replace the current one, or
+        // insert a new one into the database.
         clientToken_ = ClientToken.fromToken (config_.clientId, response.body ());
-        clientToken_.insert ();
+        clientToken_.save ();
 
         // Make a call to get the
         JsonAccount account = new JsonAccount ();

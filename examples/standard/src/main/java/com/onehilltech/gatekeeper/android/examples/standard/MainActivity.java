@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity
   private void onViewCreated ()
   {
     this.btnSignOut_ = (Button)this.findViewById (R.id.btn_signout);
+    this.btnSignOut_.setEnabled (this.sessionClient_.isLoggedIn ());
     this.btnSignOut_.setOnClickListener (new View.OnClickListener ()
     {
       @Override
@@ -54,8 +55,6 @@ public class MainActivity extends AppCompatActivity
         onLogoutClicked ();
       }
     });
-
-    this.btnSignOut_.setEnabled (this.sessionClient_.isLoggedIn ());
   }
 
   private void onLogoutClicked ()

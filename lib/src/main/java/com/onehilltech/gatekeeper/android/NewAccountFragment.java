@@ -47,15 +47,27 @@ public class NewAccountFragment extends Fragment
   }
 
   @Override
-  public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+  public void onAttach (Context context)
   {
-    return inflater.inflate (R.layout.fragment_new_account, container, false);
+    super.onAttach (context);
+
+    this.listener_ = (Listener) context;
+
+    GatekeeperClient gatekeeper =
+        new GatekeeperClient.Builder (context)
+            .setClient (this.getHttpClient ())
+            .build ();
+
+    this.sessionClient_ =
+        new SingleUserSessionClient.Builder (context)
+            .setGatekeeperClient (gatekeeper)
+            .build ();
   }
 
   @Override
-  public void onViewCreated (View view, Bundle savedInstanceState)
+  public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
   {
-    super.onViewCreated (view, savedInstanceState);
+    View view = inflater.inflate (R.layout.fragment_new_account, container, false);
 
     this.usernameView_ = (EditText) view.findViewById (R.id.username);
     this.emailView_ = (AutoCompleteTextView) view.findViewById (R.id.email);
@@ -71,21 +83,8 @@ public class NewAccountFragment extends Fragment
         onCreateAccount ();
       }
     });
-  }
 
-  @Override
-  public void onAttach (Context context)
-  {
-    super.onAttach (context);
-
-    try
-    {
-      this.listener_ = (Listener) context;
-    }
-    catch (ClassCastException e)
-    {
-      throw new ClassCastException (context.toString () + " must implement LoginFragmentListener");
-    }
+    return view;
   }
 
   @Override

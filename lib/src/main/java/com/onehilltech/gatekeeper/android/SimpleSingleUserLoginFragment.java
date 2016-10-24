@@ -1,5 +1,7 @@
 package com.onehilltech.gatekeeper.android;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -110,7 +112,15 @@ public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
       @Override
       public void onClick (View v)
       {
-        //getLoginFragmentListener ().onCreateNewAccount (SimpleSingleUserLoginFragment.this);
+        // Start the activity for creating a new account.
+        Activity activity = getActivity ();
+
+        Intent upIntent = activity.getIntent ();
+        Intent intent = NewAccountActivity.newIntent (getContext (), upIntent);
+
+        // Start the activity for creating the account, and finish this activity.
+        activity.startActivity (intent);
+        activity.finish ();
       }
     });
 
