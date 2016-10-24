@@ -19,7 +19,7 @@ public class NewAccountActivity extends AppCompatActivity
   private final Logger logger_ = LoggerFactory.getLogger (NewAccountActivity.class);
 
   private static final String EXTRA_UP_INTENT = "upIntent";
-  
+
   /**
    * Create a new Intent object for starting this activity.
    *
