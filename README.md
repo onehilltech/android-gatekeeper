@@ -77,8 +77,8 @@ public class MyActivity extends AppCompatActivity
     // Make sure the user it logged in.
     this.sessionClient_.checkLoggedIn (this, SingleUserLoginActivity.class);
     
-    // If you do not want create a session SingleUserSessionClient
-    // object, use:
+    // If you do not want create a SingleUserSessionClient object, 
+    // then use:
     //
     // SingleUserSessionClient.ensureLoggedIn (this, SingleUserLoginActivity.class);
   }
