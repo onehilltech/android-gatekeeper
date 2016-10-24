@@ -238,6 +238,9 @@ public class SingleUserSessionClient extends UserSessionClient
     loginIntent.putExtra (SingleUserLoginActivity.ARG_ON_LOGIN_COMPLETE_INTENT, activity.getIntent ());
     this.context_.startActivity (loginIntent);
 
+    // Finish the current activity.
+    activity.finish ();
+
     return false;
   }
 
