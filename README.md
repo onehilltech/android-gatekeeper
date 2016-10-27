@@ -36,6 +36,7 @@ the database. Then, define the following values in `strings.xml`:
 <string name="gatekeeper_client_secret">CLIENT SECRET</string>
 ```
 
+Add the 
 ## Built-in Activities
 
 ### Login / New account
@@ -75,7 +76,7 @@ public class MyActivity extends AppCompatActivity
     super.onStart ();
 
     // Make sure the user it logged in.
-    this.sessionClient_.checkLoggedIn (this, SingleUserLoginActivity.class);
+    this.session_.checkLoggedIn (this, SingleUserLoginActivity.class);
     
     // If you do not want create a SingleUserSessionClient object, 
     // then use:
