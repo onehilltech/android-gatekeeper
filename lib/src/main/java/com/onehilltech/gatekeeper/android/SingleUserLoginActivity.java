@@ -3,6 +3,7 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 
 import com.onehilltech.metadata.ManifestMetadata;
@@ -43,26 +44,27 @@ public class SingleUserLoginActivity extends AppCompatActivity
     {
       ManifestMetadata.get (this).initFromMetadata (this.metadata_);
 
-      Bundle extras = this.getIntent ().getExtras ();
-      String username = extras.getString (MessageConstants.ARG_USERNAME);
-      String password = extras.getString (MessageConstants.ARG_PASSWORD);
+      FragmentTransaction transaction =
+          this.getSupportFragmentManager ()
+              .beginTransaction ();
 
-      SingleUserLoginFragment loginFragment =
-          username != null && password != null ?
-              this.onCreateFragment (username, password) :
-              this.onCreateFragment ();
+      Bundle extras = this.getIntent ().getExtras ();
+
+      if (extras != null)
+      {
+        String username = extras.getString (MessageConstants.ARG_USERNAME);
+        String password = extras.getString (MessageConstants.ARG_PASSWORD);
+
+        transaction.replace (R.id.fragment_container, this.onCreateFragment (username, password));
+      }
+      else
+      {
+        transaction.replace (R.id.fragment_container, this.onCreateFragment ());
+      }
 
       // If we're being restored from a previous state, then we don't need to do
       // anything and should return or else we could end up with overlapping fragments.
-
-      this.getSupportFragmentManager ()
-          .beginTransaction ()
-          .replace (R.id.fragment_container, loginFragment)
-          .commit ();
-
-      // Load the metadata for this activity. There is a good chance that
-      // the this activity has a LOGIN_SUCCESS_REDIRECT_ACTIVITY meta-data
-      // property defined.
+      transaction.commit ();
     }
     catch (Exception e)
     {
