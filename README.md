@@ -24,6 +24,8 @@ dependencies {
 
 ## Getting Started
 
+### Configuring meta-data
+
 Use the `gatekeeper-cli` to add a new client that represents the mobile application to 
 the database. Then, define the following values in `strings.xml`:
 
@@ -36,7 +38,29 @@ the database. Then, define the following values in `strings.xml`:
 <string name="gatekeeper_client_secret">CLIENT SECRET</string>
 ```
 
-Add the 
+### Initialize application
+
+Update your `Application` class:
+
+```javascript
+public class TheApplication extends Application
+{
+  @Override
+  public void onCreate ()
+  {
+    super.onCreate ();
+
+    FlowManager.init (
+        new FlowConfig.Builder (this)
+            .openDatabasesOnInit (true)
+            .build ());
+
+    // Initialize Gatekeeper
+    Gatekeeper.initialize (this);
+  }
+}
+```
+
 ## Built-in Activities
 
 ### Login / New account
