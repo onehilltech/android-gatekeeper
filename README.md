@@ -44,7 +44,8 @@ the database. Then, define the following values in `strings.xml`:
 
 ### Initialize Gatekeeper in the application
 
-Update your `Application` class:
+Update your `Application` class to call `Gatekeeper.init (context)`. You must also
+initialize [DBFlow](https://github.com/Raizlabs/DBFlow).
 
 ```javascript
 public class TheApplication extends Application
