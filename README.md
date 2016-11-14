@@ -42,6 +42,27 @@ the database. Then, define the following values in `strings.xml`:
 </resources>  
 ```
 
+The strings then need to be referenced as meta-data in `AndroidManifest.xml`.
+
+```xml
+<application>
+  <!-- // other things -->
+  
+  <!-- Gatekeeper metadata -->
+  <meta-data
+      android:name="com.onehilltech.gatekeeper.android.baseuri"
+      android:resource="@string/gatekeeper_baseuri"/>
+
+  <meta-data
+      android:name="com.onehilltech.gatekeeper.android.client_id"
+      android:resource="@string/gatekeeper_client_id"/>
+
+  <meta-data
+      android:name="com.onehilltech.gatekeeper.android.client_secret"
+      android:resource="@string/gatekeeper_client_secret"/>
+</application>
+```
+
 ### Initialize Gatekeeper in the application
 
 Update your `Application` class to call `Gatekeeper.init (context)`. You must also
