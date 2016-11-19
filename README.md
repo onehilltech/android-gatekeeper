@@ -87,7 +87,7 @@ public class TheApplication extends Application
 }
 ```
 
-## Login / New Account Activities 
+### Login / New account activity 
 
 Export the default activities for login and creating a new account, if applicable, to 
 `AndroidManifest.xml`.
@@ -97,7 +97,7 @@ Export the default activities for login and creating a new account, if applicabl
 <activity android:name="com.onehilltech.gatekeeper.android.NewAccountActivity" />
 ```
 
-## Protecting Activities
+### Protecting activities
 
 Last, we need to protect the activities that require login. Create a
 `SingleUserSessionClient` in each activity, and make sure the user is 
