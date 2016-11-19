@@ -87,11 +87,9 @@ public class TheApplication extends Application
 }
 ```
 
-## Built-in Activities
+## Login / New Account Activities 
 
-### Login / New account
-
-Add the activities for login and creating a new account, if applicable, to 
+Export the default activities for login and creating a new account, if applicable, to 
 `AndroidManifest.xml`.
 
 ```xml
@@ -99,9 +97,13 @@ Add the activities for login and creating a new account, if applicable, to
 <activity android:name="com.onehilltech.gatekeeper.android.NewAccountActivity" />
 ```
 
-Create a `SingleUserSessionClient` in each activity, and make sure the user is logged 
-in before continuing on the `Activity.onStart()` method. This will ensure that regardless
-of how the user enter the application, they must be logged in.
+## Protecting Activities
+
+Last, we need to protect the activities that require login. Create a
+`SingleUserSessionClient` in each activity, and make sure the user is 
+logged in before continuing on the `Activity.onStart()` method. This 
+will ensure that regardless of how the user enter the application, they 
+must be logged in.
 
 ```java
 public class MyActivity extends AppCompatActivity
