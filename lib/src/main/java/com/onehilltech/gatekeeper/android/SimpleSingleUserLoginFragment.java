@@ -112,15 +112,7 @@ public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
       @Override
       public void onClick (View v)
       {
-        // Start the activity for creating a new account.
-        Activity activity = getActivity ();
-
-        Intent upIntent = activity.getIntent ();
-        Intent intent = NewAccountActivity.newIntent (getContext (), upIntent);
-
-        // Start the activity for creating the account, and finish this activity.
-        activity.startActivity (intent);
-        activity.finish ();
+        onCreateNewAccount ();
       }
     });
 
@@ -139,6 +131,19 @@ public class SimpleSingleUserLoginFragment extends SingleUserLoginFragment
     }
 
     return view;
+  }
+
+  protected void onCreateNewAccount ()
+  {
+    // Start the activity for creating a new account.
+    Activity activity = getActivity ();
+
+    Intent upIntent = activity.getIntent ();
+    Intent intent = NewAccountActivity.newIntent (this.getContext (), upIntent);
+
+    // Start the activity for creating the account, and finish this activity.
+    activity.startActivity (intent);
+    activity.finish ();
   }
 
   /**
