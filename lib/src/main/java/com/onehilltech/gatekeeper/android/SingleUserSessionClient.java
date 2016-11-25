@@ -10,9 +10,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
-import com.onehilltech.gatekeeper.android.http.jsonapi.Resource;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken_Table;
+import com.onehilltech.httpres.retrofit.Resource;
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.language.SQLCondition;
 import com.raizlabs.android.dbflow.sql.language.SQLite;

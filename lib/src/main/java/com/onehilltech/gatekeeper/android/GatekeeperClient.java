@@ -13,10 +13,11 @@ import com.onehilltech.gatekeeper.android.http.JsonClientCredentials;
 import com.onehilltech.gatekeeper.android.http.JsonGrant;
 import com.onehilltech.gatekeeper.android.http.JsonPassword;
 import com.onehilltech.gatekeeper.android.http.JsonRefreshToken;
-import com.onehilltech.gatekeeper.android.http.jsonapi.Resource;
-import com.onehilltech.gatekeeper.android.http.jsonapi.ResourceEndpoint;
-import com.onehilltech.gatekeeper.android.http.jsonapi.ResourceMarshaller;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
+import com.onehilltech.httpres.retrofit.Resource;
+import com.onehilltech.httpres.retrofit.ResourceEndpoint;
+import com.onehilltech.httpres.retrofit.gson.GsonResourceManager;
+import com.onehilltech.httpres.retrofit.gson.GsonResourceMarshaller;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 
@@ -138,12 +139,12 @@ public class GatekeeperClient
 
   private ClientToken clientToken_;
 
-  private ResourceEndpoint <JsonAccount> accounts_;
+  private ResourceEndpoint<JsonAccount> accounts_;
 
   static
   {
-    Resource.registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
-    Resource.registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
   }
 
   /**
@@ -186,15 +187,15 @@ public class GatekeeperClient
                                  .registerSubtype (JsonRefreshToken.class, "refresh_token");
 
     // Initialize the Retrofit.
-    ResourceMarshaller resourceMarshaller = new ResourceMarshaller ();
+    GsonResourceMarshaller marshaller = new GsonResourceMarshaller ();
 
     this.gson_ =
         new GsonBuilder ()
-            .registerTypeAdapter (Resource.class, resourceMarshaller)
+            .registerTypeAdapter (Resource.class, marshaller)
             .registerTypeAdapterFactory (grantTypes)
             .create ();
 
-    resourceMarshaller.setGson (this.gson_);
+    marshaller.setGson (this.gson_);
 
     this.retrofit_ =
         new Retrofit.Builder ()
