@@ -58,12 +58,12 @@ android {
     }
 }
 
-def dbflow_version = "3.1.1"
+def dbflowVersion = "3.1.1"
 
 dependencies {
-    apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
-    compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
-    compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
+    apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflowVersion}"
+    compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflowVersion}"
+    compile "com.github.Raizlabs.DBFlow:dbflow:${dbflowVersion}"
 
     compile 'com.github.onehilltech:android-design:-SNAPSHOT'
     compile 'com.github.onehilltech:android-metadata:1.5.2'
