@@ -67,7 +67,7 @@ dependencies {
 
     compile 'com.github.onehilltech:android-design:-SNAPSHOT'
     compile 'com.github.onehilltech:android-metadata:1.5.2'
-    compile 'com.github.onehilltech.httpres:httpres-retrofit-gson:0.3.2'
+    compile 'com.github.onehilltech.httpres:httpres-retrofit-gson:0.3.3'
 
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
