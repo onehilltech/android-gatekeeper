@@ -11,7 +11,7 @@ public class ClientToken extends AccessToken
   /// Client id.
   @Column(name="client_id")
   @PrimaryKey
-  String clientId_;
+  public String clientId_;
 
   public static ClientToken fromToken (String clientId, JsonBearerToken token)
   {
@@ -32,11 +32,6 @@ public class ClientToken extends AccessToken
   public String getClientId ()
   {
     return this.clientId_;
-  }
-
-  public String getAccessToken ()
-  {
-    return this.accessToken;
   }
 
   @Override

@@ -7,6 +7,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import com.onehilltech.backbone.http.Resource;
+import com.onehilltech.backbone.http.retrofit.ResourceEndpoint;
+import com.onehilltech.backbone.http.retrofit.gson.GsonResourceManager;
+import com.onehilltech.backbone.http.retrofit.gson.GsonResourceMarshaller;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.http.JsonClientCredentials;
@@ -14,10 +18,6 @@ import com.onehilltech.gatekeeper.android.http.JsonGrant;
 import com.onehilltech.gatekeeper.android.http.JsonPassword;
 import com.onehilltech.gatekeeper.android.http.JsonRefreshToken;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
-import com.onehilltech.httpres.retrofit.Resource;
-import com.onehilltech.httpres.retrofit.ResourceEndpoint;
-import com.onehilltech.httpres.retrofit.gson.GsonResourceManager;
-import com.onehilltech.httpres.retrofit.gson.GsonResourceMarshaller;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 
@@ -225,7 +225,7 @@ public class GatekeeperClient
             .client (authHttpClient)
             .build ();
 
-    this.accounts_ = ResourceEndpoint.get (authRetrofit, "account", "accounts");
+    this.accounts_ = ResourceEndpoint.create (authRetrofit, "account", "accounts");
   }
 
   /**

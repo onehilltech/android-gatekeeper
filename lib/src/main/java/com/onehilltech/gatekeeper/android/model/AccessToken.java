@@ -9,11 +9,6 @@ public class AccessToken extends BaseModel
   @Column(name="access_token")
   public String accessToken;
 
-  public String getAccessToken ()
-  {
-    return this.accessToken;
-  }
-
   @Override
   public boolean equals (Object obj)
   {

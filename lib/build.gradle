@@ -23,11 +23,13 @@ android {
 
         testApplicationId project.property('android.testApplicationId')
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        multiDexEnabled  true
     }
 
     buildTypes {
         debug {
-            // testCoverageEnabled true
+            testCoverageEnabled true
         }
 
         release {
@@ -58,21 +60,14 @@ android {
     }
 }
 
-def dbflowVersion = "3.1.1"
-
 dependencies {
-    apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflowVersion}"
-    compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflowVersion}"
-    compile "com.github.Raizlabs.DBFlow:dbflow:${dbflowVersion}"
+    apt "com.github.Raizlabs.DBFlow:dbflow-processor:3.1.1"
 
     compile 'com.github.onehilltech:android-design:-SNAPSHOT'
     compile 'com.github.onehilltech:android-metadata:1.5.2'
-    compile 'com.github.onehilltech.httpres:httpres-retrofit-gson:0.3.3'
+    compile 'com.github.onehilltech.backbone:backbone-http-retrofit-gson:-SNAPSHOT'
 
-    compile 'com.squareup.retrofit2:retrofit:2.1.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'org.danilopianini:gson-extras:0.1.0'
-
     compile 'org.apache.commons:commons-lang3:3.0'
 
     compile 'com.android.support:appcompat-v7:25.0.1'
@@ -83,7 +78,9 @@ dependencies {
 
     androidTestCompile 'junit:junit:4.11'
     androidTestCompile 'com.squareup.okhttp3:mockwebserver:3.4.1'
-    androidTestCompile('com.android.support.test:testing-support-lib:0.1') {
+    androidTestCompile ('com.android.support.test:testing-support-lib:0.1') {
         exclude group: 'junit'
     }
+
+    androidTestCompile 'com.android.support:multidex:1.0.1'
 }

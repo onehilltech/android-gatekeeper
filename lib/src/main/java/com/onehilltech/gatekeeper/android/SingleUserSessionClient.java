@@ -9,10 +9,11 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.onehilltech.backbone.http.Resource;
+import com.onehilltech.backbone.http.retrofit.CallbackWrapper;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.model.UserToken;
-import com.onehilltech.gatekeeper.android.model.UserToken_Table;
-import com.onehilltech.httpres.retrofit.Resource;
+import com.onehilltech.gatekeeper.android.model.UserToken$Table;
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.language.SQLCondition;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
@@ -109,7 +110,7 @@ public class SingleUserSessionClient extends UserSessionClient
       okhttp3.Request original = chain.request ();
       okhttp3.Request request =
           original.newBuilder ()
-                  .header ("User-Agent", "FundAll Android")
+                  .header ("User-Agent", "Gatekeeper Android")
                   .header ("Authorization", authorization)
                   .method (original.method (), original.body ())
                   .build ();
@@ -290,7 +291,7 @@ public class SingleUserSessionClient extends UserSessionClient
     if (this.userToken_ == null)
       throw new IllegalStateException ("User is already logged out");
 
-    this.service_.logout ().enqueue (new CallbackProxy<Boolean> (callback)
+    this.service_.logout ().enqueue (new CallbackWrapper<Boolean> (callback)
     {
       @Override
       public void onResponse (Call<Boolean> call, retrofit2.Response<Boolean> response)
@@ -335,7 +336,7 @@ public class SingleUserSessionClient extends UserSessionClient
   public void login (final String username, String password, Callback<JsonBearerToken> callback)
   {
     this.gatekeeper_.getUserToken (username, password)
-                    .enqueue (new CallbackProxy<JsonBearerToken> (callback)
+                    .enqueue (new CallbackWrapper<JsonBearerToken> (callback)
                     {
                       @Override
                       public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
@@ -395,8 +396,7 @@ public class SingleUserSessionClient extends UserSessionClient
       this.userToken_ =
           SQLite.select ()
                 .from (UserToken.class)
-                .where (
-                    UserToken_Table.username.eq ((String)primaryKeyValues[0].value ())
+                .where (UserToken$Table.username.eq ((String)primaryKeyValues[0].value ())
                 ).querySingle ();
 
       if (action == BaseModel.Action.INSERT)

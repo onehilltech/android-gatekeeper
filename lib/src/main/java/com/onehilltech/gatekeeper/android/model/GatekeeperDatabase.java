@@ -5,7 +5,7 @@ import com.raizlabs.android.dbflow.annotation.Database;
 @Database (
     name=GatekeeperDatabase.DATABASE_NAME,
     version=GatekeeperDatabase.VERSION,
-    generatedClassSeparator="_")
+    generatedClassSeparator="$")
 public class GatekeeperDatabase
 {
   public static final int VERSION = 1;

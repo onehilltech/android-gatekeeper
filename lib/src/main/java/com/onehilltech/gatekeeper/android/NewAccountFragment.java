@@ -11,14 +11,15 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.utils.InputError;
-import com.onehilltech.httpres.retrofit.Resource;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
 
 public class NewAccountFragment extends Fragment
 {

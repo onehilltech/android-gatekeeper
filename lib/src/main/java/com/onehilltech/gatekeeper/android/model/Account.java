@@ -17,7 +17,7 @@ public class Account extends BaseModel
     // required constructor
   }
 
-  private Account (String id)
+  public Account (String id)
   {
     this._id = id;
   }

@@ -4,9 +4,9 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
-import com.onehilltech.gatekeeper.android.http.jsonapi.Resource;
 import com.raizlabs.android.dbflow.config.FlowManager;
 
 import org.junit.After;

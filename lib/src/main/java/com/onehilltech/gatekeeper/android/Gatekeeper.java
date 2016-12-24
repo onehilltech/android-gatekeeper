@@ -2,6 +2,7 @@ package com.onehilltech.gatekeeper.android;
 
 import android.content.Context;
 
+import com.onehilltech.backbone.http.BackboneHttp;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.config.*;
 
@@ -18,6 +19,7 @@ public class Gatekeeper
    */
   public static void initialize (Context context)
   {
+    BackboneHttp.initialize ();
     FlowManager.initModule (GatekeeperGeneratedDatabaseHolder.class);
   }
 
