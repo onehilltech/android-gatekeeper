@@ -31,7 +31,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SingleUserSessionClient extends UserSessionClient
-  implements FlowContentObserver.OnModelStateChangedListener
 {
   public static final class Builder
   {
@@ -74,6 +73,18 @@ public class SingleUserSessionClient extends UserSessionClient
   private final FlowContentObserver userTokenObserver_ = new FlowContentObserver ();
 
   private final Context context_;
+
+  private final FlowContentObserver.OnModelStateChangedListener userTokenStateChangeListener_ =
+      new FlowContentObserver.OnModelStateChangedListener ()
+      {
+        @Override
+        public void onModelStateChanged (@Nullable Class<? extends Model> table,
+                                         BaseModel.Action action,
+                                         @NonNull SQLCondition[] primaryKeyValues)
+        {
+          onUserTokenStateChanged (table, action, primaryKeyValues);
+        }
+      };
 
   private static final int MSG_ON_LOGIN = 0;
   private static final int MSG_ON_LOGOUT = 1;
@@ -148,10 +159,17 @@ public class SingleUserSessionClient extends UserSessionClient
     // Load the one and only user token from the database. We also want to
     // observe the user token table for changes. These changes could be logging
     // out or refreshing the user token.
-    this.userToken_ = SQLite.select ().from (UserToken.class).querySingle ();
+    String username = SingleUserSessionPreferences.open (context).getUsername ();
+
+    if (username != null)
+      this.userToken_ =
+          SQLite.select ()
+                .from (UserToken.class)
+                .where (UserToken$Table.username.eq (username))
+                .querySingle ();
 
     this.userTokenObserver_.registerForContentChanges (context, UserToken.class);
-    this.userTokenObserver_.addModelChangeListener (this);
+    this.userTokenObserver_.addModelChangeListener (this.userTokenStateChangeListener_);
   }
 
   /**
@@ -375,12 +393,16 @@ public class SingleUserSessionClient extends UserSessionClient
     // we have created a token, and the user is currently logged in.
     this.userToken_ = UserToken.fromToken (username, jsonToken);
     this.userToken_.insert ();
+
+    // Mark this username as the current user.
+    SingleUserSessionPreferences.open (this.context_)
+                                .edit ().setUsername (username)
+                                .commit ();
   }
 
-  @Override
-  public void onModelStateChanged (@Nullable Class<? extends Model> table,
-                                   BaseModel.Action action,
-                                   @NonNull SQLCondition[] primaryKeyValues)
+  private void onUserTokenStateChanged (@Nullable Class<? extends Model> table,
+                                        BaseModel.Action action,
+                                        @NonNull SQLCondition[] primaryKeyValues)
   {
     if (action == BaseModel.Action.DELETE)
     {
@@ -392,12 +414,12 @@ public class SingleUserSessionClient extends UserSessionClient
     }
     else
     {
-      // Load the most recent token from the database.
+      // Load the token for the user that was logged in.
       this.userToken_ =
           SQLite.select ()
                 .from (UserToken.class)
-                .where (UserToken$Table.username.eq ((String)primaryKeyValues[0].value ())
-                ).querySingle ();
+                .where (UserToken$Table.username.eq ((String) primaryKeyValues[0].value ()))
+                .querySingle ();
 
       if (action == BaseModel.Action.INSERT)
       {

@@ -59,16 +59,18 @@ public class AutoRefreshTokenInterceptor implements Interceptor
       return origResponse;
 
     GatekeeperClient gatekeeper = this.session_.getGatekeeperClient ();
+    Call<JsonBearerToken> refreshToken = gatekeeper.refreshToken (userToken.refreshToken);
+    retrofit2.Response<JsonBearerToken> refreshTokenResponse = refreshToken.execute ();
 
-    Call<JsonBearerToken> refreshCall = gatekeeper.refreshToken (userToken.refreshToken);
-    retrofit2.Response<JsonBearerToken> refreshResponse = refreshCall.execute ();
-
-    if (!refreshResponse.isSuccessful ())
-      return origResponse;
+    // If we could not refresh the token, return this response to the client.
+    // This gives the client a more details explanation as to why the request
+    // did not go through.
+    if (!refreshTokenResponse.isSuccessful ())
+      return refreshTokenResponse.raw ();
 
     // Save the new user token, and retry the original call again.
     // Update the user token in the client.
-    JsonBearerToken token = refreshResponse.body ();
+    JsonBearerToken token = refreshTokenResponse.body ();
     this.session_.refreshToken (token);
 
     // Retry the call again using this callback object.
