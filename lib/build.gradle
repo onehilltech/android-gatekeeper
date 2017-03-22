@@ -70,9 +70,9 @@ dependencies {
     compile 'org.danilopianini:gson-extras:0.1.0'
     compile 'org.apache.commons:commons-lang3:3.0'
 
-    compile 'com.android.support:appcompat-v7:25.0.1'
-    compile 'com.android.support:support-v4:25.0.1'
-    compile 'com.android.support:design:25.0.1'
+    compile 'com.android.support:appcompat-v7:25.3.0'
+    compile 'com.android.support:support-v4:25.3.0'
+    compile 'com.android.support:design:25.3.0'
 
     compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.21'
 
