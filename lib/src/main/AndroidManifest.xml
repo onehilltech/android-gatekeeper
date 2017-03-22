@@ -3,12 +3,6 @@
     package="com.onehilltech.gatekeeper.android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <application
-        android:allowBackup="true"
-        android:label="@string/gatekeeper_name"
-        android:theme="@style/MaterialDesign">
-
-    </application>
+    <application />
 
 </manifest>
