@@ -3,7 +3,6 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,6 @@ import android.widget.EditText;
 
 import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
-import com.onehilltech.gatekeeper.android.utils.InputError;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
@@ -31,7 +29,7 @@ public class NewAccountFragment extends Fragment
 
   private Listener listener_;
 
-  private SingleUserSessionClient sessionClient_;
+  private GatekeeperSessionClient sessionClient_;
 
   // UI references.
   private EditText usernameView_;
@@ -60,7 +58,7 @@ public class NewAccountFragment extends Fragment
             .build ();
 
     this.sessionClient_ =
-        new SingleUserSessionClient.Builder (context)
+        new GatekeeperSessionClient.Builder (context)
             .setGatekeeperClient (gatekeeper)
             .build ();
   }
@@ -122,9 +120,9 @@ public class NewAccountFragment extends Fragment
   }
 
   /**
-   * Attempts to sign in or register the account specified by the login form. If
+   * Attempts to sign in or register the account specified by the signIn form. If
    * there are form errors (invalid email, missing fields, etc.), the errors are
-   * presented and no actual login attempt is made.
+   * presented and no actual signIn attempt is made.
    */
   private void onCreateAccount ()
   {
@@ -168,31 +166,13 @@ public class NewAccountFragment extends Fragment
     this.passwordView_.setError (null);
     this.confirmPasswordView_.setError (null);
 
-    // Store values at the time of the login attempt.
+    // Store values at the time of the signIn attempt.
     String username = this.usernameView_.getText ().toString ();
     String password = this.passwordView_.getText ().toString ();
     String confirmPassword = this.confirmPasswordView_.getText ().toString ();
     String email = this.emailView_.getText ().toString ();
 
-    InputError inputError = new InputError ();
 
-    // Make sure the username is not empty, and is valid.
-    if (TextUtils.isEmpty (username))
-      inputError.addError (this.usernameView_, this.getString (R.string.error_field_required));
-
-    // Check for a valid password, if the user entered one.
-    if (TextUtils.isEmpty (password))
-      inputError.addError (this.passwordView_, this.getString (R.string.error_invalid_password));
-    else if (!confirmPassword.equals (password))
-      inputError.addError (this.confirmPasswordView_, this.getString (R.string.error_password_not_match));
-
-    // Check for a valid email address.
-    if (TextUtils.isEmpty (email))
-      inputError.addError (this.emailView_, this.getString (R.string.error_field_required));
-
-    if (inputError.hasError ())
-      inputError.requestFocus ();
-
-    return !inputError.hasError ();
+    return true;
   }
 }

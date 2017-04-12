@@ -13,10 +13,10 @@ public class LoginMetadataTest
   @Test
   public void testDefault () throws Exception
   {
-    LoginMetadata loginMetadata = new LoginMetadata ();
-    ManifestMetadata.get (InstrumentationRegistry.getTargetContext ()).initFromMetadata (loginMetadata);
+    GatekeeperMetadata gatekeeperMetadata = new GatekeeperMetadata ();
+    ManifestMetadata.get (InstrumentationRegistry.getTargetContext ()).initFromMetadata (gatekeeperMetadata);
 
-    Assert.assertEquals ("new_account", loginMetadata.newAccountActivity);
-    Assert.assertEquals ("redirect", loginMetadata.loginSuccessRedirectActivity);
+    Assert.assertEquals ("new_account", gatekeeperMetadata.newAccountActivity);
+    Assert.assertEquals ("redirect", gatekeeperMetadata.loginSuccessRedirectActivity);
   }
 }

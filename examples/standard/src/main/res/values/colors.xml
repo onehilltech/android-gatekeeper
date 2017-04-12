@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorPrimary">#03A9F4</color>
+    <color name="colorPrimaryDark">#0288D1</color>
+    <color name="colorPrimaryLight">#81D4FA</color>
+
+    <color name="colorCardBackground">#00c4c4</color>
+
+    <color name="colorAccent">#00BFA5</color>
+    <color name="textColorPrimary">#212121</color>
+    <color name="textColorSecondary">#727272</color>
+    <color name="textColorLight">#ffffff</color>
+    <color name="colorDivider">#B6B6B6</color>
+
+    <color name="windowBackground">#d5d5d5</color>
+    <color name="cardWindowBackground">#EEEEEE</color>
+    <color name="navigationBarColor">#000000</color>
+    <color name="transparent">#CC000000</color>
+</resources>

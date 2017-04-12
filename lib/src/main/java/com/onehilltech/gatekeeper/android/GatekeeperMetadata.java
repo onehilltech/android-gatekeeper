@@ -6,7 +6,7 @@ import android.content.Intent;
 
 import com.onehilltech.metadata.MetadataProperty;
 
-final class LoginMetadata
+public final class GatekeeperMetadata
 {
   private static final String METADATA_LOGIN_SUCCESS_REDIRECT_ACTIVITY =
       "com.onehilltech.gatekeeper.android.LOGIN_SUCCESS_REDIRECT_ACTIVITY";
@@ -20,7 +20,7 @@ final class LoginMetadata
   @MetadataProperty(name = METADATA_NEW_ACCOUNT_ACTIVITY)
   public String newAccountActivity;
 
-  Intent getLoginSuccessRedirectIntent (Context context)
+  public Intent getLoginSuccessRedirectIntent (Context context)
   {
     String className = this.getClassName (context, this.loginSuccessRedirectActivity);
     Intent intent = new Intent ();
@@ -29,12 +29,7 @@ final class LoginMetadata
     return intent;
   }
 
-  boolean hasNewAccountActivity ()
-  {
-    return this.newAccountActivity != null;
-  }
-
-  Intent getNewAccountActivity (Context context)
+  public Intent getNewAccountActivity (Context context)
   {
     String className = this.getClassName (context, this.newAccountActivity);
     Intent intent = new Intent ();
@@ -43,7 +38,7 @@ final class LoginMetadata
     return intent;
   }
 
-  String getClassName (Context context, String name)
+  private String getClassName (Context context, String name)
   {
     return name != null && name.startsWith (".") ? context.getPackageName () + name : name;
   }

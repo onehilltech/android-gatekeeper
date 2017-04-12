@@ -1,5 +1,5 @@
 <resources>
-    <string name="gatekeeper_baseuri">http://10.0.2.2:8080/gatekeeper/</string>
-    <string name="gatekeeper_client_id">57ce45bb540fd18d1f027aa7</string>
-    <string name="gatekeeper_client_secret">S2rh85v6lJYRGukIb7LuhCu0p3lzd60fMOwHvhud4IfsK8pwY70rKNUb-AEsGlGz_ogJrA1p4sC-RBFfNtLfGvXmoxm2_ixqz7nNUNJL7cD70myi9mFjwzzXiLzfvR8aFONLCWePvmCwt0Xi-D61uzP3hKiNceaaMLtea0jUx30</string>
+    <string name="gatekeeper_baseuri">http://10.0.2.2:8080/</string>
+    <string name="gatekeeper_client_id">58ed90e1105aee00001e429f</string>
+    <string name="gatekeeper_client_secret">gatekeeper-android</string>
 </resources>

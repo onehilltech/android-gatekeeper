@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SingleUserSessionTest
 {
   protected GatekeeperClient.Configuration clientConfig_;
-  protected SingleUserSessionClient sessionClient_;
+  protected GatekeeperSessionClient sessionClient_;
   protected MockWebServer server_;
   protected HttpUrl serverUrl_;
   protected OkHttpClient httpClient_;

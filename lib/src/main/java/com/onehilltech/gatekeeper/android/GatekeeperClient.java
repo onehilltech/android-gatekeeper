@@ -5,33 +5,23 @@ import android.content.pm.PackageManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import com.onehilltech.backbone.http.Resource;
-import com.onehilltech.backbone.http.retrofit.ResourceEndpoint;
-import com.onehilltech.backbone.http.retrofit.gson.GsonResourceManager;
 import com.onehilltech.backbone.http.retrofit.gson.GsonResourceMarshaller;
-import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.http.JsonClientCredentials;
 import com.onehilltech.gatekeeper.android.http.JsonGrant;
 import com.onehilltech.gatekeeper.android.http.JsonPassword;
 import com.onehilltech.gatekeeper.android.http.JsonRefreshToken;
-import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Response;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -61,6 +51,16 @@ public class GatekeeperClient
     @MetadataProperty(name=BASE_URI, fromResource=true)
     public String baseUri;
 
+    /**
+     * Load the configuration from metadata.
+     *
+     * @param context
+     * @return
+     * @throws PackageManager.NameNotFoundException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws ClassNotFoundException
+     */
     public static Configuration loadFromMetadata (Context context)
         throws PackageManager.NameNotFoundException, InvocationTargetException, IllegalAccessException, ClassNotFoundException
     {
@@ -137,37 +137,6 @@ public class GatekeeperClient
   /// Configuration for the client.
   private Configuration config_;
 
-  private ClientToken clientToken_;
-
-  private ResourceEndpoint<JsonAccount> accounts_;
-
-  static
-  {
-    GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
-    GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
-  }
-
-  /**
-   * Interceptor that adds the Authorization header to a request.
-   */
-  private final Interceptor authHeaderInterceptor_ = new Interceptor ()
-  {
-    @Override
-    public Response intercept (Chain chain) throws IOException
-    {
-      String authorization = "Bearer " + clientToken_.accessToken;
-
-      okhttp3.Request original = chain.request ();
-      okhttp3.Request request =
-          original.newBuilder ()
-                  .header ("User-Agent", "FundAll Android")
-                  .header ("Authorization", authorization)
-                  .method (original.method (), original.body ())
-                  .build ();
-
-      return chain.proceed (request);
-    }
-  };
   /**
    * Initializing constructor.
    *
@@ -206,26 +175,19 @@ public class GatekeeperClient
 
     // Create the remoting endpoints.
     this.service_ = this.retrofit_.create (Service.class);
-
-    // Initialize the authenticated endpoints.
-    this.initAuthEndpoints ();
   }
 
-  private void initAuthEndpoints ()
+  /**
+   * Create a new Retrofit object for this GatekeeperClient.
+   *
+   * @return      Retrofit object
+   */
+  public Retrofit newRetrofit ()
   {
-    OkHttpClient authHttpClient =
-        this.httpClient_.newBuilder ()
-                  .addInterceptor (this.authHeaderInterceptor_)
-                  .build ();
-
-    Retrofit authRetrofit =
-        new Retrofit.Builder ()
-            .baseUrl (this.getBaseUrlWithVersion ())
-            .addConverterFactory (GsonConverterFactory.create (this.gson_))
-            .client (authHttpClient)
-            .build ();
-
-    this.accounts_ = ResourceEndpoint.create (authRetrofit, "account", "accounts");
+    return new Retrofit.Builder ().baseUrl (this.getBaseUrlWithVersion ())
+                                  .addConverterFactory (GsonConverterFactory.create (this.gson_))
+                                  .client (this.httpClient_)
+                                  .build ();
   }
 
   /**
@@ -298,8 +260,6 @@ public class GatekeeperClient
 
   /**
    * Get an access token for this client.
-   *
-   * @return
    */
   public Call <JsonBearerToken> getClientToken ()
   {
@@ -314,7 +274,6 @@ public class GatekeeperClient
    * Refresh an existing token.
    *
    * @param refreshToken        Refresh token
-   * @return
    */
   public Call <JsonBearerToken> refreshToken (String refreshToken)
   {
@@ -326,50 +285,9 @@ public class GatekeeperClient
   }
 
   /**
-   * Create a new account.
-   *
-   * @param username
-   * @param password
-   * @param email
-   * @param callback
-   */
-  public void createAccount (final String username,
-                             final String password,
-                             final String email,
-                             final Callback<Resource> callback)
-  {
-    this.getClientToken ().enqueue (new Callback<JsonBearerToken> ()
-    {
-      @Override
-      public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
-      {
-        // Save the client token. We are either going to replace the current one, or
-        // insert a new one into the database.
-        clientToken_ = ClientToken.fromToken (config_.clientId, response.body ());
-        clientToken_.save ();
-
-        // Make a call to get the
-        JsonAccount account = new JsonAccount ();
-        account.username = username;
-        account.password = password;
-        account.email = email;
-
-        accounts_.create (account).enqueue (callback);
-      }
-
-      @Override
-      public void onFailure (Call<JsonBearerToken> call, Throwable t)
-      {
-        callback.onFailure (null, t) ;
-      }
-    });
-  }
-
-  /**
    * Helper method for requesting an access token.
    *
    * @param grantType     JsonGrant object
-   * @return
    */
   private Call <JsonBearerToken> getToken (JsonGrant grantType)
   {

@@ -6,18 +6,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
-import com.onehilltech.gatekeeper.android.SingleUserLoginActivity;
-import com.onehilltech.gatekeeper.android.SingleUserSessionClient;
+import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
+import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity
-  implements SingleUserSessionClient.Listener
+  implements GatekeeperSessionClient.Listener
 {
   private Button btnSignOut_;
-  private SingleUserSessionClient sessionClient_;
+  private GatekeeperSessionClient session_;
 
   private static final String TAG = "MainActivity";
 
@@ -28,8 +28,8 @@ public class MainActivity extends AppCompatActivity
 
     this.setContentView (R.layout.activity_main);
 
-    this.sessionClient_ = new SingleUserSessionClient.Builder (this).build ();
-    this.sessionClient_.setListener (this);
+    this.session_ = new GatekeeperSessionClient.Builder (this).build ();
+    this.session_.setListener (this);
 
     this.onViewCreated ();
   }
@@ -40,13 +40,13 @@ public class MainActivity extends AppCompatActivity
     super.onStart ();
 
     // Make sure the user it logged in.
-    this.sessionClient_.checkLoggedIn (this, SingleUserLoginActivity.class);
+    this.session_.ensureSignedIn (this, GatekeeperSignInActivity.class);
   }
 
   private void onViewCreated ()
   {
     this.btnSignOut_ = (Button)this.findViewById (R.id.btn_signout);
-    this.btnSignOut_.setEnabled (this.sessionClient_.isLoggedIn ());
+    this.btnSignOut_.setEnabled (this.session_.isSignedIn ());
     this.btnSignOut_.setOnClickListener (new View.OnClickListener ()
     {
       @Override
@@ -59,13 +59,13 @@ public class MainActivity extends AppCompatActivity
 
   private void onLogoutClicked ()
   {
-    this.sessionClient_.logout (new Callback<Boolean> ()
+    this.session_.signOut (new Callback<Boolean> ()
     {
       @Override
       public void onResponse (Call<Boolean> call, Response<Boolean> response)
       {
         if (response.isSuccessful () && response.body ())
-          finish ();
+          session_.ensureSignedIn (MainActivity.this, GatekeeperSignInActivity.class);
       }
 
       @Override
@@ -77,13 +77,13 @@ public class MainActivity extends AppCompatActivity
   }
 
   @Override
-  public void onLogin (SingleUserSessionClient client)
+  public void onSignedIn (GatekeeperSessionClient client)
   {
     this.btnSignOut_.setEnabled (true);
   }
 
   @Override
-  public void onLogout (SingleUserSessionClient client)
+  public void onSignedOut (GatekeeperSessionClient client)
   {
     this.btnSignOut_.setEnabled (false);
   }

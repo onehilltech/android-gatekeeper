@@ -3,9 +3,10 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-class SingleUserSessionPreferences
+class GatekeeperSession
 {
-  private static final String PREFS_FILE = "gatekeeper_single_user_session.prefs";
+  private static final String PREFS_FILE = "gatekeeper_session.info";
+
   private static final String PREF_USERNAME = "username";
 
   private final SharedPreferences prefs_;
@@ -47,9 +48,15 @@ class SingleUserSessionPreferences
     }
   }
 
-  public static SingleUserSessionPreferences open (Context context)
+  /**
+   * Get the current GatekeeperSession details.
+   *
+   * @param context
+   * @return
+   */
+  public static GatekeeperSession get (Context context)
   {
-    return new SingleUserSessionPreferences (context.getSharedPreferences (PREFS_FILE, Context.MODE_PRIVATE));
+    return new GatekeeperSession (context.getSharedPreferences (PREFS_FILE, Context.MODE_PRIVATE));
   }
 
   public String getUsername ()
@@ -57,7 +64,7 @@ class SingleUserSessionPreferences
     return this.prefs_.getString (PREF_USERNAME, null);
   }
 
-  private SingleUserSessionPreferences (SharedPreferences prefs)
+  private GatekeeperSession (SharedPreferences prefs)
   {
     this.prefs_ = prefs;
   }

@@ -4,8 +4,6 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.onehilltech.backbone.http.Resource;
-import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.raizlabs.android.dbflow.config.FlowManager;
 
@@ -19,8 +17,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 
 
@@ -159,66 +155,5 @@ public class GatekeeperClientTest extends TestWithDatabase
                         .execute ();
 
     Assert.assertEquals (newToken, response.body ());
-  }
-
-  @Test
-  public void testCreateAccount ()
-      throws Exception
-  {
-    final JsonAccount mockAccount = new JsonAccount ();
-    mockAccount._id = "my_id";
-    mockAccount.username = STRING_USERNAME;
-    mockAccount.password = STRING_PASSWORD;
-    mockAccount.email = STRING_EMAIL;
-
-    Resource mockResource = new Resource ("account", mockAccount);
-
-    this.server_.enqueue (
-        new MockResponse ()
-            .setResponseCode (200)
-            .setHeader ("Content-Type", "application/json")
-            .setBody (this.gatekeeper_.getGson ().toJson (mockResource)));
-
-    synchronized (this.syncObject_)
-    {
-      this.gatekeeper_.createAccount (STRING_USERNAME, STRING_PASSWORD, STRING_EMAIL, new Callback<Resource> ()
-      {
-        @Override
-        public void onResponse (Call<Resource> call, Response<Resource> response)
-        {
-          Resource rc = response.body ();
-          JsonAccount account = rc.get ("account");
-
-          Assert.assertEquals (mockAccount._id, account._id);
-          Assert.assertEquals (mockAccount.username, account.username);
-          Assert.assertEquals (mockAccount.password, account.password);
-          Assert.assertEquals (mockAccount.email, account.email);
-
-          synchronized (syncObject_)
-          {
-            // Mark the test as completed.
-            completed_ = true;
-
-            // Notify the waiting thread.
-            syncObject_.notify ();
-          }
-        }
-
-        @Override
-        public void onFailure (Call<Resource> call, Throwable t)
-        {
-          Assert.fail (t.getLocalizedMessage ());
-
-          synchronized (syncObject_)
-          {
-            syncObject_.notify ();
-          }
-        }
-      });
-
-      this.syncObject_.wait (5000);
-    }
-
-    Assert.assertTrue (this.completed_);
   }
 }

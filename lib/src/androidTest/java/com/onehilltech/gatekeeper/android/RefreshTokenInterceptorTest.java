@@ -27,7 +27,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.http.GET;
 
-public class AutoRefreshTokenInterceptorTest
+public class RefreshTokenInterceptorTest
 {
   private MockWebServer mockWebServer_;
   private FakeService fakeService_;
@@ -35,6 +35,8 @@ public class AutoRefreshTokenInterceptorTest
   private static final String TEST_URL_PATH = "/helloworld";
 
   private JsonBearerToken fakeToken_;
+
+  private GatekeeperSessionClient session_;
 
   @BeforeClass
   public static void init ()
@@ -57,11 +59,11 @@ public class AutoRefreshTokenInterceptorTest
     this.mockWebServer_ = new MockWebServer ();
     this.mockWebServer_.start ();
 
-    AutoRefreshTokenInterceptor autoRefresh = new AutoRefreshTokenInterceptor ();
+    RefreshTokenInterceptor refreshToken = new RefreshTokenInterceptor ();
 
     OkHttpClient client =
         new OkHttpClient.Builder ()
-            .addInterceptor (autoRefresh)
+            .addInterceptor (refreshToken)
             .build ();
 
     HttpUrl baseUrl = this.mockWebServer_.url ("/");
@@ -91,12 +93,12 @@ public class AutoRefreshTokenInterceptorTest
             .setClient (client)
             .build ();
 
-    SingleUserSessionClient session =
-        new SingleUserSessionClient.Builder (targetContext)
+    this.session_ =
+        new GatekeeperSessionClient.Builder (targetContext)
             .setGatekeeperClient (gatekeeper)
             .build ();
 
-    autoRefresh.setSession (session);
+    refreshToken.setSession (this.session_);
   }
 
   @After
@@ -107,10 +109,13 @@ public class AutoRefreshTokenInterceptorTest
   }
 
   @Test
-  public void testIntercept () throws Exception
+  public void testIntercept ()
+      throws Exception
   {
+    JsonBearerToken initToken = JsonBearerToken.generateRandomToken ();
     JsonBearerToken newToken = JsonBearerToken.generateRandomToken ();
 
+    this.mockWebServer_.enqueue (new MockResponse ().setBody (initToken.toString ()));
     this.mockWebServer_.enqueue (new MockResponse ().setResponseCode (401));
     this.mockWebServer_.enqueue (new MockResponse ().setBody (newToken.toString ()));
     this.mockWebServer_.enqueue (new MockResponse ().setBody ("success"));
