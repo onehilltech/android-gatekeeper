@@ -44,7 +44,7 @@ public class RefreshTokenInterceptorTest
     Context targetContext = InstrumentationRegistry.getTargetContext ();
 
     FlowManager.init (new FlowConfig.Builder (targetContext).build ());
-    Gatekeeper.initialize (targetContext);
+    Gatekeeper.initialize ();
 
     // Do a hard reset of the database.
     FlowManager.getDatabase (GatekeeperDatabase.class).reset (targetContext);

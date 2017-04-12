@@ -374,6 +374,7 @@ public class GatekeeperSessionClient
   {
     GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
     GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("token", new TypeToken<JsonBearerToken> () {}.getType ());
   }
 
 
@@ -478,7 +479,7 @@ public class GatekeeperSessionClient
         account.password = password;
         account.email = email;
 
-        getAccountsEndpoint ().create (account).enqueue (callback);
+        getCreateAccountEndpoint ().create (account).enqueue (callback);
       }
 
       @Override
@@ -523,7 +524,8 @@ public class GatekeeperSessionClient
         HashMap <String, Object> options = new HashMap<> ();
         options.put ("login", autoSignIn);
 
-        getAccountsEndpoint ().create (account, options).enqueue (new CallbackWrapper<Resource> (callback) {
+        ResourceEndpoint <JsonAccount> accounts = getCreateAccountEndpoint ();
+        accounts.create (account, options).enqueue (new CallbackWrapper<Resource> (callback) {
           @Override
           public void onResponse (Call<Resource> call, retrofit2.Response<Resource> response)
           {
@@ -546,6 +548,24 @@ public class GatekeeperSessionClient
         callback.onFailure (null, t) ;
       }
     });
+  }
+
+  private ResourceEndpoint <JsonAccount> getCreateAccountEndpoint ()
+  {
+    OkHttpClient clientClient =
+        this.gatekeeperClient_.getHttpClient ()
+                              .newBuilder ()
+                              .addInterceptor (clientAuthorizationHeader_)
+                              .build ();
+
+    Retrofit clientEndpoint =
+        new Retrofit.Builder ()
+            .baseUrl (gatekeeperClient_.getBaseUrlWithVersion ())
+            .addConverterFactory (GsonConverterFactory.create (gatekeeperClient_.getGson ()))
+            .client (clientClient)
+            .build ();
+
+    return ResourceEndpoint.create (clientEndpoint, "account", "accounts");
   }
 
   private ResourceEndpoint <JsonAccount> getAccountsEndpoint ()
@@ -606,7 +626,7 @@ public class GatekeeperSessionClient
       // user token from the database that matches the username.
       String username = (String) primaryKeyValues[0].value ();
 
-      if (!this.userToken_.username.equals (username))
+      if (this.userToken_ == null || !this.userToken_.username.equals (username))
       {
         // Load the token for the user that was logged in.
         this.userToken_ =

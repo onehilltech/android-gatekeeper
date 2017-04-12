@@ -21,9 +21,14 @@
         <activity
             android:name="com.onehilltech.gatekeeper.android.GatekeeperSignInActivity"
             android:theme="@style/AppTheme.NoActionBar"
-
+            android:launchMode="singleTop"
             />
-        <activity android:name="com.onehilltech.gatekeeper.android.NewAccountActivity" />
+
+        <activity
+            android:name="com.onehilltech.gatekeeper.android.GatekeeperCreateAccountActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTop"
+            />
 
         <!-- Gatekeeper metadata -->
         <meta-data

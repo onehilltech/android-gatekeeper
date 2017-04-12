@@ -84,6 +84,12 @@ public class GatekeeperSignInFragment extends Fragment
       return this;
     }
 
+    public Builder setCreateAccountIntent (Intent intent)
+    {
+      this.args_.putParcelable (ARG_CREATE_ACCOUNT_INTENT, intent);
+      return this;
+    }
+
     public GatekeeperSignInFragment build ()
     {
       GatekeeperSignInFragment fragment = new GatekeeperSignInFragment ();
@@ -106,6 +112,8 @@ public class GatekeeperSignInFragment extends Fragment
   private static final String ARG_PASSWORD = "password";
   private static final String ARG_PASSWORD_HINT = "password_hint";
   private static final String ARG_PASSWORD_LABEL = "password_label";
+
+  private static final String ARG_CREATE_ACCOUNT_INTENT = "create_account_intent";
 
   private static final String ARG_SIGN_IN_BUTTON_TEXT = "sign_in_button_text";
 
@@ -173,16 +181,6 @@ public class GatekeeperSignInFragment extends Fragment
       }
     });
 
-    TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
-    actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
-    {
-      @Override
-      public void onClick (View v)
-      {
-        createNewAccount ();
-      }
-    });
-
     TextView title = (TextView)view.findViewById (R.id.title);
     this.errorMessage_ = (TextView)view.findViewById (R.id.error_message);
 
@@ -195,6 +193,10 @@ public class GatekeeperSignInFragment extends Fragment
       {
         title.setVisibility (View.VISIBLE);
         title.setText (args.getString (ARG_TITLE));
+      }
+      else
+      {
+        title.setVisibility (View.GONE);
       }
 
       if (args.containsKey (ARG_USERNAME))
@@ -217,6 +219,27 @@ public class GatekeeperSignInFragment extends Fragment
 
       if (args.containsKey (ARG_PASSWORD_LABEL))
         this.password_.setFloatingLabelText (args.getString (ARG_PASSWORD_LABEL));
+
+      TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
+
+      if (args.containsKey (ARG_CREATE_ACCOUNT_INTENT))
+      {
+        final Intent targetIntent = args.getParcelable (ARG_CREATE_ACCOUNT_INTENT);
+
+        actionCreateNewAccount.setVisibility (View.VISIBLE);
+        actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
+        {
+          @Override
+          public void onClick (View v)
+          {
+            startNewAccountActivity (targetIntent);
+          }
+        });
+      }
+      else
+      {
+        actionCreateNewAccount.setVisibility (View.GONE);
+      }
     }
 
     return view;
@@ -239,16 +262,24 @@ public class GatekeeperSignInFragment extends Fragment
       this.sessionClient_.onDestroy ();
   }
 
-  protected void createNewAccount ()
+  /**
+   * Start the activity for creating a new account.
+   *
+   * @param targetIntent
+   */
+  protected void startNewAccountActivity (Intent targetIntent)
   {
     // Start the activity for creating a new account.
     Activity activity = getActivity ();
 
     Intent upIntent = activity.getIntent ();
-    Intent intent = NewAccountActivity.newIntent (this.getActivity (), upIntent);
+    Intent redirectIntent = upIntent.getParcelableExtra (GatekeeperSignInActivity.ARG_REDIRECT_INTENT);
+
+    targetIntent.putExtra (GatekeeperCreateAccountActivity.EXTRA_REDIRECT_INTENT, redirectIntent);
+    targetIntent.putExtra (GatekeeperCreateAccountActivity.EXTRA_UP_INTENT, upIntent);
 
     // Start the activity for creating the account, and finish this activity.
-    activity.startActivity (intent);
+    activity.startActivity (targetIntent);
     activity.finish ();
   }
 

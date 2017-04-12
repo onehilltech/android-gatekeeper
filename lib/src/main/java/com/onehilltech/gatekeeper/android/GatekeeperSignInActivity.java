@@ -46,7 +46,7 @@ public class GatekeeperSignInActivity extends AppCompatActivity
       // anything and should return or else we could end up with overlapping fragments.
       this.getFragmentManager ()
           .beginTransaction ()
-          .replace (R.id.container, this.getFragment ())
+          .replace (R.id.container, this.onCreateFragment ())
           .commit ();
     }
     catch (Exception e)
@@ -61,10 +61,11 @@ public class GatekeeperSignInActivity extends AppCompatActivity
    *
    * @return GatekeeperSignInFragment
    */
-  protected GatekeeperSignInFragment getFragment ()
+  protected GatekeeperSignInFragment onCreateFragment ()
   {
     return new GatekeeperSignInFragment.Builder ()
         .setTitle (this.getApplicationName ())
+        .setCreateAccountIntent (GatekeeperCreateAccountActivity.newIntent (this, this.getIntent ()))
         .build ();
   }
 

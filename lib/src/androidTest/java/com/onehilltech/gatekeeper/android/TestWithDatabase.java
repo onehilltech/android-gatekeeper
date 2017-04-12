@@ -40,6 +40,6 @@ public class TestWithDatabase
             .build ());
 
     // Initialize the Gatekeeper database module.
-    Gatekeeper.initialize (context);
+    Gatekeeper.initialize ();
   }
 }

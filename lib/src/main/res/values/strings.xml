@@ -15,6 +15,8 @@
     <string name="action_sign_in">Sign in</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="action_create_new_account">Do not have an account? Create one.</string>
+    <string name="action_already_have_account">I already have an account. Sign in.</string>
+
     <string name="action_create_account">Create account</string>
 
     <string name="progress_initializing_app">Initializing application&#8230;</string>
@@ -27,7 +29,9 @@
 
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
+    <string name="label_email">Email</string>
 
-    <string name="hint_username">john.doe@contact.com</string>
+    <string name="hint_username">john.doe@contact.me</string>
     <string name="hint_password">*******</string>
+    <string name="hint_email">john.doe@contact.me</string>
 </resources>
