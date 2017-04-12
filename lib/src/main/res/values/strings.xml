@@ -32,6 +32,6 @@
     <string name="label_email">Email</string>
 
     <string name="hint_username">john.doe@contact.me</string>
-    <string name="hint_password">*******</string>
+    <string name="hint_password">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</string>
     <string name="hint_email">john.doe@contact.me</string>
 </resources>
