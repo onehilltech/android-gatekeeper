@@ -18,6 +18,6 @@ public class TheApplication extends Application
             .openDatabasesOnInit (true)
             .build ());
 
-    Gatekeeper.initialize (this);
+    Gatekeeper.initialize ();
   }
 }
