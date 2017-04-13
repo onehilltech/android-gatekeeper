@@ -387,6 +387,15 @@ public class GatekeeperSessionClient
     // listening for changes to be notified of the change.
     this.userToken_.delete ();
     this.userToken_ = null;
+
+    // Allow any service to process work for the user that has signed out
+    // of the application. We need to scope this notification to services
+    // in this package.
+    Intent intent = new Intent ()
+        .setAction (Gatekeeper.ACTION_SIGNED_OUT)
+        .setPackage (this.context_.getPackageName ());
+
+    this.context_.startService (intent);
   }
 
   /**
@@ -591,6 +600,16 @@ public class GatekeeperSessionClient
     GatekeeperSession.get (this.context_)
                      .edit ().setUsername (username)
                      .commit ();
+
+    // Allow any service to process work for the user that has signed in
+    // to the application. We need to scope this notification to services
+    // in this package.
+    Intent intent = new Intent ()
+        .setAction (Gatekeeper.ACTION_SIGNED_IN)
+        .setPackage (this.context_.getPackageName ())
+        .putExtra ("username", username);
+
+    this.context_.startService (intent);
   }
 
   // DBFlow observer that listens for changes to the current session table. It

@@ -6,6 +6,10 @@ import com.raizlabs.android.dbflow.config.*;
 
 public class Gatekeeper
 {
+  public static final String ACTION_SIGNED_IN = "com.onehilltech.gatekeeper.SIGNED_IN";
+
+  public static final String ACTION_SIGNED_OUT = "com.onehilltech.gatekeeper.SIGNED_OUT";
+
   public static void initialize ()
   {
     BackboneHttp.initialize ();
