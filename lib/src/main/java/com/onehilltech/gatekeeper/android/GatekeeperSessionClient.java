@@ -391,10 +391,7 @@ public class GatekeeperSessionClient
     // Allow any service to process work for the user that has signed out
     // of the application. We need to scope this notification to services
     // in this package.
-    Intent intent =
-        new Intent (Gatekeeper.ACTION_SIGNED_OUT)
-            .setPackage (this.context_.getPackageName ());
-
+    Intent intent = new Intent (Gatekeeper.ACTION_SIGNED_OUT);
     this.context_.startService (intent);
   }
 
@@ -604,11 +601,7 @@ public class GatekeeperSessionClient
     // Allow any service to process work for the user that has signed in
     // to the application. We need to scope this notification to services
     // in this package.
-    Intent intent = new Intent ()
-        .setAction (Gatekeeper.ACTION_SIGNED_IN)
-        .setPackage (this.context_.getPackageName ())
-        .putExtra ("username", username);
-
+    Intent intent = new Intent (Gatekeeper.ACTION_SIGNED_IN);
     this.context_.startService (intent);
   }
 
