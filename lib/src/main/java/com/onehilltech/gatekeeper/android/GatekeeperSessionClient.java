@@ -391,9 +391,9 @@ public class GatekeeperSessionClient
     // Allow any service to process work for the user that has signed out
     // of the application. We need to scope this notification to services
     // in this package.
-    Intent intent = new Intent ()
-        .setAction (Gatekeeper.ACTION_SIGNED_OUT)
-        .setPackage (this.context_.getPackageName ());
+    Intent intent =
+        new Intent (Gatekeeper.ACTION_SIGNED_OUT)
+            .setPackage (this.context_.getPackageName ());
 
     this.context_.startService (intent);
   }
