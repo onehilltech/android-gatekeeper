@@ -253,6 +253,20 @@ public class GatekeeperSessionClient
   }
 
   /**
+   * Get the HttpError from the ResponseBody.
+   *
+   * @param errorBody
+   * @return
+   * @throws IOException
+   */
+  public HttpError getError (ResponseBody errorBody)
+      throws IOException
+  {
+    Resource resource = this.resourceConverter_.convert (errorBody);
+    return resource.get ("errors");
+  }
+
+  /**
    * Get the listener object
    *
    * @return              A Listener object
