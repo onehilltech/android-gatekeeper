@@ -10,25 +10,38 @@ import com.onehilltech.metadata.ManifestMetadata;
 public class GatekeeperSignInActivity extends AppCompatActivity
     implements GatekeeperSignInFragment.LoginFragmentListener
 {
+  public static class Builder
+  {
+    private Intent intent_;
+
+    public Builder (Context context)
+    {
+      this.intent_ = new Intent (context, GatekeeperSignInActivity.class);
+    }
+
+    public Builder setRedirectTo (Intent intent)
+    {
+      this.intent_.putExtra (ARG_REDIRECT_INTENT, intent);
+      return this;
+    }
+
+    public Builder setErrorMessage (String errorMessage)
+    {
+      this.intent_.putExtra (ARG_ERROR_MESSAGE, errorMessage);
+      return this;
+    }
+
+    public Intent build ()
+    {
+      return this.intent_;
+    }
+  }
+
   private final GatekeeperMetadata metadata_ = new GatekeeperMetadata ();
   
   public static final String ARG_REDIRECT_INTENT = "redirect_intent";
 
-  /**
-   * Create a new Intent for this activity. The activity will redirect the
-   * user to the provided Intent after the sign in is complete.
-   *
-   * @param context             Current context
-   * @param redirectTo          Redirect intent
-   * @return
-   */
-  public static Intent newIntent (Context context, Intent redirectTo)
-  {
-    Intent intent = new Intent (context, GatekeeperSignInActivity.class);
-    intent.putExtra (ARG_REDIRECT_INTENT, redirectTo);
-
-    return intent;
-  }
+  public static final String ARG_ERROR_MESSAGE = "error_message";
 
   @Override
   protected void onCreate (Bundle savedInstanceState)
@@ -46,7 +59,7 @@ public class GatekeeperSignInActivity extends AppCompatActivity
       // anything and should return or else we could end up with overlapping fragments.
       this.getFragmentManager ()
           .beginTransaction ()
-          .replace (R.id.container, this.onCreateFragment ())
+          .replace (R.id.container, this.onCreateFragment (savedInstanceState))
           .commit ();
     }
     catch (Exception e)
@@ -58,15 +71,20 @@ public class GatekeeperSignInActivity extends AppCompatActivity
   /**
    * Get the fragment to display in the signIn activity. Subclasses can customize
    * the look and feel of the signIn by overriding this method.
-   *
-   * @return GatekeeperSignInFragment
    */
-  protected GatekeeperSignInFragment onCreateFragment ()
+  protected GatekeeperSignInFragment onCreateFragment (Bundle savedInstanceState)
   {
-    return new GatekeeperSignInFragment.Builder ()
-        .setTitle (this.getApplicationName ())
-        .setCreateAccountIntent (GatekeeperCreateAccountActivity.newIntent (this, this.getIntent ()))
-        .build ();
+    GatekeeperSignInFragment.Builder builder =
+        new GatekeeperSignInFragment.Builder ()
+            .setTitle (this.getApplicationName ())
+            .setCreateAccountIntent (GatekeeperCreateAccountActivity.newIntent (this, this.getIntent ()));
+
+    Bundle extras = this.getIntent ().getExtras ();
+
+    if (savedInstanceState == null && extras.containsKey (ARG_ERROR_MESSAGE))
+      builder.setErrorMessage (extras.getString (ARG_ERROR_MESSAGE));
+
+    return builder.build ();
   }
 
   protected String getApplicationName ()

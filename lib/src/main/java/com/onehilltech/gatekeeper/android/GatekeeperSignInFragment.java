@@ -90,6 +90,12 @@ public class GatekeeperSignInFragment extends Fragment
       return this;
     }
 
+    public Builder setErrorMessage (String errorMessage)
+    {
+      this.args_.putString (ARG_ERROR_MESSAGE, errorMessage);
+      return this;
+    }
+
     public GatekeeperSignInFragment build ()
     {
       GatekeeperSignInFragment fragment = new GatekeeperSignInFragment ();
@@ -116,6 +122,7 @@ public class GatekeeperSignInFragment extends Fragment
   private static final String ARG_CREATE_ACCOUNT_INTENT = "create_account_intent";
 
   private static final String ARG_SIGN_IN_BUTTON_TEXT = "sign_in_button_text";
+  private static final String ARG_ERROR_MESSAGE = "error_message";
 
   private MaterialEditText username_;
 
@@ -219,6 +226,16 @@ public class GatekeeperSignInFragment extends Fragment
 
       if (args.containsKey (ARG_PASSWORD_LABEL))
         this.password_.setFloatingLabelText (args.getString (ARG_PASSWORD_LABEL));
+
+      if (args.containsKey (ARG_ERROR_MESSAGE))
+      {
+        this.errorMessage_.setText (args.getString (ARG_ERROR_MESSAGE));
+        this.errorMessage_.setVisibility (View.VISIBLE);
+      }
+      else
+      {
+        this.errorMessage_.setVisibility (View.GONE);
+      }
 
       TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
 
