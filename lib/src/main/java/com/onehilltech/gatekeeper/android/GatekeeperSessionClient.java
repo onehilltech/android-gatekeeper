@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.gson.reflect.TypeToken;
+import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.backbone.http.retrofit.CallbackWrapper;
 import com.onehilltech.backbone.http.retrofit.ResourceEndpoint;
@@ -25,7 +26,12 @@ import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 import com.raizlabs.android.dbflow.structure.Model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -33,8 +39,10 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.POST;
@@ -104,6 +112,13 @@ public class GatekeeperSessionClient
      * @param client        Session client
      */
     void onSignedOut (GatekeeperSessionClient client);
+
+    /**
+     * Let the application know it needs to reauthenticate the user.
+     *
+     * @param client
+     */
+    void onReauthenticate (GatekeeperSessionClient client, HttpError reason);
   }
 
   private OkHttpClient httpClient_;
@@ -132,6 +147,12 @@ public class GatekeeperSessionClient
 
   private Retrofit userEndpoint_;
 
+  private final Logger logger_ = LoggerFactory.getLogger (GatekeeperSessionClient.class);
+
+  private final Converter<ResponseBody, Resource> resourceConverter_;
+
+  private static final ArrayList <String> REAUTHENTICATE_ERROR_CODES = new ArrayList<> ();
+
   /**
    * Initializing constructor.
    *
@@ -147,6 +168,8 @@ public class GatekeeperSessionClient
     // adding the authentication header to each request.
     OkHttpClient.Builder builder = client.getHttpClient ().newBuilder ();
     builder.addInterceptor (this.userAuthorizationHeader_);
+    builder.addInterceptor (this.responseInterceptor_);
+
     this.httpClient_ = builder.build ();
 
     // Build the Retrofit object for this client.
@@ -156,6 +179,7 @@ public class GatekeeperSessionClient
         .client (this.httpClient_)
         .build ();
 
+    this.resourceConverter_ = this.retrofit_.responseBodyConverter (Resource.class, new Annotation[0]);
     this.userMethods_ = this.retrofit_.create (UserMethods.class);
 
     // Load the one and only user token from the database. We also want to
@@ -349,7 +373,19 @@ public class GatekeeperSessionClient
       }
       else
       {
-        // Force the client to sign out.
+        if (response.code () == 401)
+        {
+          // Let's see what kind of error message we received. We may be able to handle
+          // it here in the interceptor if it related to the token.
+          Resource resource = resourceConverter_.convert (response.errorBody ());
+          HttpError error = resource.get ("errors");
+
+          // Force the user to logout.
+          completeSignOut ();
+
+          if (listener_ != null)
+            listener_.onReauthenticate (GatekeeperSessionClient.this, error);
+        }
 
         return false;
       }
@@ -361,27 +397,9 @@ public class GatekeeperSessionClient
   }
 
   /**
-   * Get the user token.
-   *
-   * @return
-   */
-  UserToken getUserToken ()
-  {
-    return this.userToken_;
-  }
-
-  static
-  {
-    GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
-    GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
-    GsonResourceManager.getInstance ().registerType ("token", new TypeToken<JsonBearerToken> () {}.getType ());
-  }
-
-
-  /**
    * Complete the signOut process.
    */
-  private void completeLogout ()
+  private void completeSignOut ()
   {
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
@@ -430,7 +448,7 @@ public class GatekeeperSessionClient
       {
         // Complete the signOut process.
         if (response.isSuccessful () && response.body ())
-          completeLogout ();
+          completeSignOut ();
 
         super.onResponse (call, response);
       }
@@ -719,9 +737,69 @@ public class GatekeeperSessionClient
     }
   };
 
+
+  private final Interceptor responseInterceptor_ = new Interceptor ()
+  {
+    @Override
+    public Response intercept (Chain chain) throws IOException
+    {
+      // Proceed with the original request. Check the status code for the response.
+      // If the status code is 401, then we need to refresh the token. Otherwise,
+      // we return control to the next interceptor.
+
+      Request origRequest = chain.request ();
+      Response origResponse = chain.proceed (origRequest);
+
+      if (origResponse.isSuccessful ())
+        return origResponse;
+
+      int statusCode = origResponse.code ();
+
+      if (statusCode == 401) {
+        // Let's try to update the original token. If the response is not successful,
+        // the return the original response. Otherwise, retry the same request.
+        if (refreshToken ())
+          return chain.proceed (origRequest);
+      }
+      else if (statusCode == 403) {
+        // Let's see what kind of error message we received. We may be able to handle
+        // it here in the interceptor if it related to the token.
+        Resource resource = resourceConverter_.convert (origResponse.body ());
+        HttpError error = resource.get ("errors");
+
+        if (REAUTHENTICATE_ERROR_CODES.contains (error.getCode ()))
+        {
+          // Force the user to logout.
+          completeSignOut ();
+
+          if (listener_ != null)
+            listener_.onReauthenticate (GatekeeperSessionClient.this, error);
+        }
+      }
+
+      return origResponse;
+    }
+  };
+
   interface UserMethods
   {
     @POST("oauth2/logout")
     Call <Boolean> logout ();
+  }
+
+  static
+  {
+    GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("token", new TypeToken<JsonBearerToken> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("errors", new TypeToken<HttpError> () {}.getType ());
+
+    REAUTHENTICATE_ERROR_CODES.add ("unknown_token");
+    REAUTHENTICATE_ERROR_CODES.add ("invalid_token");
+    REAUTHENTICATE_ERROR_CODES.add ("token_disabled");
+    REAUTHENTICATE_ERROR_CODES.add ("unknown_client");
+    REAUTHENTICATE_ERROR_CODES.add ("client_disabled");
+    REAUTHENTICATE_ERROR_CODES.add ("unknown_account");
+    REAUTHENTICATE_ERROR_CODES.add ("account_disabled");
   }
 }
