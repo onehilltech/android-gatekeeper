@@ -16,7 +16,12 @@ public class GatekeeperSignInActivity extends AppCompatActivity
 
     public Builder (Context context)
     {
-      this.intent_ = new Intent (context, GatekeeperSignInActivity.class);
+      this (context, GatekeeperSignInActivity.class);
+    }
+
+    public <T extends GatekeeperSignInActivity> Builder (Context context, Class <T> clazz)
+    {
+      this.intent_ = new Intent (context, clazz);
     }
 
     public Builder setRedirectTo (Intent intent)
