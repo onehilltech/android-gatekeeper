@@ -19,7 +19,7 @@ public class GatekeeperSignInActivity extends AppCompatActivity
       this (context, GatekeeperSignInActivity.class);
     }
 
-    public <T extends GatekeeperSignInActivity> Builder (Context context, Class <T> clazz)
+    public Builder (Context context, Class <? extends GatekeeperSignInActivity> clazz)
     {
       this.intent_ = new Intent (context, clazz);
     }

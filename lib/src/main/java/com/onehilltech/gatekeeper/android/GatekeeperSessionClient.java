@@ -323,13 +323,37 @@ public class GatekeeperSessionClient
     if (this.isSignedIn ())
       return true;
 
+    this.forceSignIn (activity, signInIntent);
+    return false;
+  }
+
+  /**
+   * Force the session client to sign in the current user.
+   *
+   * @param activity
+   * @param signIn
+   */
+  public void forceSignIn (Activity activity, Class <? extends Activity> signIn)
+  {
+    this.forceSignIn (activity, new Intent (activity, signIn));
+  }
+
+  /**
+   * Force the session client to sign in the current user.
+   *
+   * @param activity
+   * @param signInIntent
+   */
+  public void forceSignIn (Activity activity, Intent signInIntent)
+  {
+    // Force the user to signout.
+    this.completeSignOut ();
+
     signInIntent.putExtra (GatekeeperSignInActivity.ARG_REDIRECT_INTENT, activity.getIntent ());
     this.context_.startActivity (signInIntent);
 
     // Finish the current activity.
     activity.finish ();
-
-    return false;
   }
 
   /**
@@ -412,10 +436,14 @@ public class GatekeeperSessionClient
    */
   private void completeSignOut ()
   {
-    // Delete the token from the database. This will cause all session clients
-    // listening for changes to be notified of the change.
-    this.userToken_.delete ();
-    this.userToken_ = null;
+    if (this.userToken_ != null)
+    {
+      // Delete the token from the database. This will cause all session clients
+      // listening for changes to be notified of the change.
+
+      this.userToken_.delete ();
+      this.userToken_ = null;
+    }
   }
 
   /**
