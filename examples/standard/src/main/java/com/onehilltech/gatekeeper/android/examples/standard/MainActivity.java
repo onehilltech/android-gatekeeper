@@ -1,11 +1,13 @@
 package com.onehilltech.gatekeeper.android.examples.standard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
+import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;
 
@@ -86,5 +88,16 @@ public class MainActivity extends AppCompatActivity
   public void onSignedOut (GatekeeperSessionClient client)
   {
     this.btnSignOut_.setEnabled (false);
+  }
+
+  @Override
+  public void onReauthenticate (GatekeeperSessionClient client, HttpError error)
+  {
+    Intent intent =
+        new GatekeeperSignInActivity.Builder (this)
+            .setErrorMessage (error.getMessage ())
+            .build ();
+
+    this.session_.ensureSignedIn (this, intent);
   }
 }
