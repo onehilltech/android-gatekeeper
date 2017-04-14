@@ -12,8 +12,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.rengwuxian.materialedittext.MaterialEditText;
+
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -228,14 +231,7 @@ public class GatekeeperSignInFragment extends Fragment
         this.password_.setFloatingLabelText (args.getString (ARG_PASSWORD_LABEL));
 
       if (args.containsKey (ARG_ERROR_MESSAGE))
-      {
-        this.errorMessage_.setText (args.getString (ARG_ERROR_MESSAGE));
-        this.errorMessage_.setVisibility (View.VISIBLE);
-      }
-      else
-      {
-        this.errorMessage_.setVisibility (View.GONE);
-      }
+        showErrorMessage (args.getString (ARG_ERROR_MESSAGE));
 
       TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
 
@@ -335,7 +331,15 @@ public class GatekeeperSignInFragment extends Fragment
         }
         else
         {
-          showErrorMessage ("Sign in failed");
+          try
+          {
+            HttpError error = sessionClient_.getError (response.errorBody ());
+            showErrorMessage (error.getMessage ());
+          }
+          catch (IOException e)
+          {
+            showErrorMessage ("Sign in failed");
+          }
         }
       }
 
