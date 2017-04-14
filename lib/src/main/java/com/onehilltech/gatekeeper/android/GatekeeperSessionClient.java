@@ -394,9 +394,6 @@ public class GatekeeperSessionClient
           Resource resource = resourceConverter_.convert (response.errorBody ());
           HttpError error = resource.get ("errors");
 
-          // Force the user to logout.
-          completeSignOut ();
-
           if (listener_ != null)
             listener_.onReauthenticate (GatekeeperSessionClient.this, error);
         }
@@ -783,9 +780,8 @@ public class GatekeeperSessionClient
 
         if (REAUTHENTICATE_ERROR_CODES.contains (error.getCode ()))
         {
-          // Force the user to logout.
-          completeSignOut ();
-
+          // Notify the client to reauthenticate. This is optional. If the client
+          // does not reauthenticate, then all calls will continue to fail.
           if (listener_ != null)
             listener_.onReauthenticate (GatekeeperSessionClient.this, error);
         }
