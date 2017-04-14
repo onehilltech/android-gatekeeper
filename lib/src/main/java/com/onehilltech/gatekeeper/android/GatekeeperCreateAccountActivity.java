@@ -43,7 +43,7 @@ public class GatekeeperCreateAccountActivity extends AppCompatActivity
     this.setContentView (R.layout.activity_new_account);
 
     // Show the fragment for creating the new account.
-    GatekeeperCreateAccountFragment fragment = this.onCreateFragment ();
+    GatekeeperCreateAccountFragment fragment = this.onCreateFragment (savedInstanceState);
 
     this.getSupportFragmentManager ()
         .beginTransaction ()
@@ -51,7 +51,7 @@ public class GatekeeperCreateAccountActivity extends AppCompatActivity
         .commit ();
   }
 
-  protected GatekeeperCreateAccountFragment onCreateFragment ()
+  protected GatekeeperCreateAccountFragment onCreateFragment (Bundle savedInstanceState)
   {
     return new GatekeeperCreateAccountFragment.Builder ()
         .setTitle (this.getApplicationName ())
