@@ -115,7 +115,7 @@ public class GatekeeperClient
         if (httpClient == null)
           httpClient = new OkHttpClient.Builder ().build ();
 
-        return new GatekeeperClient (config, httpClient);
+        return new GatekeeperClient (this.context_, config, httpClient);
       }
       catch (PackageManager.NameNotFoundException | IllegalAccessException | ClassNotFoundException | InvocationTargetException e)
       {
@@ -125,6 +125,8 @@ public class GatekeeperClient
   }
 
   public static final int VERSION = 1;
+
+  private final Context context_;
 
   private final Retrofit retrofit_;
 
@@ -143,8 +145,9 @@ public class GatekeeperClient
    * @param config
    * @param httpClient
    */
-  GatekeeperClient (Configuration config, OkHttpClient httpClient)
+  GatekeeperClient (Context context, Configuration config, OkHttpClient httpClient)
   {
+    this.context_ = context;
     this.config_ = config;
     this.httpClient_ = httpClient;
 
@@ -291,6 +294,7 @@ public class GatekeeperClient
    */
   private Call <JsonBearerToken> getToken (JsonGrant grantType)
   {
+    grantType.packageName = this.context_.getPackageName ();
     return this.service_.getBearerToken (grantType);
   }
 
