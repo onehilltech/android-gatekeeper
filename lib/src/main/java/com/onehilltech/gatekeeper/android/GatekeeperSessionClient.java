@@ -821,13 +821,14 @@ public class GatekeeperSessionClient
       else if (statusCode == 403) {
         // Let's see what kind of error message we received. We may be able to handle
         // it here in the interceptor if it related to the token.
-        Resource resource = resourceConverter_.convert (origResponse.body ());
+        Response duplicate = origResponse.newBuilder ().build ();
+        Resource resource = resourceConverter_.convert (duplicate.body ());
         HttpError error = resource.get ("errors");
 
         if (REAUTHENTICATE_ERROR_CODES.contains (error.getCode ()))
         {
-          // Notify the client to reauthenticate. This is optional. If the client
-          // does not reauthenticate, then all calls will continue to fail.
+          // Notify the client to authenticate. This is optional. If the client
+          // does not authenticate, then all calls will continue to fail.
           if (listener_ != null)
             listener_.onReauthenticate (GatekeeperSessionClient.this, error);
         }
