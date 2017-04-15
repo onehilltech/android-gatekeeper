@@ -821,9 +821,18 @@ public class GatekeeperSessionClient
       else if (statusCode == 403) {
         // Let's see what kind of error message we received. We may be able to handle
         // it here in the interceptor if it related to the token.
-        Response duplicate = origResponse.newBuilder ().build ();
-        Resource resource = resourceConverter_.convert (duplicate.body ());
+        Resource resource = resourceConverter_.convert (origResponse.body ());
         HttpError error = resource.get ("errors");
+
+        // Since we can only consume a ResponseBody once, we need to replace the original
+        // one with a new one.
+        String origBody = gatekeeperClient_.getGson ().toJson (resource);
+        ResponseBody responseBody = ResponseBody.create (origResponse.body ().contentType (), origBody);
+
+        origResponse =
+            origResponse.newBuilder ()
+                        .body (responseBody)
+                        .build();
 
         if (REAUTHENTICATE_ERROR_CODES.contains (error.getCode ()))
         {
