@@ -254,7 +254,6 @@ public class GatekeeperClient
   public Call<JsonBearerToken> getUserToken (String username, String password)
   {
     JsonPassword grant = new JsonPassword ();
-    grant.clientId = this.config_.clientId;
     grant.username = username;
     grant.password = password;
 
@@ -267,9 +266,6 @@ public class GatekeeperClient
   public Call <JsonBearerToken> getClientToken ()
   {
     JsonClientCredentials credentials = new JsonClientCredentials ();
-    credentials.clientId = this.config_.clientId;
-    credentials.clientSecret = this.config_.clientSecret;
-
     return this.getToken (credentials);
   }
 
@@ -281,7 +277,6 @@ public class GatekeeperClient
   public Call <JsonBearerToken> refreshToken (String refreshToken)
   {
     JsonRefreshToken grant = new JsonRefreshToken ();
-    grant.clientId = this.config_.clientId;
     grant.refreshToken = refreshToken;
 
     return this.getToken (grant);
@@ -294,7 +289,10 @@ public class GatekeeperClient
    */
   private Call <JsonBearerToken> getToken (JsonGrant grantType)
   {
+    grantType.clientId = this.config_.clientId;
+    grantType.clientSecret = this.config_.clientSecret;
     grantType.packageName = this.context_.getPackageName ();
+
     return this.service_.getBearerToken (grantType);
   }
 
