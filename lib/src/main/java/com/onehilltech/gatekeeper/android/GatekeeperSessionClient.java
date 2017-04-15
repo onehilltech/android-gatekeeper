@@ -153,6 +153,8 @@ public class GatekeeperSessionClient
 
   private static final ArrayList <String> REAUTHENTICATE_ERROR_CODES = new ArrayList<> ();
 
+  private boolean isSigningIn_ = false;
+
   /**
    * Initializing constructor.
    *
@@ -346,6 +348,12 @@ public class GatekeeperSessionClient
    */
   public void forceSignIn (Activity activity, Intent signInIntent)
   {
+    if (this.isSigningIn_)
+      return;
+
+    this.isSigningIn_ = true;
+    this.logger_.info ("Forcing sign in");
+
     // Force the user to signout.
     this.completeSignOut ();
 
@@ -354,6 +362,16 @@ public class GatekeeperSessionClient
 
     // Finish the current activity.
     activity.finish ();
+  }
+
+  /**
+   * The user is signing in.
+   *
+   * @return
+   */
+  public boolean isSigningIn ()
+  {
+    return this.isSigningIn_;
   }
 
   /**
