@@ -228,14 +228,17 @@ public class GatekeeperSignInFragment extends Fragment
 
     if (args != null)
     {
-      if (args.containsKey (ARG_TITLE))
+      if (title != null)
       {
-        title.setVisibility (View.VISIBLE);
-        title.setText (args.getString (ARG_TITLE));
-      }
-      else
-      {
-        title.setVisibility (View.GONE);
+        // Customize the title, if the layout supports one.
+        if (args.containsKey (ARG_TITLE))
+        {
+          title.setVisibility (View.VISIBLE);
+          title.setText (args.getString (ARG_TITLE));
+        } else
+        {
+          title.setVisibility (View.GONE);
+        }
       }
 
       if (args.containsKey (ARG_USERNAME))
