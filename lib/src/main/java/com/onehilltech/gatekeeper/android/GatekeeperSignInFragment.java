@@ -230,7 +230,8 @@ public class GatekeeperSignInFragment extends Fragment
     {
       if (title != null)
       {
-        // Customize the title, if the layout supports one.
+        // If the layout contains a title, then allow the title to be customized.
+        // Otherwise, we are not going to show the title of the application.
         if (args.containsKey (ARG_TITLE))
         {
           title.setVisibility (View.VISIBLE);
@@ -391,9 +392,12 @@ public class GatekeeperSignInFragment extends Fragment
    */
   protected void showErrorMessage (String errMsg)
   {
-    if (this.errorMessage_.getVisibility () != View.VISIBLE)
-      this.errorMessage_.setVisibility (View.VISIBLE);
+    if (this.errorMessage_ != null)
+    {
+      if (this.errorMessage_.getVisibility () != View.VISIBLE)
+        this.errorMessage_.setVisibility (View.VISIBLE);
 
-    this.errorMessage_.setText (errMsg);
+      this.errorMessage_.setText (errMsg);
+    }
   }
 }
