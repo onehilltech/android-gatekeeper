@@ -1,5 +1,6 @@
 package com.onehilltech.gatekeeper.android.model;
 
+import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.ModelContainer;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
@@ -10,9 +11,15 @@ import com.raizlabs.android.dbflow.structure.BaseModel;
 public class Account extends BaseModel
 {
   @PrimaryKey
-  public String _id;
+  String _id;
 
-  public Account ()
+  @Column
+  public String username;
+
+  @Column
+  public String email;
+
+  Account ()
   {
     // required constructor
   }
