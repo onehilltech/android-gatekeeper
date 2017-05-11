@@ -147,10 +147,21 @@ public class GatekeeperSignInFragment extends Fragment
   }
 
   @Override
+  public void onAttach (Activity activity)
+  {
+    super.onAttach (activity);
+    this.onAttachImpl (activity);
+  }
+
+  @Override
   public void onAttach (Context context)
   {
     super.onAttach (context);
+    this.onAttachImpl (context);
+  }
 
+  private void onAttachImpl (Context context)
+  {
     try
     {
       this.loginFragmentListener_ = (LoginFragmentListener) context;
