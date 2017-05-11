@@ -268,23 +268,25 @@ public class GatekeeperSignInFragment extends Fragment
 
       TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
 
-      if (args.containsKey (ARG_CREATE_ACCOUNT_INTENT))
+      if (actionCreateNewAccount != null)
       {
-        final Intent targetIntent = args.getParcelable (ARG_CREATE_ACCOUNT_INTENT);
-
-        actionCreateNewAccount.setVisibility (View.VISIBLE);
-        actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
+        if (args.containsKey (ARG_CREATE_ACCOUNT_INTENT))
         {
-          @Override
-          public void onClick (View v)
+          final Intent targetIntent = args.getParcelable (ARG_CREATE_ACCOUNT_INTENT);
+
+          actionCreateNewAccount.setVisibility (View.VISIBLE);
+          actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
           {
-            startNewAccountActivity (targetIntent);
-          }
-        });
-      }
-      else
-      {
-        actionCreateNewAccount.setVisibility (View.GONE);
+            @Override
+            public void onClick (View v)
+            {
+              startNewAccountActivity (targetIntent);
+            }
+          });
+        } else
+        {
+          actionCreateNewAccount.setVisibility (View.GONE);
+        }
       }
     }
 
