@@ -99,6 +99,12 @@ public class GatekeeperSignInFragment extends Fragment
       return this;
     }
 
+    public Builder setLayout (int layout)
+    {
+      this.args_.putInt (ARG_LAYOUT, layout);
+      return this;
+    }
+
     public GatekeeperSignInFragment build ()
     {
       GatekeeperSignInFragment fragment = new GatekeeperSignInFragment ();
@@ -127,11 +133,15 @@ public class GatekeeperSignInFragment extends Fragment
   private static final String ARG_SIGN_IN_BUTTON_TEXT = "sign_in_button_text";
   private static final String ARG_ERROR_MESSAGE = "error_message";
 
+  private static final String ARG_LAYOUT = "layout";
+
   private MaterialEditText username_;
 
   private MaterialEditText password_;
 
   private TextView errorMessage_;
+
+  private int layout_ = R.layout.fragment_login;
 
   /**
    * Default constructor.
@@ -178,12 +188,20 @@ public class GatekeeperSignInFragment extends Fragment
     super.onCreate (savedInstanceState);
 
     this.sessionClient_ = this.getSessionClient ();
+
+    Bundle args = this.getArguments ();
+
+    if (args != null)
+    {
+      if (args.containsKey (ARG_LAYOUT))
+        this.layout_ = args.getInt (ARG_LAYOUT);
+    }
   }
 
   @Override
   public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
   {
-    View view = inflater.inflate (R.layout.fragment_login, container, false);
+    View view = inflater.inflate (this.layout_, container, false);
 
     // Setup the UI controls.
     this.username_ = (MaterialEditText) view.findViewById (R.id.username);
