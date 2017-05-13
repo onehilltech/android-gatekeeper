@@ -45,6 +45,7 @@ import retrofit2.Callback;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
 import retrofit2.http.POST;
 
 /**
@@ -526,6 +527,24 @@ public class GatekeeperSessionClient
   }
 
   /**
+   * Change the users current password.
+   *
+   * @param currentPassword
+   * @param newPassword
+   * @return
+   */
+  public Call <Boolean> changePassword (String currentPassword, String newPassword)
+  {
+    HashMap <String, String> values = new HashMap<> ();
+    values.put ("current", currentPassword);
+    values.put ("new", newPassword);
+
+    Resource r = new Resource ("change-password", values);
+
+    return this.userMethods_.changePassword (r);
+  }
+
+  /**
    * Create a new account.
    *
    * @param username
@@ -851,6 +870,9 @@ public class GatekeeperSessionClient
   {
     @POST("oauth2/logout")
     Call <Boolean> logout ();
+
+    @POST("accounts/me/password")
+    Call <Boolean> changePassword (@Body Resource r);
   }
 
   static
