@@ -17,6 +17,7 @@ import com.onehilltech.backbone.http.retrofit.ResourceEndpoint;
 import com.onehilltech.backbone.http.retrofit.gson.GsonResourceManager;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
+import com.onehilltech.gatekeeper.android.http.JsonChangePassword;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken$Table;
@@ -879,6 +880,7 @@ public class GatekeeperSessionClient
   {
     GsonResourceManager.getInstance ().registerType ("account", new TypeToken<JsonAccount> () {}.getType ());
     GsonResourceManager.getInstance ().registerType ("accounts", new TypeToken<List<JsonAccount>> () {}.getType ());
+    GsonResourceManager.getInstance ().registerType ("change-password", new TypeToken<JsonChangePassword> () {}.getType ());
     GsonResourceManager.getInstance ().registerType ("token", new TypeToken<JsonBearerToken> () {}.getType ());
     GsonResourceManager.getInstance ().registerType ("errors", new TypeToken<HttpError> () {}.getType ());
 
