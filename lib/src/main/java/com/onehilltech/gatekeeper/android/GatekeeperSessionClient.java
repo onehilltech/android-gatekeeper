@@ -536,11 +536,11 @@ public class GatekeeperSessionClient
    */
   public Call <Boolean> changePassword (String currentPassword, String newPassword)
   {
-    HashMap <String, String> values = new HashMap<> ();
-    values.put ("current", currentPassword);
-    values.put ("new", newPassword);
+    JsonChangePassword change = new JsonChangePassword ();
+    change.currentPassword = currentPassword;
+    change.newPassword = newPassword;
 
-    Resource r = new Resource ("change-password", values);
+    Resource r = new Resource ("change-password", change);
 
     return this.userMethods_.changePassword (r);
   }
