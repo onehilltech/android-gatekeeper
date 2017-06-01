@@ -271,6 +271,16 @@ public class GatekeeperSessionClient
   }
 
   /**
+   * Get the access token for the current session.
+   *
+   * @return
+   */
+  public String getAccessToken ()
+  {
+    return this.userToken_.accessToken;
+  }
+
+  /**
    * Get the listener object
    *
    * @return              A Listener object
