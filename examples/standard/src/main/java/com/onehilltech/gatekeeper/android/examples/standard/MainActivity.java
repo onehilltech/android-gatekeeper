@@ -79,6 +79,18 @@ public class MainActivity extends AppCompatActivity
   }
 
   @Override
+  public void onSignInFailed (GatekeeperSessionClient client, Throwable reason)
+  {
+
+  }
+
+  @Override
+  public void onSignInFailed (GatekeeperSessionClient client, HttpError reason)
+  {
+
+  }
+
+  @Override
   public void onSignedIn (GatekeeperSessionClient client)
   {
     this.btnSignOut_.setEnabled (true);

@@ -32,6 +32,7 @@ public class GatekeeperSignInFragment extends Fragment
   public static final class Builder
   {
     private final Bundle args_ = new Bundle ();
+    private GatekeeperSignInFragment signInFragment_;
 
     public Builder setTitle (String title)
     {
@@ -99,9 +100,19 @@ public class GatekeeperSignInFragment extends Fragment
       return this;
     }
 
+    public Builder setSignInFragment (GatekeeperSignInFragment fragment)
+    {
+      this.signInFragment_ = fragment;
+      return this;
+    }
+
     public GatekeeperSignInFragment build ()
     {
-      GatekeeperSignInFragment fragment = new GatekeeperSignInFragment ();
+      GatekeeperSignInFragment fragment =
+          this.signInFragment_ != null ?
+              this.signInFragment_ :
+              new GatekeeperSignInFragment ();
+
       fragment.setArguments (this.args_);
 
       return fragment;
