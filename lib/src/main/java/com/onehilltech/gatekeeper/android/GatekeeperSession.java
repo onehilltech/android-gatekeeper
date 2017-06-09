@@ -3,6 +3,11 @@ package com.onehilltech.gatekeeper.android;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+/**
+ * @class GatekeeperSession
+ *
+ * Session information about the current user.
+ */
 class GatekeeperSession
 {
   private static final String PREFS_FILE = "gatekeeper_session.info";
