@@ -597,6 +597,8 @@ public class GatekeeperSessionClient
     if (this.userToken_ == null)
       throw new IllegalStateException ("User is already signed out");
 
+    this.logger_.info ("Signing out current user");
+
     this.userMethods_.logout ().enqueue (new CallbackWrapper<Boolean> (callback)
     {
       @Override
