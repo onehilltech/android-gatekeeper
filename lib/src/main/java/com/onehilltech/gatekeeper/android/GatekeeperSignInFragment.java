@@ -298,6 +298,16 @@ public class GatekeeperSignInFragment extends Fragment
     return view;
   }
 
+  public String getUsernameText ()
+  {
+    return this.username_.getText ().toString ();
+  }
+
+  public String getPasswordText ()
+  {
+    return this.password_.getText ().toString ();
+  }
+
   @Override
   public void onDetach ()
   {
