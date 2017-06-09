@@ -107,6 +107,8 @@ public class GatekeeperSessionClient
      * @param client        Session client
      */
     void onSignedIn (GatekeeperSessionClient client);
+    void onSignInFailed (GatekeeperSessionClient client, Throwable reason);
+    void onSignInFailed (GatekeeperSessionClient client, HttpError reason);
 
     /**
      * The client has signed out.
@@ -481,25 +483,105 @@ public class GatekeeperSessionClient
    *
    * @param username          Username for the user
    * @param password          Password for the user
-   * @param callback          Callback object
    */
-  public void signIn (final String username, String password, Callback<JsonBearerToken> callback)
+  public void signIn (final String username, String password)
   {
     if (this.isSignedIn ())
       throw new IllegalStateException ("User is currently signed in");
 
     this.gatekeeperClient_.getUserToken (username, password)
-                          .enqueue (new CallbackWrapper<JsonBearerToken> (callback)
+                          .enqueue (new Callback<JsonBearerToken> ()
                           {
                             @Override
                             public void onResponse (Call<JsonBearerToken> call, retrofit2.Response<JsonBearerToken> response)
                             {
                               if (response.isSuccessful ())
+                              {
                                 completeSignIn (username, response.body ());
+                              }
+                              else if (listener_ != null)
+                              {
+                                try
+                                {
+                                  // We could not sign in the user. Let's see if we can get the error message
+                                  // for the sign in failure.
+                                  HttpError error = getError (response.errorBody ());
+                                  listener_.onSignInFailed (GatekeeperSessionClient.this, error);
+                                }
+                                catch (IOException e)
+                                {
+                                  listener_.onSignInFailed (GatekeeperSessionClient.this, e);
+                                }
+                              }
+                            }
 
-                              super.onResponse (call, response);
+                            @Override
+                            public void onFailure (Call<JsonBearerToken> call, Throwable t)
+                            {
+                              if (listener_ != null)
+                                listener_.onSignInFailed (GatekeeperSessionClient.this, t);
                             }
                           });
+  }
+
+  /**
+   * Complete the signIn process by storing the information in the database, and
+   * notifying all parties that the signIn is complete.
+   *
+   * @param username            Username that signed in
+   * @param jsonToken           Access token for the user
+   */
+  private void completeSignIn (String username, JsonBearerToken jsonToken)
+  {
+    // Store the user token, but do not save it. We do not want to save the
+    // access token until we are certain we have information about the current
+    // user stored in the session.
+    this.userToken_ = UserToken.fromToken (username, jsonToken);
+
+    // Get information about the current user.
+    this.getMyAccount ().enqueue (new Callback<Resource> ()
+    {
+      @Override
+      public void onResponse (Call<Resource> call, retrofit2.Response<Resource> response)
+      {
+        if (response.isSuccessful ())
+        {
+          // Update the session information, and save the user token. At this point, we
+          // are done with the login process and can return control to the client.
+          JsonAccount account = response.body ().get ("account");
+
+          GatekeeperSession session = GatekeeperSession.get (context_);
+          session.edit ()
+                 .setUsername (account.username)
+                 .setUserId (account._id)
+                 .commit ();
+
+          // Save the user token to make the sign in complete.
+          userToken_.save ();
+
+          if (listener_ != null)
+            listener_.onSignedIn (GatekeeperSessionClient.this);
+        }
+        else if (listener_ != null)
+        {
+          try
+          {
+            HttpError error = getError (response.errorBody ());
+            listener_.onSignInFailed (GatekeeperSessionClient.this, error);
+          }
+          catch (IOException e)
+          {
+            listener_.onSignInFailed (GatekeeperSessionClient.this, e);
+          }
+        }
+      }
+
+      @Override
+      public void onFailure (Call<Resource> call, Throwable t)
+      {
+        listener_.onSignInFailed (GatekeeperSessionClient.this, t);
+      }
+    });
   }
 
   /**
@@ -678,25 +760,6 @@ public class GatekeeperSessionClient
     return ResourceEndpoint.create (this.userEndpoint_, "account", "accounts");
   }
 
-  /**
-   * Complete the signIn process by storing the information in the database, and
-   * notifying all parties that the signIn is complete.
-   *
-   * @param username            Username that signed in
-   * @param jsonToken           Access token for the user
-   */
-  private void completeSignIn (String username, JsonBearerToken jsonToken)
-  {
-    // Save the token to the database. This will notify all session clients that
-    // we have created a token, and the user is currently logged in.
-    this.userToken_ = UserToken.fromToken (username, jsonToken);
-    this.userToken_.save ();
-
-    // Mark this username as the current user.
-    GatekeeperSession.get (this.context_)
-                     .edit ().setUsername (username)
-                     .commit ();
-  }
 
   // DBFlow observer that listens for changes to the current session table. It
   // then translates the event changes into messages that interested parties can

@@ -13,14 +13,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.onehilltech.backbone.http.HttpError;
-import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.rengwuxian.materialedittext.MaterialEditText;
-
-import java.io.IOException;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 /**
  * @class GatekeeperSignInFragment
@@ -29,6 +22,7 @@ import retrofit2.Response;
  * session client, and provide a signIn() method to perform the signIn task.
  */
 public class GatekeeperSignInFragment extends Fragment
+  implements GatekeeperSessionClient.Listener
 {
   public interface LoginFragmentListener
   {
@@ -353,37 +347,9 @@ public class GatekeeperSignInFragment extends Fragment
    * @param username
    * @param password
    */
-  protected void signIn (final String username, String password)
+  protected void signIn (String username, String password)
   {
-    this.sessionClient_.signIn (username, password, new Callback<JsonBearerToken> ()
-    {
-      @Override
-      public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
-      {
-        if (response.isSuccessful ())
-        {
-          loginFragmentListener_.onSignInComplete (GatekeeperSignInFragment.this);
-        }
-        else
-        {
-          try
-          {
-            HttpError error = sessionClient_.getError (response.errorBody ());
-            showErrorMessage (error.getMessage ());
-          }
-          catch (IOException e)
-          {
-            showErrorMessage ("Sign in failed");
-          }
-        }
-      }
-
-      @Override
-      public void onFailure (Call<JsonBearerToken> call, Throwable t)
-      {
-        showErrorMessage ("Sign in failed");
-      }
-    });
+    this.sessionClient_.signIn (username, password);
   }
 
   /**
@@ -394,12 +360,43 @@ public class GatekeeperSignInFragment extends Fragment
    */
   protected void showErrorMessage (String errMsg)
   {
-    if (this.errorMessage_ != null)
-    {
-      if (this.errorMessage_.getVisibility () != View.VISIBLE)
-        this.errorMessage_.setVisibility (View.VISIBLE);
+    if (this.errorMessage_ == null)
+      return;
 
-      this.errorMessage_.setText (errMsg);
-    }
+    if (this.errorMessage_.getVisibility () != View.VISIBLE)
+      this.errorMessage_.setVisibility (View.VISIBLE);
+
+    this.errorMessage_.setText (errMsg);
+  }
+
+  @Override
+  public void onSignedIn (GatekeeperSessionClient client)
+  {
+    if (this.loginFragmentListener_ != null)
+      this.loginFragmentListener_.onSignInComplete (this);
+  }
+
+  @Override
+  public void onSignInFailed (GatekeeperSessionClient client, Throwable reason)
+  {
+    this.showErrorMessage (reason.getLocalizedMessage ());
+  }
+
+  @Override
+  public void onSignInFailed (GatekeeperSessionClient client, HttpError reason)
+  {
+    this.showErrorMessage (reason.getMessage ());
+  }
+
+  @Override
+  public void onSignedOut (GatekeeperSessionClient client)
+  {
+
+  }
+
+  @Override
+  public void onReauthenticate (GatekeeperSessionClient client, HttpError reason)
+  {
+
   }
 }

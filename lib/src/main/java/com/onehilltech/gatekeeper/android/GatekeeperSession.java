@@ -8,10 +8,15 @@ class GatekeeperSession
   private static final String PREFS_FILE = "gatekeeper_session.info";
 
   private static final String PREF_USERNAME = "username";
+  private static final String PREF_USER_ID = "user_id";
 
   private final SharedPreferences prefs_;
 
-  public static class Editor
+  /**
+   * Edit the current session. This can only be used by classes from this
+   * package.
+   */
+  static class Editor
   {
     private final SharedPreferences.Editor editor_;
 
@@ -20,30 +25,38 @@ class GatekeeperSession
       this.editor_ = editor;
     }
 
-    public Editor setUsername (String userId)
+    Editor setUsername (String username)
     {
-      this.editor_.putString (PREF_USERNAME, userId);
+      this.editor_.putString (PREF_USERNAME, username);
       return this;
     }
 
-    public boolean commit ()
+    Editor setUserId (String userId)
+    {
+      this.editor_.putString (PREF_USER_ID, userId);
+      return this;
+    }
+
+    boolean commit ()
     {
       return this.editor_.commit ();
     }
 
-    public void apply ()
+    void apply ()
     {
       this.editor_.apply ();
     }
 
-    public void clear ()
+    void clear ()
     {
       this.editor_.clear ();
     }
 
-    public void delete ()
+    void delete ()
     {
       this.editor_.remove (PREF_USERNAME);
+      this.editor_.remove (PREF_USER_ID);
+
       this.editor_.commit ();
     }
   }
@@ -64,6 +77,11 @@ class GatekeeperSession
     return this.prefs_.getString (PREF_USERNAME, null);
   }
 
+  public String getUserId ()
+  {
+    return this.prefs_.getString (PREF_USER_ID, null);
+  }
+
   private GatekeeperSession (SharedPreferences prefs)
   {
     this.prefs_ = prefs;
@@ -75,7 +93,7 @@ class GatekeeperSession
    *
    * @return
    */
-  public Editor edit ()
+  Editor edit ()
   {
     return new Editor (this.prefs_.edit ());
   }
