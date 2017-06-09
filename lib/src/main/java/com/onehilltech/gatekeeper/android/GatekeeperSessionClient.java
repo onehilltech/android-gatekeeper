@@ -541,6 +541,7 @@ public class GatekeeperSessionClient
     this.userToken_ = UserToken.fromToken (username, jsonToken);
 
     // Get information about the current user.
+    this.logger_.info ("Requesting my account information");
     this.getMyAccount ().enqueue (new Callback<Resource> ()
     {
       @Override
@@ -550,6 +551,8 @@ public class GatekeeperSessionClient
         {
           // Update the session information, and save the user token. At this point, we
           // are done with the login process and can return control to the client.
+          logger_.info ("Saving session info");
+
           JsonAccount account = response.body ().get ("account");
 
           GatekeeperSession session = GatekeeperSession.get (context_);
