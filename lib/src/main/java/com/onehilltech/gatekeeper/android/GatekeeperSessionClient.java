@@ -489,6 +489,8 @@ public class GatekeeperSessionClient
     if (this.isSignedIn ())
       throw new IllegalStateException ("User is currently signed in");
 
+    this.logger_.info ("Signing in user to service");
+
     this.gatekeeperClient_.getUserToken (username, password)
                           .enqueue (new Callback<JsonBearerToken> ()
                           {

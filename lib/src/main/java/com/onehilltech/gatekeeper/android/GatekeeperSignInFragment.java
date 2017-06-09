@@ -193,6 +193,7 @@ public class GatekeeperSignInFragment extends Fragment
     super.onCreate (savedInstanceState);
 
     this.sessionClient_ = this.getSessionClient ();
+    this.sessionClient_.setListener (this);
 
     Bundle args = this.getArguments ();
 
