@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.onehilltech.backbone.http.HttpError;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 /**
@@ -22,7 +21,6 @@ import com.rengwuxian.materialedittext.MaterialEditText;
  * session client, and provide a signIn() method to perform the signIn task.
  */
 public class GatekeeperSignInFragment extends Fragment
-  implements GatekeeperSessionClient.Listener
 {
   public interface LoginFragmentListener
   {
@@ -193,7 +191,6 @@ public class GatekeeperSignInFragment extends Fragment
     super.onCreate (savedInstanceState);
 
     this.sessionClient_ = this.getSessionClient ();
-    this.sessionClient_.setListener (this);
 
     Bundle args = this.getArguments ();
 
@@ -210,24 +207,32 @@ public class GatekeeperSignInFragment extends Fragment
     View view = inflater.inflate (this.layout_, container, false);
 
     // Setup the UI controls.
-    this.username_ = (MaterialEditText) view.findViewById (R.id.username);
+    this.username_ = view.findViewById (R.id.username);
     this.username_.addValidator (new NotEmptyValidator ());
 
-    this.password_ = (MaterialEditText) view.findViewById (R.id.password);
+    this.password_ = view.findViewById (R.id.password);
     this.password_.addValidator (new NotEmptyValidator ());
 
-    Button signInButton = (Button)view.findViewById (R.id.button_sign_in);
-    signInButton.setOnClickListener (new View.OnClickListener ()
-    {
-      @Override
-      public void onClick (View v)
-      {
-        performSignIn ();
-      }
+    Button signInButton = view.findViewById (R.id.button_sign_in);
+
+    signInButton.setOnClickListener (v -> {
+      boolean isValid = this.username_.validate ();
+      isValid &= this.password_.validate ();
+
+      if (!isValid)
+        return;
+
+      String username = this.getUsernameText ();
+      String password = this.getPasswordText ();
+
+      this.sessionClient_
+          .signIn (username, password)
+          .then ((value, cont) -> loginFragmentListener_.onSignInComplete (this),
+                 reason -> showErrorMessage (reason.getLocalizedMessage ()));
     });
 
-    TextView title = (TextView)view.findViewById (R.id.title);
-    this.errorMessage_ = (TextView)view.findViewById (R.id.error_message);
+    TextView title = view.findViewById (R.id.title);
+    this.errorMessage_ = view.findViewById (R.id.error_message);
 
     // Initialize the view with data.
     Bundle args = this.getArguments ();
@@ -272,7 +277,7 @@ public class GatekeeperSignInFragment extends Fragment
       if (args.containsKey (ARG_ERROR_MESSAGE))
         showErrorMessage (args.getString (ARG_ERROR_MESSAGE));
 
-      TextView actionCreateNewAccount = (TextView)view.findViewById (R.id.action_create_account);
+      TextView actionCreateNewAccount = view.findViewById (R.id.action_create_account);
 
       if (actionCreateNewAccount != null)
       {
@@ -281,15 +286,9 @@ public class GatekeeperSignInFragment extends Fragment
           final Intent targetIntent = args.getParcelable (ARG_CREATE_ACCOUNT_INTENT);
 
           actionCreateNewAccount.setVisibility (View.VISIBLE);
-          actionCreateNewAccount.setOnClickListener (new View.OnClickListener ()
-          {
-            @Override
-            public void onClick (View v)
-            {
-              startNewAccountActivity (targetIntent);
-            }
-          });
-        } else
+          actionCreateNewAccount.setOnClickListener (v -> startNewAccountActivity (targetIntent));
+        }
+        else
         {
           actionCreateNewAccount.setVisibility (View.GONE);
         }
@@ -348,33 +347,6 @@ public class GatekeeperSignInFragment extends Fragment
   }
 
   /**
-   * Sign in the user with the provided credentials.
-   */
-  private void performSignIn ()
-  {
-    boolean isValid = this.username_.validate ();
-    isValid &= this.password_.validate ();
-
-    if (!isValid)
-      return;
-
-    String username = this.username_.getText ().toString ();
-    String password = this.password_.getText ().toString ();
-    this.signIn (username, password);
-  }
-
-  /**
-   * Sign in the user.
-   *
-   * @param username
-   * @param password
-   */
-  protected void signIn (String username, String password)
-  {
-    this.sessionClient_.signIn (username, password);
-  }
-
-  /**
    * Show an error message. This causes all views to be hidden except for the logo and
    * the error message. When this happens, the user must exit the parent activity.
    *
@@ -389,36 +361,5 @@ public class GatekeeperSignInFragment extends Fragment
       this.errorMessage_.setVisibility (View.VISIBLE);
 
     this.errorMessage_.setText (errMsg);
-  }
-
-  @Override
-  public void onSignedIn (GatekeeperSessionClient client)
-  {
-    if (this.loginFragmentListener_ != null)
-      this.loginFragmentListener_.onSignInComplete (this);
-  }
-
-  @Override
-  public void onSignInFailed (GatekeeperSessionClient client, Throwable reason)
-  {
-    this.showErrorMessage (reason.getLocalizedMessage ());
-  }
-
-  @Override
-  public void onSignInFailed (GatekeeperSessionClient client, HttpError reason)
-  {
-    this.showErrorMessage (reason.getMessage ());
-  }
-
-  @Override
-  public void onSignedOut (GatekeeperSessionClient client)
-  {
-
-  }
-
-  @Override
-  public void onReauthenticate (GatekeeperSessionClient client, HttpError reason)
-  {
-
   }
 }

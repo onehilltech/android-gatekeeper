@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import com.onehilltech.backbone.app.Promise;
+import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.backbone.http.retrofit.gson.GsonResourceMarshaller;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
@@ -16,12 +18,18 @@ import com.onehilltech.gatekeeper.android.http.JsonRefreshToken;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
 
+import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Converter;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
@@ -139,6 +147,8 @@ public class GatekeeperClient
   /// Configuration for the client.
   private Configuration config_;
 
+  private final Converter<ResponseBody, Resource> resourceConverter_;
+
   /**
    * Initializing constructor.
    *
@@ -175,6 +185,8 @@ public class GatekeeperClient
             .addConverterFactory (GsonConverterFactory.create (this.gson_))
             .client (this.httpClient_)
             .build ();
+
+    this.resourceConverter_ = this.retrofit_.responseBodyConverter (Resource.class, new Annotation[0]);
 
     // Create the remoting endpoints.
     this.service_ = this.retrofit_.create (Service.class);
@@ -251,7 +263,7 @@ public class GatekeeperClient
    * @param username        Username
    * @param password        Password
    */
-  public Call<JsonBearerToken> getUserToken (String username, String password)
+  public Promise<JsonBearerToken> getUserToken (String username, String password)
   {
     JsonPassword grant = new JsonPassword ();
     grant.username = username;
@@ -263,7 +275,7 @@ public class GatekeeperClient
   /**
    * Get an access token for this client.
    */
-  public Call <JsonBearerToken> getClientToken ()
+  public Promise <JsonBearerToken> getClientToken ()
   {
     JsonClientCredentials credentials = new JsonClientCredentials ();
     return this.getToken (credentials);
@@ -274,7 +286,7 @@ public class GatekeeperClient
    *
    * @param refreshToken        Refresh token
    */
-  public Call <JsonBearerToken> refreshToken (String refreshToken)
+  public Promise<JsonBearerToken> refreshToken (String refreshToken)
   {
     JsonRefreshToken grant = new JsonRefreshToken ();
     grant.refreshToken = refreshToken;
@@ -282,18 +294,75 @@ public class GatekeeperClient
     return this.getToken (grant);
   }
 
+  Call <JsonBearerToken> refreshTokenSync (String refreshToken)
+  {
+    JsonRefreshToken grant = new JsonRefreshToken ();
+    grant.refreshToken = refreshToken;
+    grant.clientId = this.config_.clientId;
+    grant.clientSecret = this.config_.clientSecret;
+    grant.packageName = this.context_.getPackageName ();
+
+    return this.service_.getBearerToken (grant);
+  }
+
   /**
    * Helper method for requesting an access token.
    *
    * @param grantType     JsonGrant object
    */
-  private Call <JsonBearerToken> getToken (JsonGrant grantType)
+  private Promise<JsonBearerToken> getToken (JsonGrant grantType)
   {
-    grantType.clientId = this.config_.clientId;
-    grantType.clientSecret = this.config_.clientSecret;
-    grantType.packageName = this.context_.getPackageName ();
+    return new Promise<> ((settlement) -> {
+      grantType.clientId = this.config_.clientId;
+      grantType.clientSecret = this.config_.clientSecret;
+      grantType.packageName = this.context_.getPackageName ();
 
-    return this.service_.getBearerToken (grantType);
+      this.service_.getBearerToken (grantType).enqueue (new Callback<JsonBearerToken> ()
+      {
+        @Override
+        public void onResponse (Call<JsonBearerToken> call, Response<JsonBearerToken> response)
+        {
+          if (response.isSuccessful ())
+          {
+            settlement.resolve (response.body ());
+          }
+          else
+          {
+            try
+            {
+              HttpError error = getError (response.errorBody ());
+              error.setStatusCode (response.code ());
+
+              settlement.reject (error);
+            }
+            catch (IOException e)
+            {
+              settlement.reject (e);
+            }
+          }
+        }
+
+        @Override
+        public void onFailure (Call<JsonBearerToken> call, Throwable t)
+        {
+          settlement.reject (t);
+        }
+      });
+    });
+  }
+
+  /**
+   * Get the HttpError from the ResponseBody.
+   *
+   * @param errorBody
+   * @return
+   * @throws IOException
+   */
+  public HttpError getError (ResponseBody errorBody)
+      throws IOException
+  {
+    Resource resource = this.resourceConverter_.convert (errorBody);
+    return resource.get ("errors");
   }
 
   private interface Service

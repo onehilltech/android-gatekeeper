@@ -1,9 +1,3 @@
 <resources>
     <string name="app_name">Standard Gatekeeper</string>
-
-    <string name="gatekeeper_baseuri">https://10.0.2.2:8080/gatekeeper</string>
-    <string name="gatekeeper_client_id">client_id</string>
-    <string name="gatekeeper_client_secret">client_secret</string>
-
-    <string name="facebook_app_id">1789065207983520</string>
 </resources>

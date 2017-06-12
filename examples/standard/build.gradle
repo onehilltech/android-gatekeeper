@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
 
 group   = project.property('build.group')
 version = project.property('build.version')
@@ -32,19 +33,20 @@ android {
     productFlavors {
         // This product flavor allows us to have a custom configuration for running
         // on the emulator.
-        emulator {
+        development {
 
         }
 
         // This product flavor allows us to have a custom configuration for running
         // on a real mobile device.
-        device {
+        production {
 
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     lintOptions {

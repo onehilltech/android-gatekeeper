@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'me.tatarka.retrolambda'
 
 apt {
     arguments {
@@ -39,7 +40,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     lintOptions {
@@ -63,7 +65,6 @@ android {
 dependencies {
     apt "com.github.Raizlabs.DBFlow:dbflow-processor:3.1.1"
 
-    compile 'com.github.onehilltech:android-design:-SNAPSHOT'
     compile 'com.github.onehilltech:android-metadata:1.5.2'
     compile 'com.github.onehilltech.backbone:backbone-android:-SNAPSHOT'
     compile 'com.github.onehilltech.backbone:backbone-http-retrofit-gson:-SNAPSHOT'
@@ -73,10 +74,10 @@ dependencies {
 
     compile 'com.rengwuxian.materialedittext:library:2.1.4'
 
-    compile 'com.android.support:appcompat-v7:25.3.0'
-    compile 'com.android.support:support-v4:25.3.0'
-    compile 'com.android.support:design:25.3.0'
-    compile 'com.android.support:cardview-v7:25.3.0'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:cardview-v7:25.3.1'
 
     compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.21'
 

@@ -1,0 +1,5 @@
+<resources>
+    <string name="gatekeeper_baseuri">http://10.0.2.2:8080/</string>
+    <string name="gatekeeper_client_id">593dc15c33812acb3a46ff30</string>
+    <string name="gatekeeper_client_secret">gatekeeper-android-demo</string>
+</resources>

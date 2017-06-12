@@ -5,21 +5,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.InputType;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 import okhttp3.OkHttpClient;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 
 public class GatekeeperCreateAccountFragment extends Fragment
@@ -293,24 +288,10 @@ public class GatekeeperCreateAccountFragment extends Fragment
     String password = this.getPassword ();
     String email = this.getEmail ();
 
-    this.session_.createAccount (username, password, email, true, new Callback<Resource> ()
-    {
-      @Override
-      public void onResponse (Call<Resource> call, Response<Resource> response)
-      {
-        if (response.isSuccessful ())
-        {
-          JsonAccount account = response.body ().get ("account");
-          listener_.onAccountCreated (GatekeeperCreateAccountFragment.this, account);
-        }
-      }
-
-      @Override
-      public void onFailure (Call<Resource> call, Throwable t)
-      {
-        listener_.onError (GatekeeperCreateAccountFragment.this, t);
-      }
-    });
+    this.session_
+        .createAccount (username, password, email, true)
+        .then ((value, cont) -> this.listener_.onAccountCreated (this, value),
+               reason -> this.listener_.onError (this, reason));
   }
 
   /**
