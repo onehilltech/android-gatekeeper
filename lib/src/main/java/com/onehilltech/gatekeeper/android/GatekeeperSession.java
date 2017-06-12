@@ -8,7 +8,7 @@ import android.content.SharedPreferences;
  *
  * Session information about the current user.
  */
-class GatekeeperSession
+public class GatekeeperSession
 {
   private static final String PREFS_FILE = "gatekeeper_session.info";
 
