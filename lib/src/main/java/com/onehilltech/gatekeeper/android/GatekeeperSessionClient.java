@@ -103,8 +103,6 @@ public class GatekeeperSessionClient
      * @param client        Session client
      */
     void onSignedIn (GatekeeperSessionClient client);
-    void onSignInFailed (GatekeeperSessionClient client, Throwable reason);
-    void onSignInFailed (GatekeeperSessionClient client, HttpError reason);
 
     /**
      * The client has signed out.
