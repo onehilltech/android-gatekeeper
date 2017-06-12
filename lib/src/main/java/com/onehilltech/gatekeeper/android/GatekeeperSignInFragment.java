@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.onehilltech.backbone.app.RejectedOnUIThread;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
 /**
@@ -227,8 +228,8 @@ public class GatekeeperSignInFragment extends Fragment
 
       this.sessionClient_
           .signIn (username, password)
-          .then ((value, cont) -> loginFragmentListener_.onSignInComplete (this),
-                 reason -> showErrorMessage (reason.getLocalizedMessage ()));
+          .then ((value, cont) -> loginFragmentListener_.onSignInComplete (this))
+          ._catch (new RejectedOnUIThread (reason -> showErrorMessage (reason.getLocalizedMessage ())));
     });
 
     TextView title = view.findViewById (R.id.title);
