@@ -473,6 +473,12 @@ public class GatekeeperSessionClient
     this.userToken_ = null;
   }
 
+  public HttpError getError (ResponseBody errorBody)
+      throws IOException
+  {
+    return this.client_.getError (errorBody);
+  }
+
   /**
    * Sign in a user.
    *
