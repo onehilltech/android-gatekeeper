@@ -467,6 +467,9 @@ public class GatekeeperSessionClient
     if (this.userToken_ == null)
       return;
 
+    // Delete the current session information.
+    GatekeeperSession.get (this.context_).edit ().delete ();
+
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
     this.userToken_.delete ();
