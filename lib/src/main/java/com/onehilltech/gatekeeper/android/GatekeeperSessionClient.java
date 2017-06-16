@@ -809,27 +809,29 @@ public class GatekeeperSessionClient
   /**
    * Interceptor that add the client token as the Authorization header to the request.
    */
-  private final Interceptor clientAuthorizationHeader_ = new Interceptor ()
-  {
-    @Override
-    public Response intercept (Chain chain) throws IOException
+  private final Interceptor clientAuthorizationHeader_ = (chain)-> {
+    okhttp3.Request original = chain.request ();
+    Request.Builder builder = original.newBuilder ();
+
+    if (userAgent_ != null)
+      builder.header ("User-Agent", userAgent_);
+
+    if (clientToken_ != null)
     {
       String authorization = "Bearer " + clientToken_.accessToken;
-      okhttp3.Request original = chain.request ();
-      Request.Builder builder = original.newBuilder ();
-
-      if (userAgent_ != null)
-        builder.header ("User-Agent", userAgent_);
-
-      builder.header ("Authorization", authorization)
-             .method (original.method (), original.body ())
-             .build ();
-
-      return chain.proceed (builder.build ());
+      builder.header ("Authorization", authorization);
     }
+
+    builder.method (original.method (), original.body ())
+           .build ();
+
+    return chain.proceed (builder.build ());
   };
 
-
+  /**
+   * Interceptor that handles special cases for a response, such a refreshing
+   * the token or for ending a session.
+   */
   private final Interceptor responseInterceptor_ = new Interceptor ()
   {
     @Override
