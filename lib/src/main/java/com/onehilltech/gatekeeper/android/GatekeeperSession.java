@@ -66,15 +66,31 @@ public class GatekeeperSession
     }
   }
 
+  @Deprecated
+  public static GatekeeperSession get (Context context)
+  {
+    return new GatekeeperSession (context.getSharedPreferences (PREFS_FILE, Context.MODE_PRIVATE));
+  }
+
   /**
-   * Get the current GatekeeperSession details.
+   * Get details about the current session.
    *
    * @param context
    * @return
    */
-  public static GatekeeperSession get (Context context)
+  public static GatekeeperSession getCurrent (Context context)
   {
     return new GatekeeperSession (context.getSharedPreferences (PREFS_FILE, Context.MODE_PRIVATE));
+  }
+
+  /**
+   * Test if the current session is valid.
+   *
+   * @return
+   */
+  public boolean isValid ()
+  {
+    return this.prefs_.contains (PREF_USER_ID);
   }
 
   public String getUsername ()
