@@ -291,7 +291,7 @@ public class GatekeeperCreateAccountFragment extends Fragment
     this.session_
         .createAccount (username, password, email, true)
         .then ((value, cont) -> this.listener_.onAccountCreated (this, value),
-               reason -> this.listener_.onError (this, reason));
+               (reason, cont) -> this.listener_.onError (this, reason));
   }
 
   /**

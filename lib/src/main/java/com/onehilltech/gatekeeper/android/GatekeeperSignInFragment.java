@@ -229,7 +229,7 @@ public class GatekeeperSignInFragment extends Fragment
       this.sessionClient_
           .signIn (username, password)
           .then ((value, cont) -> loginFragmentListener_.onSignInComplete (this))
-          ._catch (new RejectedOnUIThread (reason -> showErrorMessage (reason.getLocalizedMessage ())));
+          ._catch (new RejectedOnUIThread ((reason, cont) -> showErrorMessage (reason.getLocalizedMessage ())));
     });
 
     TextView title = view.findViewById (R.id.title);

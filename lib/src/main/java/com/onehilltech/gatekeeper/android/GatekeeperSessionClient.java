@@ -455,7 +455,7 @@ public class GatekeeperSessionClient
                     this.userToken_.update ();
 
                     settlement.resolve (null);
-                  }, reason -> settlement.reject (reason));
+                  }, (reason, cont) -> settlement.reject (reason));
     });
   }
 
@@ -468,7 +468,7 @@ public class GatekeeperSessionClient
       return;
 
     // Delete the current session information.
-    GatekeeperSession.get (this.context_).edit ().delete ();
+    GatekeeperSession.getCurrent (this.context_).edit ().delete ();
 
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
@@ -501,7 +501,7 @@ public class GatekeeperSessionClient
           .getUserToken (username, password)
           .then (completeSignIn)
           .then ((value, cont) -> settlement.resolve (null),
-                 reason -> settlement.reject (reason));
+                 (reason, cont) -> settlement.reject (reason));
     });
   }
 
@@ -542,7 +542,7 @@ public class GatekeeperSessionClient
             this.userToken_.save ();
 
             settlement.resolve (null);
-          }, reason -> settlement.reject (reason));
+          }, (reason, cont) -> settlement.reject (reason));
     });
   }
 
@@ -666,7 +666,7 @@ public class GatekeeperSessionClient
       this.client_.getClientToken ()
                   .then (saveTokenAndCreateAccount)
                   .then ((r, cont) -> settlement.resolve (r.get ("account")),
-                         reason -> settlement.reject (reason));
+                         (reason, cont) -> settlement.reject (reason));
     });
   }
 
@@ -703,7 +703,7 @@ public class GatekeeperSessionClient
 
         this.completeSignIn (username, userToken)
             .then ((value, c) -> settlement.resolve (account),
-                   reason -> settlement.reject (reason));
+                   (reason, c) -> settlement.reject (reason));
       };
 
       this.client_.getClientToken ()
