@@ -769,16 +769,16 @@ public class GatekeeperSessionClient
     @Override
     public Response intercept (Chain chain) throws IOException
     {
-      String authorization = "Bearer " + userToken_.accessToken;
       okhttp3.Request original = chain.request ();
       okhttp3.Request.Builder builder = original.newBuilder ();
+
+      if (userToken_ != null)
+        builder.header ("Authorization", "Bearer " + userToken_.accessToken);
 
       if (userAgent_ != null)
         builder.header ("User-Agent", userAgent_);
 
-      builder.header ("Authorization", authorization)
-             .method (original.method (), original.body ())
-             .build ();
+      builder.method (original.method (), original.body ());
 
       return chain.proceed (builder.build ());
     }
