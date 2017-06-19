@@ -825,10 +825,7 @@ public class GatekeeperSessionClient
       builder.header ("User-Agent", userAgent_);
 
     if (clientToken_ != null)
-    {
-      String authorization = "Bearer " + clientToken_.accessToken;
-      builder.header ("Authorization", authorization);
-    }
+      builder.header ("Authorization", "Bearer " + clientToken_.accessToken);
 
     builder.method (original.method (), original.body ())
            .build ();
