@@ -16,6 +16,9 @@ import com.rengwuxian.materialedittext.MaterialEditText;
 
 import okhttp3.OkHttpClient;
 
+import static com.onehilltech.backbone.app.Promise.rejected;
+import static com.onehilltech.backbone.app.Promise.resolved;
+
 
 public class GatekeeperCreateAccountFragment extends Fragment
 {
@@ -290,8 +293,8 @@ public class GatekeeperCreateAccountFragment extends Fragment
 
     this.session_
         .createAccount (username, password, email, true)
-        .then ((value, cont) -> this.listener_.onAccountCreated (this, value),
-               (reason, cont) -> this.listener_.onError (this, reason));
+        .then (resolved (value -> this.listener_.onAccountCreated (this, value)))
+        ._catch (rejected (reason -> this.listener_.onError (this, reason)));
   }
 
   /**

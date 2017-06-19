@@ -12,6 +12,8 @@ import com.onehilltech.gatekeeper.android.GatekeeperSession;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;
 
+import static com.onehilltech.backbone.app.Promise.resolved;
+
 public class MainActivity extends AppCompatActivity
   implements GatekeeperSessionClient.Listener
 {
@@ -52,7 +54,7 @@ public class MainActivity extends AppCompatActivity
 
     this.btnSignOut_.setOnClickListener (
         v -> this.session_.signOut ()
-                          .then ((value, cont) -> this.session_.ensureSignedIn (this, GatekeeperSignInActivity.class)));
+                          .then (resolved (value -> this.session_.ensureSignedIn (this, GatekeeperSignInActivity.class))));
 
     if (this.session_.isSignedIn ())
       this.whoami_.setText (GatekeeperSession.get (this).getUsername ());

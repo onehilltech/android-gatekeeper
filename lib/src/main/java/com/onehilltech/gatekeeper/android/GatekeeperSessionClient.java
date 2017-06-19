@@ -45,6 +45,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
+import static com.onehilltech.backbone.app.Promise.rejected;
+import static com.onehilltech.backbone.app.Promise.resolved;
+
 /**
  * @class GatekeeperSessionClient
  */
@@ -445,9 +448,9 @@ public class GatekeeperSessionClient
     if (!this.isSignedIn ())
       return Promise.reject (new IllegalStateException ("User must be signed in to refresh token"));
 
-    return new Promise<> (settlement -> {
+    return new Promise<> (settlement ->
       this.client_.refreshToken (this.userToken_.refreshToken)
-                  .then ((token, cont) -> {
+                  .then (resolved (token -> {
                     // The token was refreshed. Let's save the token, and then resolve this
                     // promise so the client can continue on.
                     this.userToken_.accessToken = token.accessToken;
@@ -455,8 +458,9 @@ public class GatekeeperSessionClient
                     this.userToken_.update ();
 
                     settlement.resolve (null);
-                  }, (reason, cont) -> settlement.reject (reason));
-    });
+                  }))
+                  ._catch (rejected (settlement::reject))
+    );
   }
 
   /**
@@ -493,16 +497,13 @@ public class GatekeeperSessionClient
     if (this.isSignedIn ())
       return Promise.reject (new IllegalStateException ("User is already signed in"));
 
-    return new Promise<> (settlement -> {
-      final Promise.OnResolved <JsonBearerToken, Void> completeSignIn =
-          (token, cont) -> cont.with (this.completeSignIn (username, token));
-
+    return new Promise<> (settlement ->
       this.client_
           .getUserToken (username, password)
-          .then (completeSignIn)
-          .then ((value, cont) -> settlement.resolve (null),
-                 (reason, cont) -> settlement.reject (reason));
-    });
+          .then (token -> this.completeSignIn (username, token))
+          .then (resolved (value -> settlement.resolve (null)))
+          ._catch (rejected (settlement::reject))
+    );
   }
 
   /**
@@ -524,14 +525,14 @@ public class GatekeeperSessionClient
       this.logger_.info ("Requesting my account information");
 
       this.getMyAccount ()
-          .then ((r, cont)-> {
+          .then (resolved (r -> {
             // Update the session information, and save the user token. At this point, we
             // are done with the login process and can return control to the client.
             this.logger_.info ("Saving session info");
 
             JsonAccount account = r.get ("account");
 
-            GatekeeperSession session = GatekeeperSession.get (this.context_);
+            GatekeeperSession session = GatekeeperSession.getCurrent (this.context_);
 
             session.edit ()
                    .setUsername (account.username)
@@ -542,7 +543,8 @@ public class GatekeeperSessionClient
             this.userToken_.save ();
 
             settlement.resolve (null);
-          }, (reason, cont) -> settlement.reject (reason));
+          }))
+          ._catch (rejected (settlement::reject));
     });
   }
 
@@ -649,25 +651,23 @@ public class GatekeeperSessionClient
    */
   public Promise<JsonAccount> createAccount (String username, String password, String email)
   {
-    return new Promise<> (settlement -> {
-      final Promise.OnResolved<JsonBearerToken, Resource> saveTokenAndCreateAccount = (token, cont) -> {
-        this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
-        this.clientToken_.save ();
-
-        // Make a call to create the account.
-        JsonAccount account = new JsonAccount ();
-        account.username = username;
-        account.password = password;
-        account.email = email;
-
-        cont.with (this.getCreateAccountEndpoint ().create (account));
-      };
-
+    return new Promise<> (settlement ->
       this.client_.getClientToken ()
-                  .then (saveTokenAndCreateAccount)
-                  .then ((r, cont) -> settlement.resolve (r.get ("account")),
-                         (reason, cont) -> settlement.reject (reason));
-    });
+                  .then (token -> {
+                    this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
+                    this.clientToken_.save ();
+
+                    // Make a call to create the account.
+                    JsonAccount account = new JsonAccount ();
+                    account.username = username;
+                    account.password = password;
+                    account.email = email;
+
+                    return this.getCreateAccountEndpoint ().create (account);
+                  })
+                  .then (resolved (r -> settlement.resolve (r.get ("account"))))
+                  ._catch (rejected (settlement::reject))
+    );
   }
 
   /**
@@ -680,36 +680,36 @@ public class GatekeeperSessionClient
    */
   public Promise <JsonAccount> createAccount (String username, String password, String email, boolean autoSignIn)
   {
-    return new Promise<> (settlement -> {
-      final Promise.OnResolved<JsonBearerToken, Resource> saveTokenAndCreateAccount = (token, cont) -> {
-        this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
-        this.clientToken_.save ();
-
-        // Make a call to create the account.
-        JsonAccount account = new JsonAccount ();
-        account.username = username;
-        account.password = password;
-        account.email = email;
-
-        HashMap <String, Object> options = new HashMap<> ();
-        options.put ("login", autoSignIn);
-
-        cont.with (this.getCreateAccountEndpoint ().create (account, options));
-      };
-
-      final Promise.OnResolved<Resource, Void> completeSignIn = (r, cont) -> {
-        JsonAccount account = r.get ("account");
-        JsonBearerToken userToken = r.get ("token");
-
-        this.completeSignIn (username, userToken)
-            .then ((value, c) -> settlement.resolve (account),
-                   (reason, c) -> settlement.reject (reason));
-      };
-
+    return new Promise<> (settlement ->
       this.client_.getClientToken ()
-                  .then (saveTokenAndCreateAccount)
-                  .then (completeSignIn);
-    });
+                  .then (token -> {
+                    // Use the client token to create a new account. We are going to login
+                    // with the newly created account.
+                    this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
+                    this.clientToken_.save ();
+
+                    // Make a call to create the account.
+                    JsonAccount account = new JsonAccount ();
+                    account.username = username;
+                    account.password = password;
+                    account.email = email;
+
+                    HashMap <String, Object> options = new HashMap<> ();
+                    options.put ("login", autoSignIn);
+
+                    return this.getCreateAccountEndpoint ().create (account, options);
+                  })
+                  .then (resolved (r -> {
+                    // Complete the sign in process.
+                    JsonAccount account = r.get ("account");
+                    JsonBearerToken userToken = r.get ("token");
+
+                    this.completeSignIn (username, userToken)
+                        .then (resolved (value -> settlement.resolve (account)))
+                        ._catch (rejected (settlement::reject));
+                  }))
+                  ._catch (rejected (settlement::reject))
+    );
   }
 
   private ResourceEndpoint <JsonAccount> getCreateAccountEndpoint ()
@@ -792,12 +792,20 @@ public class GatekeeperSessionClient
           this.client_.refreshTokenSync (this.userToken_.refreshToken)
                       .execute ();
 
-      JsonBearerToken token = response.body ();
-      this.userToken_.accessToken = token.accessToken;
-      this.userToken_.refreshToken = token.refreshToken;
-      this.userToken_.save ();
+      if (response.isSuccessful ())
+      {
+        JsonBearerToken token = response.body ();
 
-      return true;
+        this.userToken_.accessToken = token.accessToken;
+        this.userToken_.refreshToken = token.refreshToken;
+        this.userToken_.save ();
+
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     catch (IOException e)
     {
