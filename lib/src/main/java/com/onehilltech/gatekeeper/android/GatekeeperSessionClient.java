@@ -739,6 +739,7 @@ public class GatekeeperSessionClient
   // parties when a user is signed in and when a user is signed out.
   private static final int MSG_ON_LOGIN = 0;
   private static final int MSG_ON_LOGOUT = 1;
+  private static final int MSG_ON_REAUTHENTICATE = 2;
 
   private final Handler uiHandler_ = new Handler (Looper.getMainLooper ()) {
     @Override
@@ -749,13 +750,17 @@ public class GatekeeperSessionClient
         case MSG_ON_LOGIN:
           if (listener_ != null)
             listener_.onSignedIn (GatekeeperSessionClient.this);
-
           break;
 
         case MSG_ON_LOGOUT:
           if (listener_ != null)
             listener_.onSignedOut (GatekeeperSessionClient.this);
+          break;
 
+        case MSG_ON_REAUTHENTICATE:
+          HttpError httpError = (HttpError)msg.obj;
+          if (listener_ != null)
+            listener_.onReauthenticate (GatekeeperSessionClient.this, httpError);
           break;
       }
     }
@@ -880,8 +885,8 @@ public class GatekeeperSessionClient
         {
           // Notify the client to authenticate. This is optional. If the client
           // does not authenticate, then all calls will continue to fail.
-          if (listener_ != null)
-            listener_.onReauthenticate (GatekeeperSessionClient.this, error);
+          Message msg = uiHandler_.obtainMessage (MSG_ON_REAUTHENTICATE, error);
+          msg.sendToTarget ();
         }
       }
 
