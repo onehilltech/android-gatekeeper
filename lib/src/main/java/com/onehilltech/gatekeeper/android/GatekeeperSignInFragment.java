@@ -14,9 +14,9 @@ import android.widget.TextView;
 
 import com.rengwuxian.materialedittext.MaterialEditText;
 
-import static com.onehilltech.backbone.app.Promise.rejected;
-import static com.onehilltech.backbone.app.Promise.resolved;
-import static com.onehilltech.backbone.app.RejectedOnUIThread.rejectOnUiThread;
+import static com.onehilltech.promises.Promise.rejected;
+import static com.onehilltech.promises.Promise.resolved;
+import static com.onehilltech.promises.RejectedOnUIThread.onUiThread;
 
 /**
  * @class GatekeeperSignInFragment
@@ -232,7 +232,7 @@ public class GatekeeperSignInFragment extends Fragment
       this.sessionClient_
           .signIn (username, password)
           .then (resolved (value -> loginFragmentListener_.onSignInComplete (this)))
-          ._catch (rejectOnUiThread (rejected (reason -> showErrorMessage (reason.getLocalizedMessage ()))));
+          ._catch (onUiThread (rejected (reason -> showErrorMessage (reason.getLocalizedMessage ()))));
     });
 
     TextView title = view.findViewById (R.id.title);

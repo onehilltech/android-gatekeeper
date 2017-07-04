@@ -16,8 +16,8 @@ import com.rengwuxian.materialedittext.MaterialEditText;
 
 import okhttp3.OkHttpClient;
 
-import static com.onehilltech.backbone.app.Promise.rejected;
-import static com.onehilltech.backbone.app.Promise.resolved;
+import static com.onehilltech.promises.Promise.rejected;
+import static com.onehilltech.promises.Promise.resolved;
 
 
 public class GatekeeperCreateAccountFragment extends Fragment

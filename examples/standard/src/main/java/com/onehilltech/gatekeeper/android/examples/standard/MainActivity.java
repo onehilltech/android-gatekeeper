@@ -12,7 +12,7 @@ import com.onehilltech.gatekeeper.android.GatekeeperSession;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;
 
-import static com.onehilltech.backbone.app.Promise.resolved;
+import static com.onehilltech.promises.Promise.resolved;
 
 public class MainActivity extends AppCompatActivity
   implements GatekeeperSessionClient.Listener

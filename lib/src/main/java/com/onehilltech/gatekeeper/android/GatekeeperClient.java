@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
-import com.onehilltech.backbone.app.Promise;
 import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.backbone.http.retrofit.gson.GsonResourceMarshaller;
@@ -17,6 +16,7 @@ import com.onehilltech.gatekeeper.android.http.JsonPassword;
 import com.onehilltech.gatekeeper.android.http.JsonRefreshToken;
 import com.onehilltech.metadata.ManifestMetadata;
 import com.onehilltech.metadata.MetadataProperty;
+import com.onehilltech.promises.Promise;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;

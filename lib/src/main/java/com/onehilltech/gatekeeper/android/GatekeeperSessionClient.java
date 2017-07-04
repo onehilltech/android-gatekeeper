@@ -8,7 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.google.gson.reflect.TypeToken;
-import com.onehilltech.backbone.app.Promise;
+import com.onehilltech.promises.Promise;
 import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.backbone.http.retrofit.ResourceEndpoint;
@@ -45,8 +45,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
-import static com.onehilltech.backbone.app.Promise.rejected;
-import static com.onehilltech.backbone.app.Promise.resolved;
+import static com.onehilltech.promises.Promise.rejected;
+import static com.onehilltech.promises.Promise.resolved;
 
 /**
  * @class GatekeeperSessionClient
