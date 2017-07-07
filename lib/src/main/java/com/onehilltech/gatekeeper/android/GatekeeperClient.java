@@ -6,9 +6,9 @@ import android.content.pm.PackageManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import com.onehilltech.backbone.data.ResourceSerializer;
 import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
-import com.onehilltech.backbone.http.retrofit.gson.GsonResourceMarshaller;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.http.JsonClientCredentials;
 import com.onehilltech.gatekeeper.android.http.JsonGrant;
@@ -169,15 +169,15 @@ public class GatekeeperClient
                                  .registerSubtype (JsonRefreshToken.class, "refresh_token");
 
     // Initialize the Retrofit.
-    GsonResourceMarshaller marshaller = new GsonResourceMarshaller ();
+    ResourceSerializer serializer = new ResourceSerializer.Builder ().build ();
 
     this.gson_ =
         new GsonBuilder ()
-            .registerTypeAdapter (Resource.class, marshaller)
+            .registerTypeAdapter (Resource.class, serializer)
             .registerTypeAdapterFactory (grantTypes)
             .create ();
 
-    marshaller.setGson (this.gson_);
+    serializer.setGson (this.gson_);
 
     this.retrofit_ =
         new Retrofit.Builder ()
