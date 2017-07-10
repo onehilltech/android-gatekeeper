@@ -7,9 +7,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
-import com.onehilltech.backbone.data.ArrayAdapter;
-import com.onehilltech.backbone.data.ElementAdapterManager;
-import com.onehilltech.backbone.data.ObjectAdapter;
 import com.onehilltech.backbone.data.ResourceEndpoint;
 import com.onehilltech.backbone.http.HttpError;
 import com.onehilltech.backbone.http.Resource;
@@ -905,12 +902,6 @@ public class GatekeeperSessionClient
 
   static
   {
-    ElementAdapterManager.getInstance ().registerType ("account", new ObjectAdapter (JsonAccount.class));
-    ElementAdapterManager.getInstance ().registerType ("accounts", new ArrayAdapter (JsonAccount.class));
-    ElementAdapterManager.getInstance ().registerType ("change-password", new ObjectAdapter (JsonChangePassword.class));
-    ElementAdapterManager.getInstance ().registerType ("token", new ObjectAdapter (JsonBearerToken.class));
-    ElementAdapterManager.getInstance ().registerType ("errors", new ObjectAdapter (HttpError.class));
-
     REAUTHENTICATE_ERROR_CODES.add ("unknown_token");
     REAUTHENTICATE_ERROR_CODES.add ("invalid_token");
     REAUTHENTICATE_ERROR_CODES.add ("token_disabled");
