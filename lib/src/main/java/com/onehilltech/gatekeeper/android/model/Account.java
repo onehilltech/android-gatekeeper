@@ -7,7 +7,7 @@ import com.raizlabs.android.dbflow.annotation.Table;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 
 @ModelContainer
-@Table (database=GatekeeperDatabase.class, name="account")
+@Table (database=GatekeeperDatabase.class, name="accounts")
 public class Account extends BaseModel
 {
   @PrimaryKey

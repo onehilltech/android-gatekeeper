@@ -5,7 +5,7 @@ import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 
-@Table(database=GatekeeperDatabase.class, name="client_token")
+@Table(database=GatekeeperDatabase.class, name="client_tokens")
 public class ClientToken extends AccessToken
 {
   /// Client id.

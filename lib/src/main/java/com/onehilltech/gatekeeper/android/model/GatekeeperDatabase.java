@@ -8,6 +8,6 @@ import com.raizlabs.android.dbflow.annotation.Database;
     generatedClassSeparator="$")
 public class GatekeeperDatabase
 {
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
   public static final String DATABASE_NAME = "gatekeeper";
 }
