@@ -10,15 +10,19 @@ import java.util.Arrays;
 @Table(database=GatekeeperDatabase.class, name="user_tokens")
 public class UserToken extends AccessToken
 {
-  /// Client id.
-  @Column(name="username")
   @PrimaryKey
   public String username;
 
-  /// Access token for the client.
   @Column(name="refresh_token")
   public String refreshToken;
 
+  /**
+   * Create a User token from a token.
+   *
+   * @param username
+   * @param token
+   * @return
+   */
   public static UserToken fromToken (String username, JsonBearerToken token)
   {
     return new UserToken (username, token.accessToken, token.refreshToken);

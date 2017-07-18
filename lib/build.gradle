@@ -22,7 +22,7 @@ android {
         versionCode = project.property('build.versionCode').toInteger()
         versionName = project.property('build.version')
 
-        testApplicationId project.property('android.testApplicationId')
+        testApplicationId "com.onehilltech.gatekeeper.android.test"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled  true
@@ -63,11 +63,11 @@ android {
 }
 
 dependencies {
-    apt "com.github.Raizlabs.DBFlow:dbflow-processor:3.1.1"
+    apt "com.github.Raizlabs.DBFlow:dbflow-processor:4.0.4"
 
     compile 'com.github.onehilltech:android-metadata:1.5.2'
-    compile 'com.github.onehilltech.backbone:backbone-android:-SNAPSHOT'
-    compile 'com.github.onehilltech.backbone:backbone-data:-SNAPSHOT'
+    compile 'com.github.onehilltech.backbone:backbone-android:0.3.1'
+    compile 'com.github.onehilltech.backbone:backbone-data:0.3.1'
 
     compile 'org.danilopianini:gson-extras:0.1.0'
     compile 'org.apache.commons:commons-lang3:3.0'

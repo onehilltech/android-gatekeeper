@@ -1,5 +1,7 @@
 package com.onehilltech.gatekeeper.android.model;
 
+import com.onehilltech.backbone.data.serializers.ObjectIdSerializer;
+import com.onehilltech.backbone.objectid.ObjectId;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
@@ -9,13 +11,13 @@ import com.raizlabs.android.dbflow.annotation.Table;
 public class ClientToken extends AccessToken
 {
   /// Client id.
-  @Column(name="client_id")
   @PrimaryKey
-  public String clientId_;
+  @Column(name="client_id", typeConverter = ObjectIdSerializer.class)
+  public ObjectId clientId;
 
   public static ClientToken fromToken (String clientId, JsonBearerToken token)
   {
-    return new ClientToken (clientId, token.accessToken);
+    return new ClientToken (new ObjectId (clientId), token.accessToken);
   }
 
   ClientToken ()
@@ -23,21 +25,16 @@ public class ClientToken extends AccessToken
 
   }
 
-  private ClientToken (String clientId, String accessToken)
+  private ClientToken (ObjectId clientId, String accessToken)
   {
-    this.clientId_ = clientId;
+    this.clientId = clientId;
     this.accessToken = accessToken;
-  }
-
-  public String getClientId ()
-  {
-    return this.clientId_;
   }
 
   @Override
   public int hashCode ()
   {
-    return this.clientId_.hashCode ();
+    return this.clientId.hashCode ();
   }
 
   @Override
@@ -50,6 +47,6 @@ public class ClientToken extends AccessToken
       return false;
 
     ClientToken clientToken = (ClientToken)obj;
-    return clientToken.clientId_.equals (this.clientId_);
+    return clientToken.clientId.equals (this.clientId);
   }
 }

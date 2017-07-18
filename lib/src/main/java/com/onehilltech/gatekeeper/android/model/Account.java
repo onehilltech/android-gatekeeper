@@ -1,17 +1,18 @@
 package com.onehilltech.gatekeeper.android.model;
 
+import com.onehilltech.backbone.data.DataModel;
+import com.onehilltech.backbone.data.serializers.ObjectIdSerializer;
+import com.onehilltech.backbone.objectid.ObjectId;
 import com.raizlabs.android.dbflow.annotation.Column;
-import com.raizlabs.android.dbflow.annotation.ModelContainer;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
-import com.raizlabs.android.dbflow.structure.BaseModel;
 
-@ModelContainer
 @Table (database=GatekeeperDatabase.class, name="accounts")
-public class Account extends BaseModel
+public class Account extends DataModel <Account>
 {
   @PrimaryKey
-  String _id;
+  @Column(typeConverter = ObjectIdSerializer.class)
+  public ObjectId _id;
 
   @Column
   public String username;
@@ -24,13 +25,8 @@ public class Account extends BaseModel
     // required constructor
   }
 
-  public Account (String id)
+  public Account (ObjectId id)
   {
     this._id = id;
-  }
-
-  public String getId ()
-  {
-    return this._id;
   }
 }

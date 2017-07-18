@@ -17,6 +17,7 @@ import com.onehilltech.gatekeeper.android.model.ClientToken;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken$Table;
 import com.onehilltech.promises.Promise;
+import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.runtime.FlowContentObserver;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.BaseModel;
@@ -452,7 +453,9 @@ public class GatekeeperSessionClient
                     // promise so the client can continue on.
                     this.userToken_.accessToken = token.accessToken;
                     this.userToken_.refreshToken = token.refreshToken;
-                    this.userToken_.update ();
+
+                    // Update the user token in the database.
+                    FlowManager.getModelAdapter (UserToken.class).update (this.userToken_);
 
                     settlement.resolve (null);
                   }))
@@ -473,7 +476,8 @@ public class GatekeeperSessionClient
 
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
-    this.userToken_.delete ();
+    FlowManager.getModelAdapter (UserToken.class).delete (this.userToken_);
+
     this.userToken_ = null;
   }
 
@@ -537,7 +541,7 @@ public class GatekeeperSessionClient
                    .commit ();
 
             // Save the user token to make the sign in complete.
-            this.userToken_.save ();
+            FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
             settlement.resolve (null);
           }))
@@ -652,7 +656,7 @@ public class GatekeeperSessionClient
       this.client_.getClientToken ()
                   .then (token -> {
                     this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
-                    this.clientToken_.save ();
+                    FlowManager.getModelAdapter (ClientToken.class).save (this.clientToken_);
 
                     // Make a call to create the account.
                     JsonAccount account = new JsonAccount ();
@@ -683,7 +687,7 @@ public class GatekeeperSessionClient
                     // Use the client token to create a new account. We are going to login
                     // with the newly created account.
                     this.clientToken_ = ClientToken.fromToken (this.client_.getClientId (), token);
-                    this.clientToken_.save ();
+                    FlowManager.getModelAdapter (ClientToken.class).save (this.clientToken_);
 
                     // Make a call to create the account.
                     JsonAccount account = new JsonAccount ();
@@ -786,7 +790,7 @@ public class GatekeeperSessionClient
     }
   };
 
-  boolean refreshTokenSync ()
+  private boolean refreshTokenSync ()
   {
     try
     {
@@ -800,7 +804,7 @@ public class GatekeeperSessionClient
 
         this.userToken_.accessToken = token.accessToken;
         this.userToken_.refreshToken = token.refreshToken;
-        this.userToken_.save ();
+        FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
         return true;
       }
