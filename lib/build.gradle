@@ -66,8 +66,8 @@ dependencies {
     apt "com.github.Raizlabs.DBFlow:dbflow-processor:4.0.4"
 
     compile 'com.onehilltech:android-metadata:1.5.2'
-    compile 'com.onehilltech.backbone:backbone-android:0.7.20'
-    compile 'com.onehilltech.backbone:backbone-data:0.7.20'
+    compile 'com.onehilltech.backbone:backbone-android:0.7.21'
+    compile 'com.onehilltech.backbone:backbone-data:0.7.21'
 
     compile 'org.danilopianini:gson-extras:0.1.0'
     compile 'org.apache.commons:commons-lang3:3.0'
