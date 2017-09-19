@@ -13,7 +13,9 @@ import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.http.JsonChangePassword;
+import com.onehilltech.gatekeeper.android.model.Account;
 import com.onehilltech.gatekeeper.android.model.ClientToken;
+import com.onehilltech.gatekeeper.android.model.GatekeeperStore;
 import com.onehilltech.gatekeeper.android.model.UserToken;
 import com.onehilltech.gatekeeper.android.model.UserToken$Table;
 import com.onehilltech.promises.Promise;
@@ -251,6 +253,11 @@ public class GatekeeperSessionClient
             .addConverterFactory (GsonConverterFactory.create (this.client_.getGson ()))
             .client (this.userClient_)
             .build ();
+  }
+
+  public GatekeeperClient getClient ()
+  {
+    return this.client_;
   }
 
   /**
@@ -525,27 +532,22 @@ public class GatekeeperSessionClient
       // Get information about the current user.
       this.logger_.info ("Requesting my account information");
 
-      this.getMyAccount ()
-          .then (resolved (r -> {
-            // Update the session information, and save the user token. At this point, we
-            // are done with the login process and can return control to the client.
-            this.logger_.info ("Saving session info");
+      GatekeeperStore.getInstance (this.context_)
+                     .get (Account.class, "me")
+                     .then (resolved (account -> {
+                       GatekeeperSession session = GatekeeperSession.getCurrent (this.context_);
 
-            JsonAccount account = r.get ("account");
+                       session.edit ()
+                              .setUsername (account.username)
+                              .setUserId (account._id.toString ())
+                              .commit ();
 
-            GatekeeperSession session = GatekeeperSession.getCurrent (this.context_);
+                       // Save the user token to make the sign in complete.
+                       FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
-            session.edit ()
-                   .setUsername (account.username)
-                   .setUserId (account._id)
-                   .commit ();
-
-            // Save the user token to make the sign in complete.
-            FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
-
-            settlement.resolve (null);
-          }))
-          ._catch (rejected (settlement::reject));
+                       settlement.resolve (null);
+                     }))
+                     ._catch (rejected (settlement::reject));
     });
   }
 
@@ -588,19 +590,6 @@ public class GatekeeperSessionClient
         }
       });
     });
-  }
-
-  /**
-   * Get my account information.
-   *
-   * @return
-   */
-  public Promise <Resource> getMyAccount ()
-  {
-    if (!this.isSignedIn ())
-      return Promise.reject (new IllegalStateException ("User not signed in"));
-
-    return this.getAccountsEndpoint ().get ("me");
   }
 
   /**
@@ -729,11 +718,6 @@ public class GatekeeperSessionClient
             .build ();
 
     return ResourceEndpoint.create (clientEndpoint, "account", "accounts");
-  }
-
-  private ResourceEndpoint <JsonAccount> getAccountsEndpoint ()
-  {
-    return ResourceEndpoint.create (this.userEndpoint_, "account", "accounts");
   }
 
   // The messaging handler for this client. This handlers notifies interested
