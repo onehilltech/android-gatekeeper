@@ -538,7 +538,10 @@ public class GatekeeperSessionClient
 
                        settlement.resolve (null);
                      }))
-                     ._catch (rejected (settlement::reject));
+                     ._catch (rejected (reason -> {
+                       this.userToken_ = null;
+                       settlement.reject (reason);
+                     }));
     });
   }
 
