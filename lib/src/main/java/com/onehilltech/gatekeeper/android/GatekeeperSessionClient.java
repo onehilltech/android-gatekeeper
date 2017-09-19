@@ -49,24 +49,25 @@ import static com.onehilltech.promises.Promise.rejected;
 import static com.onehilltech.promises.Promise.resolved;
 
 /**
- * @class GatekeeperSessionClient
+ * Gatekeeper client bound to a user session.
  */
 public class GatekeeperSessionClient
 {
   /**
-   * @class Builder
-   *
    * Build a GatekeeperSessionClient object.
    */
   public static final class Builder
   {
     private GatekeeperClient client_;
+
     private Context context_;
+
     private String userAgent_;
 
     public Builder (Context context)
     {
       this.context_ = context;
+
       this.client_ = new GatekeeperClient.Builder (context).build ();
     }
 
@@ -136,9 +137,9 @@ public class GatekeeperSessionClient
 
   private final FlowContentObserver userTokenObserver_ = new FlowContentObserver ();
 
-  private final Context context_;
-
   private final GatekeeperClient client_;
+
+  private final GatekeeperSession session_;
 
   private final UserMethods userMethods_;
 
@@ -164,8 +165,8 @@ public class GatekeeperSessionClient
    */
   private GatekeeperSessionClient (Context context, GatekeeperClient client)
   {
-    this.context_ = context;
     this.client_ = client;
+    this.session_ = GatekeeperSession.getCurrent (context);
 
     // Build a new HttpClient for the user session. This client is responsible for
     // adding the authentication header to each request.
@@ -260,6 +261,11 @@ public class GatekeeperSessionClient
     return this.client_;
   }
 
+  public GatekeeperSession getSession ()
+  {
+    return this.session_;
+  }
+
   /**
    * Set the User-Agent for the client.
    *
@@ -278,16 +284,6 @@ public class GatekeeperSessionClient
   public String getUserAgent ()
   {
     return this.userAgent_;
-  }
-
-  /**
-   * Get the username for the current session.
-   *
-   * @return
-   */
-  public String getUsername ()
-  {
-    return GatekeeperSession.get (this.context_).getUsername ();
   }
 
   /**
@@ -351,7 +347,7 @@ public class GatekeeperSessionClient
    */
   public boolean ensureSignedIn (Activity activity, Class <? extends Activity> signIn)
   {
-    return this.ensureSignedIn (activity, new Intent (this.context_, signIn));
+    return this.ensureSignedIn (activity, new Intent (activity, signIn));
   }
 
   /**
@@ -400,7 +396,7 @@ public class GatekeeperSessionClient
     this.completeSignOut ();
 
     signInIntent.putExtra (GatekeeperSignInActivity.ARG_REDIRECT_INTENT, activity.getIntent ());
-    this.context_.startActivity (signInIntent);
+    activity.startActivity (signInIntent);
 
     // Finish the current activity.
     activity.finish ();
@@ -420,9 +416,9 @@ public class GatekeeperSessionClient
    * Cleanup the object. This is to be called in the onDestroy() method of the
    * Context (e.g., Activity, Fragment, or Service) that created it.
    */
-  public void onDestroy ()
+  public void onDestroy (Context context)
   {
-    this.userTokenObserver_.unregisterForContentChanges (this.context_);
+    this.userTokenObserver_.unregisterForContentChanges (context);
   }
 
   /**
@@ -479,7 +475,7 @@ public class GatekeeperSessionClient
       return;
 
     // Delete the current session information.
-    GatekeeperSession.getCurrent (this.context_).edit ().delete ();
+    this.session_.edit ().delete ();
 
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
@@ -526,7 +522,6 @@ public class GatekeeperSessionClient
     return new Promise<> (settlement -> {
       // Save the user access token. We need it so we can
       this.userToken_ = UserToken.fromToken (username, jsonToken);
-      FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
       // Get information about the current user.
       this.logger_.info ("Requesting my account information");
@@ -534,12 +529,12 @@ public class GatekeeperSessionClient
       GatekeeperStore.forSession (this)
                      .get (Account.class, "me")
                      .then (resolved (account -> {
-                       GatekeeperSession session = GatekeeperSession.getCurrent (this.context_);
+                       this.session_.edit ()
+                                    .setUsername (account.username)
+                                    .setUserId (account._id.toString ())
+                                    .commit ();
 
-                       session.edit ()
-                              .setUsername (account.username)
-                              .setUserId (account._id.toString ())
-                              .commit ();
+                       FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
                        settlement.resolve (null);
                      }))
