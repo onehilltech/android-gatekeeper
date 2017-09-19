@@ -524,15 +524,14 @@ public class GatekeeperSessionClient
   private Promise <Void> completeSignIn (String username, JsonBearerToken jsonToken)
   {
     return new Promise<> (settlement -> {
-      // Store the user token, but do not save it. We do not want to save the
-      // access token until we are certain we have information about the current
-      // user stored in the session.
+      // Save the user access token. We need it so we can
       this.userToken_ = UserToken.fromToken (username, jsonToken);
+      FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
       // Get information about the current user.
       this.logger_.info ("Requesting my account information");
 
-      GatekeeperStore.getInstance (this.context_)
+      GatekeeperStore.forSession (this)
                      .get (Account.class, "me")
                      .then (resolved (account -> {
                        GatekeeperSession session = GatekeeperSession.getCurrent (this.context_);
@@ -541,9 +540,6 @@ public class GatekeeperSessionClient
                               .setUsername (account.username)
                               .setUserId (account._id.toString ())
                               .commit ();
-
-                       // Save the user token to make the sign in complete.
-                       FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
                        settlement.resolve (null);
                      }))

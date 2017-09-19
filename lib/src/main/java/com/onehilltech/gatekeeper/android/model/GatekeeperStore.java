@@ -9,6 +9,14 @@ public class GatekeeperStore
 {
   private static DataStore dataStore_;
 
+  public static DataStore forSession (GatekeeperSessionClient session)
+  {
+    return new DataStore.Builder (GatekeeperDatabase.class)
+        .setBaseUrl (session.getClient ().getBaseUrlWithVersion ())
+        .setHttpClient (session.getUserClient ())
+        .build ();
+  }
+
   public static DataStore getInstance (Context context)
   {
     if (dataStore_ != null)
