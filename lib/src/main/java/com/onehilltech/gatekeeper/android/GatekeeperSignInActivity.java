@@ -62,7 +62,7 @@ public class GatekeeperSignInActivity extends AppCompatActivity
 
       // If we're being restored from a previous state, then we don't need to do
       // anything and should return or else we could end up with overlapping fragments.
-      this.getFragmentManager ()
+      this.getSupportFragmentManager ()
           .beginTransaction ()
           .replace (R.id.container, this.onCreateFragment (savedInstanceState))
           .commit ();
