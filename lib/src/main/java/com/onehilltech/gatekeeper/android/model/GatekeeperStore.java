@@ -3,6 +3,8 @@ package com.onehilltech.gatekeeper.android.model;
 import android.content.Context;
 
 import com.onehilltech.backbone.data.DataStore;
+import com.onehilltech.backbone.data.serializers.ObjectIdSerializer;
+import com.onehilltech.backbone.objectid.ObjectId;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 
 public class GatekeeperStore
@@ -14,6 +16,7 @@ public class GatekeeperStore
     return new DataStore.Builder (GatekeeperDatabase.class)
         .setBaseUrl (session.getClient ().getBaseUrlWithVersion ())
         .setHttpClient (session.getUserClient ())
+        .addTypeAdapter (ObjectId.class, new ObjectIdSerializer ())
         .build ();
   }
 
