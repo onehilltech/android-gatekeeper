@@ -545,13 +545,18 @@ public class GatekeeperSessionClient
     });
   }
 
+  public Promise <Boolean> signOut ()
+  {
+    return this.signOut (true);
+  }
+
   /**
    * Sign out the current user
    */
-  public Promise <Boolean> signOut ()
+  public Promise <Boolean> signOut (boolean forceSignOut)
   {
     if (this.userToken_ == null)
-      return Promise.reject (new IllegalStateException ("User is already signed out"));
+      return Promise.resolve (true);
 
     return new Promise<> (settlement -> {
       this.logger_.info ("Signing out current user");
@@ -561,26 +566,34 @@ public class GatekeeperSessionClient
         @Override
         public void onResponse (Call<Boolean> call, retrofit2.Response<Boolean> response)
         {
-          // Complete the signOut process.
-          if (response.isSuccessful ())
+          if (response.isSuccessful () || forceSignOut)
           {
-            boolean result = response.body ();
+            Boolean result = response.body ();
+            boolean complete = (result != null && result) || forceSignOut;
 
-            if (result)
+            if (complete)
               completeSignOut ();
 
-            settlement.resolve (result);
+            settlement.resolve (complete);
           }
           else
           {
-            settlement.reject (new IllegalStateException ("Failed to signout user"));
+            settlement.reject (new IllegalStateException ("Failed to sign out user"));
           }
         }
 
         @Override
         public void onFailure (Call<Boolean> call, Throwable t)
         {
-          settlement.reject (t);
+          if (forceSignOut)
+          {
+            completeSignOut ();
+            settlement.resolve (true);
+          }
+          else
+          {
+            settlement.reject (t);
+          }
         }
       });
     });
