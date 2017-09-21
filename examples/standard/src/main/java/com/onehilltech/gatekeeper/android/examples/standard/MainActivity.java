@@ -7,7 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.onehilltech.backbone.http.HttpError;
+import com.onehilltech.backbone.data.HttpError;
 import com.onehilltech.gatekeeper.android.GatekeeperSession;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;

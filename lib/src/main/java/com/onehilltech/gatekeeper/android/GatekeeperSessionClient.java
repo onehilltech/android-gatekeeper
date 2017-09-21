@@ -7,9 +7,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import com.onehilltech.backbone.data.HttpError;
+import com.onehilltech.backbone.data.Resource;
 import com.onehilltech.backbone.data.ResourceEndpoint;
-import com.onehilltech.backbone.http.HttpError;
-import com.onehilltech.backbone.http.Resource;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.onehilltech.gatekeeper.android.http.JsonBearerToken;
 import com.onehilltech.gatekeeper.android.http.JsonChangePassword;
@@ -67,8 +67,6 @@ public class GatekeeperSessionClient
     public Builder (Context context)
     {
       this.context_ = context;
-
-      this.client_ = new GatekeeperClient.Builder (context).build ();
     }
 
     public Builder setGatekeeperClient (GatekeeperClient client)
@@ -85,6 +83,9 @@ public class GatekeeperSessionClient
 
     public GatekeeperSessionClient build ()
     {
+      if (this.client_ == null)
+        this.client_ = new GatekeeperClient.Builder (this.context_).build ();
+
       GatekeeperSessionClient client = new GatekeeperSessionClient (this.context_, this.client_);
 
       if (this.userAgent_ != null)
@@ -137,6 +138,8 @@ public class GatekeeperSessionClient
 
   private final FlowContentObserver userTokenObserver_ = new FlowContentObserver ();
 
+  private final Context context_;
+
   private final GatekeeperClient client_;
 
   private final GatekeeperSession session_;
@@ -165,6 +168,7 @@ public class GatekeeperSessionClient
    */
   private GatekeeperSessionClient (Context context, GatekeeperClient client)
   {
+    this.context_ = context;
     this.client_ = client;
     this.session_ = GatekeeperSession.getCurrent (context);
 
@@ -526,7 +530,7 @@ public class GatekeeperSessionClient
       // Get information about the current user.
       this.logger_.info ("Requesting my account information");
 
-      GatekeeperStore.forSession (this)
+      GatekeeperStore.forSession (this.context_, this)
                      .get (Account.class, "me")
                      .then (resolved (account -> {
                        this.session_.edit ()

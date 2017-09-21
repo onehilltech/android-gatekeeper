@@ -3,18 +3,27 @@ package com.onehilltech.gatekeeper.android.model;
 import android.content.Context;
 
 import com.onehilltech.backbone.data.DataStore;
+import com.onehilltech.backbone.data.DataStoreAdapter;
 import com.onehilltech.backbone.data.serializers.ObjectIdSerializer;
 import com.onehilltech.backbone.objectid.ObjectId;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
+
+import okhttp3.CacheControl;
 
 public class GatekeeperStore
 {
   private static DataStore dataStore_;
 
-  public static DataStore forSession (GatekeeperSessionClient session)
+  private static DataStoreAdapter dataStoreAdapter_ = request ->
+      request.url ().encodedPath ().endsWith ("/accounts/me") && request.method ().equals ("GET") ?
+          request.newBuilder ().cacheControl (CacheControl.FORCE_NETWORK).build () :
+          request;
+
+  public static DataStore forSession (Context context, GatekeeperSessionClient session)
   {
-    return new DataStore.Builder (GatekeeperDatabase.class)
+    return new DataStore.Builder (context, GatekeeperDatabase.class)
         .setBaseUrl (session.getClient ().getBaseUrlWithVersion ())
+        .setApplicationAdapter (dataStoreAdapter_)
         .setHttpClient (session.getUserClient ())
         .addTypeAdapter (ObjectId.class, new ObjectIdSerializer ())
         .build ();
@@ -26,12 +35,7 @@ public class GatekeeperStore
       return dataStore_;
 
     GatekeeperSessionClient sessionClient = new GatekeeperSessionClient.Builder (context).build ();
-
-    dataStore_ =
-        new DataStore.Builder (GatekeeperDatabase.class)
-            .setBaseUrl (sessionClient.getClient ().getBaseUrlWithVersion ())
-            .setHttpClient (sessionClient.getUserClient ())
-            .build ();
+    dataStore_ = forSession (context, sessionClient);
 
     return dataStore_;
   }
