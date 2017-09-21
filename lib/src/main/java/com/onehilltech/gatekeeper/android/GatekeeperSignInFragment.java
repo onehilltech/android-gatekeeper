@@ -34,6 +34,7 @@ public class GatekeeperSignInFragment extends Fragment
   public static final class Builder
   {
     private final Bundle args_ = new Bundle ();
+
     private GatekeeperSignInFragment signInFragment_;
 
     public Builder setTitle (String title)
@@ -123,8 +124,6 @@ public class GatekeeperSignInFragment extends Fragment
 
   private LoginFragmentListener loginFragmentListener_;
 
-  private GatekeeperSessionClient sessionClient_;
-
   private static final String ARG_TITLE = "title";
 
   private static final String ARG_USERNAME = "username";
@@ -158,27 +157,11 @@ public class GatekeeperSignInFragment extends Fragment
     // Required empty public constructor
   }
 
-  protected GatekeeperSessionClient getSessionClient ()
-  {
-    return new GatekeeperSessionClient.Builder (this.getActivity ()).build ();
-  }
-
-  @Override
-  public void onAttach (Activity activity)
-  {
-    super.onAttach (activity);
-    this.onAttachImpl (activity);
-  }
-
   @Override
   public void onAttach (Context context)
   {
     super.onAttach (context);
-    this.onAttachImpl (context);
-  }
 
-  private void onAttachImpl (Context context)
-  {
     try
     {
       this.loginFragmentListener_ = (LoginFragmentListener) context;
@@ -193,8 +176,6 @@ public class GatekeeperSignInFragment extends Fragment
   public void onCreate (@Nullable Bundle savedInstanceState)
   {
     super.onCreate (savedInstanceState);
-
-    this.sessionClient_ = this.getSessionClient ();
 
     Bundle args = this.getArguments ();
 
@@ -229,10 +210,10 @@ public class GatekeeperSignInFragment extends Fragment
       String username = this.getUsernameText ();
       String password = this.getPasswordText ();
 
-      this.sessionClient_
-          .signIn (username, password)
-          .then (resolved (value -> loginFragmentListener_.onSignInComplete (this)))
-          ._catch (onUiThread (rejected (reason -> showErrorMessage (reason.getLocalizedMessage ()))));
+      GatekeeperSessionClient.getInstance (this.getContext ())
+                             .signIn (username, password)
+                             .then (resolved (value -> loginFragmentListener_.onSignInComplete (this)))
+                             ._catch (onUiThread (rejected (reason -> showErrorMessage (reason.getLocalizedMessage ()))));
     });
 
     TextView title = view.findViewById (R.id.title);
@@ -318,15 +299,6 @@ public class GatekeeperSignInFragment extends Fragment
     super.onDetach ();
 
     this.loginFragmentListener_ = null;
-  }
-
-  @Override
-  public void onDestroy ()
-  {
-    super.onDestroy ();
-
-    if (this.sessionClient_ != null)
-      this.sessionClient_.onDestroy (this.getContext ());
   }
 
   /**

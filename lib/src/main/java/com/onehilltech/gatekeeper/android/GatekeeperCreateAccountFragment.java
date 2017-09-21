@@ -14,8 +14,6 @@ import android.widget.TextView;
 import com.onehilltech.gatekeeper.android.http.JsonAccount;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
-import okhttp3.OkHttpClient;
-
 import static com.onehilltech.promises.Promise.rejected;
 import static com.onehilltech.promises.Promise.resolved;
 
@@ -119,8 +117,6 @@ public class GatekeeperCreateAccountFragment extends Fragment
 
   private Listener listener_;
 
-  private GatekeeperSessionClient session_;
-
   private MaterialEditText username_;
 
   private MaterialEditText password_;
@@ -138,18 +134,7 @@ public class GatekeeperCreateAccountFragment extends Fragment
   public void onAttach (Context context)
   {
     super.onAttach (context);
-
     this.listener_ = (Listener) context;
-
-    GatekeeperClient gatekeeper =
-        new GatekeeperClient.Builder (context)
-            .setClient (this.getHttpClient ())
-            .build ();
-
-    this.session_ =
-        new GatekeeperSessionClient.Builder (context)
-            .setGatekeeperClient (gatekeeper)
-            .build ();
   }
 
   @Override
@@ -257,11 +242,6 @@ public class GatekeeperCreateAccountFragment extends Fragment
     this.listener_ = null;
   }
 
-  protected OkHttpClient getHttpClient ()
-  {
-    return new OkHttpClient.Builder ().build ();
-  }
-
   public String getUsername ()
   {
     return this.username_.getText ().toString ();
@@ -291,10 +271,10 @@ public class GatekeeperCreateAccountFragment extends Fragment
     String password = this.getPassword ();
     String email = this.getEmail ();
 
-    this.session_
-        .createAccount (username, password, email, true)
-        .then (resolved (value -> this.listener_.onAccountCreated (this, value)))
-        ._catch (rejected (reason -> this.listener_.onError (this, reason)));
+    GatekeeperSessionClient.getInstance (this.getContext ())
+                           .createAccount (username, password, email, true)
+                           .then (resolved (value -> this.listener_.onAccountCreated (this, value)))
+                           ._catch (rejected (reason -> this.listener_.onError (this, reason)));
   }
 
   /**

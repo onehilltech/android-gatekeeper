@@ -8,7 +8,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.onehilltech.backbone.data.HttpError;
-import com.onehilltech.gatekeeper.android.GatekeeperSession;
 import com.onehilltech.gatekeeper.android.GatekeeperSessionClient;
 import com.onehilltech.gatekeeper.android.GatekeeperSignInActivity;
 
@@ -21,20 +20,26 @@ public class MainActivity extends AppCompatActivity
 
   private TextView whoami_;
 
-  private GatekeeperSessionClient session_;
+  GatekeeperSessionClient sessionClient_;
 
   @Override
   protected void onCreate (@Nullable Bundle savedInstanceState)
   {
-
     super.onCreate (savedInstanceState);
-
     this.setContentView (R.layout.activity_main);
 
-    this.session_ = new GatekeeperSessionClient.Builder (this).build ();
-    this.session_.setListener (this);
+    this.sessionClient_ = GatekeeperSessionClient.getInstance (this);
+    this.sessionClient_.addListener (this);
 
     this.onViewCreated ();
+  }
+
+  @Override
+  protected void onDestroy ()
+  {
+    super.onDestroy ();
+
+    this.sessionClient_.removeListener (this);
   }
 
   @Override
@@ -42,22 +47,23 @@ public class MainActivity extends AppCompatActivity
   {
     super.onStart ();
 
-    // Make sure the user it logged in.
-    this.session_.ensureSignedIn (this, GatekeeperSignInActivity.class);
+    this.sessionClient_.ensureSignedIn (this, GatekeeperSignInActivity.class);
   }
 
   private void onViewCreated ()
   {
     this.btnSignOut_ = (Button)this.findViewById (R.id.btn_signout);
     this.whoami_ = (TextView)this.findViewById (R.id.whoami);
-    this.btnSignOut_.setEnabled (this.session_.isSignedIn ());
+    this.btnSignOut_.setEnabled (this.sessionClient_.isSignedIn ());
 
     this.btnSignOut_.setOnClickListener (
-        v -> this.session_.signOut ()
-                          .then (resolved (value -> this.session_.ensureSignedIn (this, GatekeeperSignInActivity.class))));
+        v -> this.sessionClient_.signOut ()
+                                .then (resolved (value -> {
+                                  this.sessionClient_.ensureSignedIn (this, GatekeeperSignInActivity.class);
+                                })));
 
-    if (this.session_.isSignedIn ())
-      this.whoami_.setText (GatekeeperSession.get (this).getUsername ());
+    if (this.sessionClient_.isSignedIn ())
+      this.whoami_.setText (this.sessionClient_.getSession ().getUsername ());
   }
 
   @Override
@@ -80,6 +86,6 @@ public class MainActivity extends AppCompatActivity
             .setErrorMessage (error.getMessage ())
             .build ();
 
-    this.session_.ensureSignedIn (this, intent);
+    this.sessionClient_.ensureSignedIn (this, intent);
   }
 }

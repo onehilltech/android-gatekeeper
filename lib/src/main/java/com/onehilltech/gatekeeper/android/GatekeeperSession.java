@@ -66,17 +66,10 @@ public class GatekeeperSession
     }
   }
 
-  @Deprecated
-  public static GatekeeperSession get (Context context)
-  {
-    return new GatekeeperSession (context.getSharedPreferences (PREFS_FILE, Context.MODE_PRIVATE));
-  }
-
   /**
-   * Get details about the current session.
+   * Get the current session.
    *
-   * @param context
-   * @return
+   * @return GatekeeperSession object
    */
   public static GatekeeperSession getCurrent (Context context)
   {

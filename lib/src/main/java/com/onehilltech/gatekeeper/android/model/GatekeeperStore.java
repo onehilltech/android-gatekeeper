@@ -19,23 +19,19 @@ public class GatekeeperStore
           request.newBuilder ().cacheControl (CacheControl.FORCE_NETWORK).build () :
           request;
 
-  public static DataStore forSession (Context context, GatekeeperSessionClient session)
-  {
-    return new DataStore.Builder (context, GatekeeperDatabase.class)
-        .setBaseUrl (session.getClient ().getBaseUrlWithVersion ())
-        .setApplicationAdapter (dataStoreAdapter_)
-        .setHttpClient (session.getUserClient ())
-        .addTypeAdapter (ObjectId.class, new ObjectIdSerializer ())
-        .build ();
-  }
-
   public static DataStore getInstance (Context context)
   {
     if (dataStore_ != null)
       return dataStore_;
 
-    GatekeeperSessionClient sessionClient = new GatekeeperSessionClient.Builder (context).build ();
-    dataStore_ = forSession (context, sessionClient);
+    GatekeeperSessionClient sessionClient = GatekeeperSessionClient.getInstance (context);
+
+    dataStore_ = new DataStore.Builder (context, GatekeeperDatabase.class)
+        .setBaseUrl (sessionClient.getClient ().getBaseUrlWithVersion ())
+        .setApplicationAdapter (dataStoreAdapter_)
+        .setHttpClient (sessionClient.getUserClient ())
+        .addTypeAdapter (ObjectId.class, new ObjectIdSerializer ())
+        .build ();
 
     return dataStore_;
   }

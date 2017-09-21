@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -53,48 +54,6 @@ import static com.onehilltech.promises.Promise.resolved;
  */
 public class GatekeeperSessionClient
 {
-  /**
-   * Build a GatekeeperSessionClient object.
-   */
-  public static final class Builder
-  {
-    private GatekeeperClient client_;
-
-    private Context context_;
-
-    private String userAgent_;
-
-    public Builder (Context context)
-    {
-      this.context_ = context;
-    }
-
-    public Builder setGatekeeperClient (GatekeeperClient client)
-    {
-      this.client_ = client;
-      return this;
-    }
-
-    public Builder setUserAgent (String userAgent)
-    {
-      this.userAgent_ = userAgent;
-      return this;
-    }
-
-    public GatekeeperSessionClient build ()
-    {
-      if (this.client_ == null)
-        this.client_ = new GatekeeperClient.Builder (this.context_).build ();
-
-      GatekeeperSessionClient client = new GatekeeperSessionClient (this.context_, this.client_);
-
-      if (this.userAgent_ != null)
-        client.setUserAgent (this.userAgent_);
-
-      return client;
-    }
-  }
-
   /**
    * @interface Listener
    *
@@ -124,6 +83,17 @@ public class GatekeeperSessionClient
     void onReauthenticate (GatekeeperSessionClient client, HttpError reason);
   }
 
+  public static GatekeeperSessionClient getInstance (Context context)
+  {
+    if (instance_ != null)
+      return instance_;
+
+    instance_ = new GatekeeperSessionClient (context);
+    return instance_;
+  }
+
+  private static GatekeeperSessionClient instance_;
+
   private OkHttpClient httpClient_;
 
   /// The user token for the current session.
@@ -134,11 +104,9 @@ public class GatekeeperSessionClient
 
   private Retrofit retrofit_;
 
-  private Listener listener_;
+  private final LinkedList <Listener> listeners_ = new LinkedList<> ();
 
   private final FlowContentObserver userTokenObserver_ = new FlowContentObserver ();
-
-  private final Context context_;
 
   private final GatekeeperClient client_;
 
@@ -158,52 +126,65 @@ public class GatekeeperSessionClient
 
   private static final ArrayList <String> REAUTHENTICATE_ERROR_CODES = new ArrayList<> ();
 
-  private boolean isSigningIn_ = false;
+  private final Context context_;
 
   /**
    * Initializing constructor.
    *
    * @param context         Target context
-   * @param client          GatekeeperClient object
    */
-  private GatekeeperSessionClient (Context context, GatekeeperClient client)
+  private GatekeeperSessionClient (Context context)
   {
-    this.context_ = context;
-    this.client_ = client;
+    this.context_ = context.getApplicationContext ();
+    this.client_ = new GatekeeperClient.Builder (context).build ();
     this.session_ = GatekeeperSession.getCurrent (context);
 
     // Build a new HttpClient for the user session. This client is responsible for
     // adding the authentication header to each request.
-    OkHttpClient.Builder builder = client.getHttpClient ().newBuilder ();
-    builder.addInterceptor (this.userAuthorizationHeader_);
+    OkHttpClient.Builder builder = this.client_.getHttpClient ().newBuilder ();
     builder.addInterceptor (this.responseInterceptor_);
 
     this.httpClient_ = builder.build ();
 
     // Build the Retrofit object for this client.
     this.retrofit_ = new Retrofit.Builder ()
-        .baseUrl (client.getBaseUrlWithVersion ())
-        .addConverterFactory (GsonConverterFactory.create (client.getGson ()))
+        .baseUrl (this.client_.getBaseUrlWithVersion ())
+        .addConverterFactory (GsonConverterFactory.create (this.client_.getGson ()))
         .client (this.httpClient_)
         .build ();
 
     this.resourceConverter_ = this.retrofit_.responseBodyConverter (Resource.class, new Annotation[0]);
     this.userMethods_ = this.retrofit_.create (UserMethods.class);
 
-    // Load the one and only user token from the database. We also want to
-    // observe the user token table for changes. These changes could be logging
-    // out or refreshing the user token.
-    String username = GatekeeperSession.get (context).getUsername ();
+    this.initUserToken (context);
+
+    this.userClient_ =
+        this.httpClient_.newBuilder ()
+                        .addInterceptor (this.userAuthorizationHeader_)
+                        .build ();
+
+    this.userEndpoint_ =
+        new Retrofit.Builder ()
+            .baseUrl (this.client_.getBaseUrlWithVersion ())
+            .addConverterFactory (GsonConverterFactory.create (this.client_.getGson ()))
+            .client (this.userClient_)
+            .build ();
+  }
+
+  private void initUserToken (Context context)
+  {
+    String username = GatekeeperSession.getCurrent (context).getUsername ();
 
     if (username != null)
-    {
       this.userToken_ =
           SQLite.select ()
                 .from (UserToken.class)
                 .where (UserToken$Table.username.eq (username))
                 .querySingle ();
-    }
 
+    // Load the one and only user token from the database. We also want to
+    // observe the user token table for changes. These changes could be logging
+    // out or refreshing the user token.
     this.userTokenObserver_.registerForContentChanges (context, UserToken.class);
     this.userTokenObserver_.addModelChangeListener ((table, action, primaryKeyValues) -> {
       if (action == BaseModel.Action.DELETE)
@@ -246,18 +227,6 @@ public class GatekeeperSessionClient
         }
       }
     });
-
-    this.userClient_ =
-        this.httpClient_.newBuilder ()
-                        .addInterceptor (this.userAuthorizationHeader_)
-                        .build ();
-
-    this.userEndpoint_ =
-        new Retrofit.Builder ()
-            .baseUrl (this.client_.getBaseUrlWithVersion ())
-            .addConverterFactory (GsonConverterFactory.create (this.client_.getGson ()))
-            .client (this.userClient_)
-            .build ();
   }
 
   public GatekeeperClient getClient ()
@@ -295,9 +264,14 @@ public class GatekeeperSessionClient
    *
    * @param listener      Listener object
    */
-  public void setListener (Listener listener)
+  public void addListener (Listener listener)
   {
-    this.listener_ = listener;
+    this.listeners_.add (listener);
+  }
+
+  public void removeListener (Listener listener)
+  {
+    this.listeners_.remove (listener);
   }
 
   /**
@@ -308,16 +282,6 @@ public class GatekeeperSessionClient
   public String getAccessToken ()
   {
     return this.userToken_.accessToken;
-  }
-
-  /**
-   * Get the listener object
-   *
-   * @return              A Listener object
-   */
-  public Listener getListener ()
-  {
-    return this.listener_;
   }
 
   /**
@@ -390,13 +354,7 @@ public class GatekeeperSessionClient
    */
   public void forceSignIn (Activity activity, Intent signInIntent)
   {
-    if (this.isSigningIn_)
-      return;
-
-    this.isSigningIn_ = true;
-    this.logger_.info ("Forcing sign in");
-
-    // Force the user to signout.
+    // Force the user to sign out.
     this.completeSignOut ();
 
     signInIntent.putExtra (GatekeeperSignInActivity.ARG_REDIRECT_INTENT, activity.getIntent ());
@@ -404,16 +362,6 @@ public class GatekeeperSessionClient
 
     // Finish the current activity.
     activity.finish ();
-  }
-
-  /**
-   * The user is signing in.
-   *
-   * @return
-   */
-  public boolean isSigningIn ()
-  {
-    return this.isSigningIn_;
   }
 
   /**
@@ -484,6 +432,7 @@ public class GatekeeperSessionClient
     // Delete the token from the database. This will cause all session clients
     // listening for changes to be notified of the change.
     FlowManager.getModelAdapter (UserToken.class).delete (this.userToken_);
+    GatekeeperStore.getInstance (this.context_).clearCache ();
 
     this.userToken_ = null;
   }
@@ -527,10 +476,9 @@ public class GatekeeperSessionClient
       // Save the user access token. We need it so we can
       this.userToken_ = UserToken.fromToken (username, jsonToken);
 
-      // Get information about the current user.
-      this.logger_.info ("Requesting my account information");
+      FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
-      GatekeeperStore.forSession (this.context_, this)
+      GatekeeperStore.getInstance (this.context_)
                      .get (Account.class, "me")
                      .then (resolved (account -> {
                        this.session_.edit ()
@@ -538,12 +486,14 @@ public class GatekeeperSessionClient
                                     .setUserId (account._id.toString ())
                                     .commit ();
 
-                       FlowManager.getModelAdapter (UserToken.class).save (this.userToken_);
 
                        settlement.resolve (null);
                      }))
                      ._catch (rejected (reason -> {
+                       // Delete the user token that we temporarily saved.
                        this.userToken_ = null;
+                       FlowManager.getModelAdapter (UserToken.class).delete (this.userToken_);
+
                        settlement.reject (reason);
                      }));
     });
@@ -744,19 +694,20 @@ public class GatekeeperSessionClient
       switch (msg.what)
       {
         case MSG_ON_LOGIN:
-          if (listener_ != null)
-            listener_.onSignedIn (GatekeeperSessionClient.this);
+          for (Listener listener: listeners_)
+            listener.onSignedIn (GatekeeperSessionClient.this);
           break;
 
         case MSG_ON_LOGOUT:
-          if (listener_ != null)
-            listener_.onSignedOut (GatekeeperSessionClient.this);
+          for (Listener listener: listeners_)
+            listener.onSignedOut (GatekeeperSessionClient.this);
           break;
 
         case MSG_ON_REAUTHENTICATE:
           HttpError httpError = (HttpError)msg.obj;
-          if (listener_ != null)
-            listener_.onReauthenticate (GatekeeperSessionClient.this, httpError);
+
+          for (Listener listener: listeners_)
+            listener.onReauthenticate (GatekeeperSessionClient.this, httpError);
           break;
       }
     }
